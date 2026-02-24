@@ -17,7 +17,7 @@ jobs:
 
       - name: Deploy Django STAGING
         run: |
-          cd /srv/app/django
+          cd /srv/apps/django
           git pull origin stag
           chmod +x deploy-stag.sh
           ./deploy-stag.sh
