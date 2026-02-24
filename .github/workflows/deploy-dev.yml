@@ -7,17 +7,14 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: [self-hosted, Linux, X64, django, backend]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: dev
+      - uses: actions/checkout@v4
 
       - name: Deploy Django DEV
         run: |
+          rsync -av --delete --exclude='.env*' ./ /srv/apps/django/
           cd /srv/apps/django
-          git pull origin dev
           chmod +x deploy-dev.sh
           ./deploy-dev.sh

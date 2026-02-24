@@ -17,6 +17,22 @@ staticfiles/
 .env
 .env.*
 
+# Backups
+backups/
+*.sql
+
+# Docker
+*.tar
+*.pid
+docker-compose.override.yml
+
+# Testing
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
+.mypy_cache/
+
 # IDE
 .vscode/
 .idea/
@@ -24,3 +40,8 @@ staticfiles/
 
 # OS
 .DS_Store
+Thumbs.db
+
+# Secrets
+*.pem
+*.key

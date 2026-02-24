@@ -15,8 +15,8 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "Starting server..."
-if [ "$DJANGO_ENV" = "production" ]; then
-    gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+if [ "$DJANGO_ENV" = "live" ]; then
+    exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3}
 else
-    python manage.py runserver 0.0.0.0:8000
+    exec python manage.py runserver 0.0.0.0:8000
 fi
