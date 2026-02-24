@@ -1,0 +1,23 @@
+name: Deploy to DEV
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Deploy Django DEV
+        run: |
+          cd /srv/app/django
+          git pull origin dev
+          chmod +x deploy-dev.sh
+          ./deploy-dev.sh

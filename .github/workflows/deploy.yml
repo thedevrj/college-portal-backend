@@ -1,0 +1,28 @@
+name: Django Deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - stag
+      - live
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy Based on Branch
+        run: |
+          cd /srv/apps/django
+
+          if [ "${GITHUB_REF_NAME}" == "dev" ]; then
+            ./deploy-dev.sh
+          elif [ "${GITHUB_REF_NAME}" == "stag" ]; then
+            ./deploy-stag.sh
+          elif [ "${GITHUB_REF_NAME}" == "live" ]; then
+            ./deploy-live.sh
+          fi

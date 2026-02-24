@@ -1,0 +1,23 @@
+name: Deploy to STAGING
+
+on:
+  push:
+    branches:
+      - stag
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: stag
+
+      - name: Deploy Django STAGING
+        run: |
+          cd /srv/app/django
+          git pull origin stag
+          chmod +x deploy-stag.sh
+          ./deploy-stag.sh

@@ -1,0 +1,23 @@
+name: Deploy to PRODUCTION
+
+on:
+  push:
+    branches:
+      - live
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: live
+
+      - name: Deploy Django PRODUCTION
+        run: |
+          cd /srv/app/django
+          git pull origin live
+          chmod +x deploy-live.sh
+          ./deploy-live.sh
