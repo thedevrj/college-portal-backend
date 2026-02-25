@@ -14,6 +14,7 @@ docker exec postgres pg_dump -U postgres college_portal_live \
   || echo "⚠️ Backup failed"
 
 echo "🏗️ Building and deploying container..."
+docker-compose -f docker-compose.live.yml down
 docker-compose -f docker-compose.live.yml up -d --build
 
 echo "🔍 Checking container status..."

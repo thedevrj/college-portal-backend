@@ -5,6 +5,7 @@ set -e
 echo "🚀 Starting Django STAGING deployment..."
 
 echo "📦 Building and starting container..."
+docker-compose -f docker-compose.stag.yml down
 docker-compose -f docker-compose.stag.yml up -d --build
 
 echo "🔍 Checking container status..."
