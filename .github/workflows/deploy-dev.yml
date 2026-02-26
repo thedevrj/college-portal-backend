@@ -14,7 +14,7 @@ jobs:
 
       - name: Deploy Django DEV
         run: |
-          rsync -av --delete --exclude='.env*' ./ /srv/apps/django/
+          rsync -av --delete  --exclude='.env*' --exclude='.git' ./ /srv/apps/django/
           cd /srv/apps/django
           chmod +x deploy-dev.sh
           ./deploy-dev.sh
