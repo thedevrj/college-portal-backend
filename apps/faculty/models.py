@@ -15,6 +15,7 @@ class Faculty(models.Model):
         blank=True
     )
     photo = models.ImageField(upload_to="faculty/",null=True,blank=True)
+    photo_alt_text = models.CharField(max_length=255, blank=True, help_text="GIGW accessibility text for the image")
     name = models.CharField(max_length=255)
     designation = models.CharField(max_length=255)
 
@@ -65,21 +66,6 @@ class Faculty(models.Model):
     class Meta:
 
         ordering = ["name"]
-
-        constraints = [
-
-            models.UniqueConstraint(
-                fields=["school"],
-                condition=models.Q(roles="DEAN"),
-                name="one_dean_per_school"
-            ),
-
-            models.UniqueConstraint(
-                fields=["department"],
-                condition=models.Q(roles="HOD"),
-                name="one_hod_per_department"
-            ),
-        ]
 
     def save(self, *args, **kwargs):
 

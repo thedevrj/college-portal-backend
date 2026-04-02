@@ -1,59 +1,79 @@
 from rest_framework import serializers
-from .models import School, Department
-from apps.faculty.models import Faculty
-from apps.faculty.serializers import FacultySerializer
-from apps.centres.serializers import CentreSerializer
-from django.db.models import Q
+from .models import (
+    School, Department, Program, Notice, Committee, 
+    CommitteeMember, ResearchProject, ResearchScholar, 
+    Timetable, StudyMaterial
+)
 
-class DepartmentSerializer(serializers.ModelSerializer):
-
-    hod = serializers.SerializerMethodField()
-    school_name = serializers.CharField(source="school.name", read_only=True)
-    school_slug = serializers.CharField(source="school.slug", read_only=True)
-
-    class Meta:
-        model = Department
-        fields = [
-            "name",
-            "slug",
-            "hod",
-            "school_name",
-            "school_slug"
-        ]
-
-    def get_hod(self, obj):
-        hod = obj.faculty.filter(roles__contains=["HOD"]).first()
-        if hod:
-            return FacultySerializer(hod, context=self.context).data
-        return None
-    
 class SchoolSerializer(serializers.ModelSerializer):
-
-    departments = DepartmentSerializer(many=True, read_only=True)
     dean = serializers.SerializerMethodField()
-    image = serializers.SerializerMethodField()
 
     class Meta:
         model = School
-        fields = [
-            "name",
-            "slug",
-            "image",
-            "dean",
-            "about_school",
-            "departments",
-            "centres"
-        ]
+        fields = '__all__'
 
     def get_dean(self, obj):
-        dean = obj.faculty.filter(roles__contains=["DEAN"]).first()
+        from apps.faculty.serializers import FacultySerializer
+        dean = getattr(obj, 'DEAN', None)
         if dean:
             return FacultySerializer(dean, context=self.context).data
         return None
 
-    def get_image(self, obj):
-        request = self.context.get("request")
-        if obj.image and request:
-            return request.build_absolute_uri(obj.image.url)
+class DepartmentSerializer(serializers.ModelSerializer):
+    school_name = serializers.CharField(source='school.name', read_only=True)
+    hod = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Department
+        fields = '__all__'
+
+    def get_hod(self, obj):
+        from apps.faculty.serializers import FacultySerializer
+        hod = getattr(obj, 'hod', None)
+        if hod:
+            return FacultySerializer(hod, context=self.context).data
         return None
+
+class ProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Program
+        fields = '__all__'
+
+class NoticeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notice
+        fields = '__all__'
+
+class CommitteeMemberSerializer(serializers.ModelSerializer):
+    faculty_name = serializers.CharField(source='faculty.name', read_only=True)
+    class Meta:
+        model = CommitteeMember
+        fields = '__all__'
+
+class CommitteeSerializer(serializers.ModelSerializer):
+    members = CommitteeMemberSerializer(many=True, read_only=True)
+    class Meta:
+        model = Committee
+        fields = '__all__'
+
+class ResearchProjectSerializer(serializers.ModelSerializer):
+    pi_name = serializers.CharField(source='principal_investigator.name', read_only=True)
+    class Meta:
+        model = ResearchProject
+        fields = '__all__'
+
+class ResearchScholarSerializer(serializers.ModelSerializer):
+    supervisor_name = serializers.CharField(source='supervisor.name', read_only=True)
+    class Meta:
+        model = ResearchScholar
+        fields = '__all__'
+
+class TimetableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Timetable
+        fields = '__all__'
+
+class StudyMaterialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudyMaterial
+        fields = '__all__'

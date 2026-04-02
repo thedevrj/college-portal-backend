@@ -30,7 +30,7 @@ class CentreSerializer(serializers.ModelSerializer):
             "faculty",
         ]
     def get_director(self, obj):
-        director = obj.faculty.filter(roles__icontains="DIRECTOR").first()
+        director = obj.faculty.filter(roles__contains="DIRECTOR").first()
         if director:
             return FacultySerializer(director, context=self.context).data
         return None

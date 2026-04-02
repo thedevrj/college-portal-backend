@@ -1,15 +1,11 @@
 from rest_framework import viewsets
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Faculty
 from .serializers import FacultySerializer
 
-
 class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
-
-    queryset = Faculty.objects.select_related(
-        "school",
-        "department"
-    )
-
+    queryset = Faculty.objects.all()
     serializer_class = FacultySerializer
-
-    lookup_field = "slug"
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['department__slug', 'school__slug', 'designation']
+    lookup_field = 'slug'
