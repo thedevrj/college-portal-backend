@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    School, Department, Program, Notice, Committee, 
+    School, Department, Program, Course, CBCSCourse, DepartmentGallery, Notice, Committee, 
     CommitteeMember, ResearchProject, ResearchScholar, 
     Timetable, StudyMaterial
 )
@@ -14,14 +14,20 @@ class SchoolSerializer(serializers.ModelSerializer):
 
     def get_dean(self, obj):
         from apps.faculty.serializers import FacultySerializer
-        dean = getattr(obj, 'DEAN', None)
+        dean = getattr(obj, 'dean', None)
         if dean:
             return FacultySerializer(dean, context=self.context).data
         return None
 
+class DepartmentGallerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DepartmentGallery
+        fields = '__all__'
+
 class DepartmentSerializer(serializers.ModelSerializer):
     school_name = serializers.CharField(source='school.name', read_only=True)
     hod = serializers.SerializerMethodField()
+    gallery_images = DepartmentGallerySerializer(many=True, read_only=True)
 
     class Meta:
         model = Department
@@ -34,7 +40,20 @@ class DepartmentSerializer(serializers.ModelSerializer):
             return FacultySerializer(hod, context=self.context).data
         return None
 
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = '__all__'
+
+class CBCSCourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CBCSCourse
+        fields = '__all__'
+
 class ProgramSerializer(serializers.ModelSerializer):
+    courses = CourseSerializer(many=True, read_only=True)
+    cbcs_courses = CBCSCourseSerializer(many=True, read_only=True)
+
     class Meta:
         model = Program
         fields = '__all__'
