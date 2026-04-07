@@ -59,8 +59,9 @@ class Program(models.Model):
     other_level = models.CharField(max_length=255, blank=True, null=True, help_text="Please specify the level if 'Others' is selected")
     duration = models.CharField(max_length=100,null=True, blank=True, help_text="e.g., 4 Years, 6 Semesters")
     intake = models.CharField(max_length=100,null=True, blank=True, help_text="Number of seats available")
-    eligibility = RichTextField(blank=True, null=True, help_text="Eligibility criteria for the program")
     fees = models.CharField(max_length=255, blank=True, null=True, help_text="Fee structure details")
+    eligibility = RichTextField(blank=True, null=True, help_text="Eligibility criteria for the program")
+    admission_process = RichTextField(blank=True, null=True, help_text="Admission process for the program")
     syllabus = models.FileField(upload_to="programs/syllabus/", blank=True, null=True, help_text="Downloadable syllabus document")
     program_outcomes = RichTextField(blank=True, null=True, help_text="Detailed program outcomes/objectives")
     def clean(self):
@@ -75,6 +76,8 @@ class Course(models.Model):
     COURSE_TYPE_CHOICES = [
         ('Core', 'Core'),
         ('Elective', 'Elective'),
+        ('Compulsory Elective', 'Compulsory Elective'),
+        ('Compulsory Foundation', 'Compulsory Foundation'),
         ('Practical', 'Practical'),
         ('Others', 'Others'),
     ]
