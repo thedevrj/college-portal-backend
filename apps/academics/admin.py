@@ -46,6 +46,9 @@ class ProgramAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     inlines = [CourseInline, CBCSCourseInline]
 
+    class Media:
+        js = ('js/admin_dynamic_fields.js?v=4',)
+
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
     list_display = ('title', 'department', 'date_posted', 'is_active')
@@ -62,6 +65,9 @@ class CommitteeAdmin(admin.ModelAdmin):
     list_filter = ('department',)
     inlines = [CommitteeMemberInline]
     search_fields = ('name',)
+
+    class Media:
+        js = ('js/admin_dynamic_fields.js?v=4',)
 
 @admin.register(ResearchProject)
 class ResearchProjectAdmin(admin.ModelAdmin):

@@ -5,6 +5,7 @@ services:
     build: .
     container_name: django-live
     volumes:
+      - .:/app
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
     ports:
@@ -15,7 +16,7 @@ services:
       - college-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/admin/" ]
       interval: 30s
       timeout: 10s
       retries: 3
