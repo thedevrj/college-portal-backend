@@ -19,11 +19,6 @@ class Faculty(models.Model):
     name = models.CharField(max_length=255)
     designation = models.CharField(max_length=255)
 
-    class Role(models.TextChoices):
-        DEAN = "DEAN", "Dean"
-        HOD = "HOD", "HOD"
-        DIRECTOR = "DIRECTOR", "Director"
-        CO_ORDINATOR = "CO_ORDINATOR" , "co_ordinator"
 
     roles = models.JSONField(default=list, blank=True)
 
