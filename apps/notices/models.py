@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from ckeditor.fields import RichTextField
 
 class GlobalNotice(models.Model):
@@ -11,7 +12,10 @@ class GlobalNotice(models.Model):
     
     title = models.CharField(max_length=500)
     content = RichTextField(blank=True, null=True, help_text="Detailed content of the notice")
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    categories = ArrayField(
+        models.CharField(max_length=50, choices=CATEGORY_CHOICES),
+        blank=True, default=list, help_text="Select one or more categories"
+    )
     link = models.URLField(blank=True, null=True, help_text="Optional external link or relative URL")
     attachment = models.FileField(upload_to="global_notices/", blank=True, null=True)
     
@@ -23,4 +27,5 @@ class GlobalNotice(models.Model):
         ordering = ['-date_posted']
         
     def __str__(self):
-        return f"[{self.category}] {self.title}"
+        cats = ", ".join(self.categories) if self.categories else "Uncategorized"
+        return f"[{cats}] {self.title}"
