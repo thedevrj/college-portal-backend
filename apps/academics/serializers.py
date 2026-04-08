@@ -7,6 +7,7 @@ from .models import (
 
 class SchoolSerializer(serializers.ModelSerializer):
     dean = serializers.SerializerMethodField()
+    departments = serializers.SerializerMethodField()
 
     class Meta:
         model = School
@@ -18,6 +19,9 @@ class SchoolSerializer(serializers.ModelSerializer):
         if dean:
             return FacultySerializer(dean, context=self.context).data
         return None
+
+    def get_departments(self, obj):
+        return [{"id": dept.id, "name": dept.name, "slug": dept.slug} for dept in obj.departments.all()]
 
 class DepartmentGallerySerializer(serializers.ModelSerializer):
     class Meta:
