@@ -19,13 +19,17 @@ class DepartmentGalleryInline(admin.TabularInline):
     model = DepartmentGallery
     extra = 1
 
+class CBCSCourseInline(admin.TabularInline):
+    model = CBCSCourse
+    extra = 1
+
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'school', 'get_hod', 'contact_email')
     list_filter = ('school',)
     search_fields = ('name', 'about')
     prepopulated_fields = {'slug': ('name',)}
-    inlines = [DepartmentGalleryInline]
+    inlines = [DepartmentGalleryInline, CBCSCourseInline]
 
     def get_hod(self, obj):
         return getattr(obj, 'hod', None)
@@ -35,16 +39,12 @@ class CourseInline(admin.TabularInline):
     model = Course
     extra = 1
 
-class CBCSCourseInline(admin.TabularInline):
-    model = CBCSCourse
-    extra = 1
-
 @admin.register(Program)
 class ProgramAdmin(admin.ModelAdmin):
     list_display = ('name', 'department', 'level', 'duration', 'intake')
     list_filter = ('level', 'department')
     search_fields = ('name',)
-    inlines = [CourseInline, CBCSCourseInline]
+    inlines = [CourseInline]
 
     class Media:
         js = ('js/admin_dynamic_fields.js?v=4',)

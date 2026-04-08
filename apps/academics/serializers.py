@@ -56,7 +56,6 @@ class CBCSCourseSerializer(serializers.ModelSerializer):
 
 class ProgramSerializer(serializers.ModelSerializer):
     courses = CourseSerializer(many=True, read_only=True)
-    cbcs_courses = CBCSCourseSerializer(many=True, read_only=True)
 
     class Meta:
         model = Program

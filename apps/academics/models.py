@@ -102,7 +102,7 @@ class Course(models.Model):
         return f"{self.course_code} - {self.course_title}"
 
 class CBCSCourse(models.Model):
-    program = models.ForeignKey(Program, related_name="cbcs_courses", on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, related_name="cbcs_courses", on_delete=models.CASCADE, null=True, blank=True)
     semester = models.PositiveIntegerField(help_text="e.g., 1, 2, 3...")
     course_code = models.CharField(max_length=50)
     course_title = models.CharField(max_length=255)
