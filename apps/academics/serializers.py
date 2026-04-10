@@ -56,6 +56,8 @@ class CBCSCourseSerializer(serializers.ModelSerializer):
 
 class ProgramSerializer(serializers.ModelSerializer):
     courses = CourseSerializer(many=True, read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
+    school_name = serializers.CharField(source='department.school.name', read_only=True)
 
     class Meta:
         model = Program
@@ -80,12 +82,21 @@ class CommitteeSerializer(serializers.ModelSerializer):
 
 class ResearchProjectSerializer(serializers.ModelSerializer):
     pi_name = serializers.CharField(source='principal_investigator.name', read_only=True)
+    co_investigators_names = serializers.SerializerMethodField()
+    department_slug = serializers.CharField(source='department.slug', read_only=True)
+
     class Meta:
         model = ResearchProject
         fields = '__all__'
 
+    def get_co_investigators_names(self, obj):
+        return [faculty.name for faculty in obj.co_investigators.all()]
+
 class ResearchScholarSerializer(serializers.ModelSerializer):
     supervisor_name = serializers.CharField(source='supervisor.name', read_only=True)
+    co_supervisor_name = serializers.CharField(source='co_supervisor.name', read_only=True, default=None)
+    department_slug = serializers.CharField(source='department.slug', read_only=True)
+    
     class Meta:
         model = ResearchScholar
         fields = '__all__'

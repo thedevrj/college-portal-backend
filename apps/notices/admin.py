@@ -22,7 +22,7 @@ class GlobalNoticeAdmin(admin.ModelAdmin):
     form = GlobalNoticeForm
     list_display = ('title', 'display_categories', 'show_in_marquee', 'is_active', 'date_posted')
     list_filter = ('show_in_marquee', 'is_active', 'date_posted')
-    search_fields = ('title', 'content')
+    search_fields = ('title',)
 
     def display_categories(self, obj):
         return ", ".join(obj.categories) if obj.categories else "-"
