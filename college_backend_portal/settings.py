@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "ckeditor",
 
-    "apps.core",
     "apps.academics",
     "apps.faculty",
     "apps.centres",

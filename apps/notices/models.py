@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
-from ckeditor.fields import RichTextField
 
 class GlobalNotice(models.Model):
     CATEGORY_CHOICES = [
@@ -11,7 +10,6 @@ class GlobalNotice(models.Model):
     ]
     
     title = models.CharField(max_length=500)
-    content = RichTextField(blank=True, null=True, help_text="Detailed content of the notice")
     categories = ArrayField(
         models.CharField(max_length=50, choices=CATEGORY_CHOICES),
         blank=True, default=list, help_text="Select one or more categories"
