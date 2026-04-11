@@ -7,6 +7,7 @@ from .models import (
 
 class SchoolSerializer(serializers.ModelSerializer):
     dean = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     departments = serializers.SerializerMethodField()
 
     class Meta:
@@ -18,6 +19,10 @@ class SchoolSerializer(serializers.ModelSerializer):
         dean = getattr(obj, 'dean', None)
         if dean:
             return FacultySerializer(dean, context=self.context).data
+        return None
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
         return None
 
     def get_departments(self, obj):
