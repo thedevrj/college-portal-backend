@@ -60,7 +60,7 @@ class NoticeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Notice.objects.filter(is_active=True).order_by('-date_posted')
     serializer_class = NoticeSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['department__slug']
+    filterset_fields = ['department__slug', 'category']
     search_fields = ['title', 'content']
 
 class CommitteeViewSet(viewsets.ReadOnlyModelViewSet):

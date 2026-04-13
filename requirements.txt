@@ -10,3 +10,5 @@ gunicorn==21.2.0
 whitenoise==6.6.0
 Pillow
 django-ckeditor==6.7.1
+django-import-export==3.3.3
+openpyxl==3.1.2
