@@ -132,8 +132,18 @@ class DepartmentGallery(models.Model):
         return f"Gallery image for {self.department.name}"
 
 class Notice(models.Model):
+    NOTICE_CATEGORY_CHOICES = [
+        ('General', 'General'),
+        ('Academic', 'Academic'),
+        ('Examination', 'Examination'),
+        ('Admission', 'Admission'),
+        ('Scholarship', 'Scholarship'),        
+        ('Others', 'Others'),
+    ]
     department = models.ForeignKey(Department, related_name="notices", on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=NOTICE_CATEGORY_CHOICES)
+    other_category = models.CharField(max_length=100, blank=True, null=True, help_text="Specify if 'Others' selected")
     content = RichTextField(blank=True)
     attachment = models.FileField(upload_to="notices/", blank=True, null=True)
     date_posted = models.DateField(auto_now_add=True)
@@ -142,8 +152,13 @@ class Notice(models.Model):
     class Meta:
         ordering = ["-date_posted"]
 
+    def clean(self):
+        super().clean()
+        if self.category == 'Others' and not self.other_category:
+            raise ValidationError({'other_category': "This field is required when category is 'Others'."})
+
     def __str__(self):
-        return self.title
+        return f"[{self.category}] {self.title}"
 
 class Committee(models.Model):
     department = models.ForeignKey(Department, related_name="committees", on_delete=models.CASCADE)

@@ -30,6 +30,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 2. Static Field (Notice Category)
+    const categorySelect = document.getElementById('id_category');
+    const otherCategoryInput = document.getElementById('id_other_category');
+    if (categorySelect && otherCategoryInput) {
+        toggleDisable(categorySelect, otherCategoryInput);
+        categorySelect.addEventListener('change', function () {
+            toggleDisable(this, otherCategoryInput);
+        });
+    }
+
     // Event Delegation for dynamically changing selects
     document.body.addEventListener('change', function(event) {
         const target = event.target;

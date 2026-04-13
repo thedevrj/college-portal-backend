@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "ckeditor",
+    "import_export",
 
     "apps.academics",
     "apps.faculty",

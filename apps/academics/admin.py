@@ -47,13 +47,16 @@ class ProgramAdmin(admin.ModelAdmin):
     inlines = [CourseInline]
 
     class Media:
-        js = ('js/admin_dynamic_fields.js?v=4',)
+        js = ('js/admin_dynamic_fields.js?v=5',)
 
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
-    list_display = ('title', 'department', 'date_posted', 'is_active')
-    list_filter = ('department', 'date_posted', 'is_active')
+    list_display = ('title', 'department', 'category', 'date_posted', 'is_active')
+    list_filter = ('category', 'department', 'date_posted', 'is_active')
     search_fields = ('title', 'content')
+
+    class Media:
+        js = ('js/admin_dynamic_fields.js?v=5',)
 
 class CommitteeMemberInline(admin.TabularInline):
     model = CommitteeMember
@@ -67,7 +70,7 @@ class CommitteeAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
     class Media:
-        js = ('js/admin_dynamic_fields.js?v=4',)
+        js = ('js/admin_dynamic_fields.js?v=5',)
 
 @admin.register(ResearchProject)
 class ResearchProjectAdmin(admin.ModelAdmin):
