@@ -132,8 +132,6 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "college_backend_portal.pagination.FlexiblePagination",
-    "PAGE_SIZE": 20,
 }
 
 # REST_FRAMEWORK = {

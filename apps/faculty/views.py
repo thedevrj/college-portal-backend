@@ -2,8 +2,10 @@ from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Faculty
 from .serializers import FacultyListSerializer, FacultyDetailSerializer
+from college_backend_portal.pagination import FlexiblePagination
 
 class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
+    pagination_class = FlexiblePagination
     queryset = Faculty.objects.select_related(
         'school', 'department', 'centre'
     ).filter(is_active=True)
