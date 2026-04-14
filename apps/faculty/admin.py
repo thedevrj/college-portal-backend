@@ -56,7 +56,7 @@ class FacultyResource(resources.ModelResource):
         model = Faculty
         # Set staff_no as primary identifier since employee_id is often None in user's sheet
         import_id_fields = ('staff_no',)
-        fields = ( 'staff_no', 'name', 'dob', 'designation', 'faculty_type', 'campus', 'qualification', 'teaching_exp', 'research_exp', 'school', 'department', 'centre', 'insti_email', 'other_email', 'phone1', 'phone2', 'research_int', 'bio')
+        fields = ( 'staff_no', 'name', 'dob', 'designation', 'faculty_type', 'campus', 'qualification', 'teaching_exp', 'research_exp', 'google_scholar_url', 'linkedin_url', 'website_url', 'date_of_joining', 'is_active', 'school', 'department', 'centre', 'insti_email', 'other_email', 'phone1', 'phone2', 'research_int', 'bio')
         export_order = fields
         skip_unchanged = True
         report_skipped = True
@@ -204,14 +204,41 @@ class FacultyResource(resources.ModelResource):
         if res_exp_key and row_copy[res_exp_key]:
             row['research_exp'] = str(row_copy[res_exp_key]).strip()
 
-        # 9. Default roles to empty list
+        # 9. Additional Profile Mappings
+        gs_key = next((k for k in ['google_scholar', 'google scholar', 'google scholar url'] if k in row_copy), None)
+        if gs_key and row_copy[gs_key]:
+            row['google_scholar_url'] = str(row_copy[gs_key]).strip()
+
+        li_key = next((k for k in ['linkedin', 'linkedin_url', 'linked in'] if k in row_copy), None)
+        if li_key and row_copy[li_key]:
+            row['linkedin_url'] = str(row_copy[li_key]).strip()
+
+        web_key = next((k for k in ['website', 'website_url', 'personal website', 'url'] if k in row_copy), None)
+        if web_key and row_copy[web_key]:
+            row['website_url'] = str(row_copy[web_key]).strip()
+
+        # Date of Joining Processing
+        doj_key = next((k for k in ['date_of_joining', 'date of joining', 'joining date'] if k in row_copy), None)
+        if doj_key:
+            val = row_copy[doj_key]
+            if val and isinstance(val, str):
+                val = val.strip()
+                try:
+                    row['date_of_joining'] = datetime.strptime(val, '%d.%m.%Y').date()
+                except (ValueError, TypeError):
+                    try:
+                        row['date_of_joining'] = datetime.strptime(val.replace('/', '.').replace('-', '.'), '%d.%m.%Y').date()
+                    except (ValueError, TypeError):
+                        pass
+
+        # 10. Default roles to empty list
         if 'roles' not in row:
             row['roles'] = []
 
 @admin.register(Faculty)
 class FacultyAdmin(ImportExportModelAdmin):
     resource_classes = [FacultyResource]
-    list_display = ('name', 'staff_no', 'faculty_type', 'designation', 'department', 'campus')
-    list_filter = ('campus', 'faculty_type', 'department', 'school', 'designation')
+    list_display = ('name', 'staff_no', 'faculty_type', 'designation', 'department', 'campus', 'is_active')
+    list_filter = ('is_active', 'campus', 'faculty_type', 'department', 'school', 'designation')
     search_fields = ('name', 'staff_no', 'insti_email')
     prepopulated_fields = {'slug': ('name',)}

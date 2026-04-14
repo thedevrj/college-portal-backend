@@ -14,8 +14,6 @@ class Faculty(models.Model):
         ('Satellite Campus Amethi', 'Satellite Campus Amethi'),
     ]
 
-    
-
     staff_no = models.PositiveIntegerField(
         unique=True,
         null=True,
@@ -34,8 +32,14 @@ class Faculty(models.Model):
     teaching_exp = models.CharField(max_length=100, blank=True, help_text="e.g., 10 Years 6 Months")
     research_exp = models.TextField(max_length=100, blank=True, help_text="e.g., 5 Years")
     research_int = RichTextField(blank=True)   
+    bio = RichTextField(blank=True)
 
-
+    google_scholar_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    website_url = models.URLField(blank=True, help_text="Personal or lab website")
+    
+    cv_document = models.FileField(upload_to="faculty_cvs/", null=True, blank=True, help_text="Upload CV/Resume in PDF format")
+    
     roles = models.JSONField(default=list, blank=True)
 
     school = models.ForeignKey(
@@ -66,7 +70,10 @@ class Faculty(models.Model):
     phone1 = models.CharField(max_length=10,null=True,blank=True)
     phone2 = models.CharField(max_length=10,null=True,blank=True)
 
-    bio = models.TextField(blank=True)
+
+    date_of_joining = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True, help_text="Uncheck if the faculty member leaves the university")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
