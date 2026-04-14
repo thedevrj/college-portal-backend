@@ -1,16 +1,20 @@
 from django.db import models
 from django.utils.text import slugify
+from ckeditor.fields import RichTextField
 
 
 class Faculty(models.Model):
+    FACULTY_TYPE_CHOICES = [
+        ('Teaching', 'Teaching'),
+        ('Non-Teaching', 'Non-Teaching'),
+    ]
 
-    employee_id = models.CharField(
-        max_length=50,
-        unique=True,
-        null=True,
-        blank=True
-    )
-    dob = models.DateField(null=True, blank=True)
+    CAMPUS_CHOICES = [
+        ('BBAU', 'BBAU'),
+        ('Satellite Campus Amethi', 'Satellite Campus Amethi'),
+    ]
+
+    
 
     staff_no = models.PositiveIntegerField(
         unique=True,
@@ -20,12 +24,19 @@ class Faculty(models.Model):
     photo = models.ImageField(upload_to="faculty/",null=True,blank=True)
     photo_alt_text = models.CharField(max_length=255, blank=True, help_text="GIGW accessibility text for the image")
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255,unique=True,blank=True)
     designation = models.CharField(max_length=255)
+    dob = models.DateField(null=True, blank=True)
+    faculty_type = models.CharField(max_length=50, choices=FACULTY_TYPE_CHOICES)
+    campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES)
+
+    qualification = RichTextField(blank=True)
+    teaching_exp = models.CharField(max_length=100, blank=True, help_text="e.g., 10 Years 6 Months")
+    research_exp = models.TextField(max_length=100, blank=True, help_text="e.g., 5 Years")
+    research_int = RichTextField(blank=True)   
 
 
     roles = models.JSONField(default=list, blank=True)
-
-    slug = models.SlugField(max_length=255,unique=True,blank=True)
 
     school = models.ForeignKey(
         "academics.School",
@@ -52,10 +63,8 @@ class Faculty(models.Model):
     
     insti_email = models.EmailField(null=True,blank=True)
     other_email = models.EmailField(null=True,blank=True)
-    phone1 = models.CharField(max_length=20,null=True,blank=True)
-    phone2 = models.CharField(max_length=20,null=True,blank=True)
-
-    research_int = models.TextField(blank=True)   
+    phone1 = models.CharField(max_length=10,null=True,blank=True)
+    phone2 = models.CharField(max_length=10,null=True,blank=True)
 
     bio = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -93,4 +102,4 @@ class Faculty(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.employee_id or 'No ID'})"
+        return f"{self.name} ({self.staff_no or 'No ID'})"
