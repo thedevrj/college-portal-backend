@@ -16,13 +16,22 @@ class BaseSchoolSerializer(serializers.ModelSerializer):
         return None
 
 class SchoolListSerializer(BaseSchoolSerializer):
+    dean = serializers.SerializerMethodField()
     class Meta(BaseSchoolSerializer.Meta):
-        fields = ['id', 'name', 'slug', 'image', 'contact_email', 'contact_phone']
+        fields = ['id', 'name', 'slug', 'image', 'contact_email', 'contact_phone', 'dean']
+
+    def get_dean(self, obj):
+        from apps.faculty.serializers import FacultyListSerializer
+        dean = getattr(obj, 'dean', None)
+        if dean:
+            return FacultyListSerializer(dean, context=self.context).data
+        return None
 
 class SchoolDetailSerializer(BaseSchoolSerializer):
     dean = serializers.SerializerMethodField()
     departments = serializers.SerializerMethodField()
-    class Meta(BaseSchoolSerializer.Meta):
+    class Meta:
+        model = School
         fields = '__all__'
 
     def get_dean(self, obj):
@@ -48,13 +57,22 @@ class BaseDepartmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class DepartmentListSerializer(BaseDepartmentSerializer):
+    hod = serializers.SerializerMethodField()
     class Meta(BaseDepartmentSerializer.Meta):
-        fields = ['id', 'name', 'slug', 'school', 'school_name', 'school_slug', 'contact_email', 'contact_phone']
+        fields = ['id', 'name', 'slug', 'school', 'school_name', 'school_slug', 'contact_email', 'contact_phone', 'hod']
+
+    def get_hod(self, obj):
+        from apps.faculty.serializers import FacultyListSerializer
+        hod = getattr(obj, 'hod', None)
+        if hod:
+            return FacultyListSerializer(hod, context=self.context).data
+        return None
 
 class DepartmentDetailSerializer(BaseDepartmentSerializer):
     hod = serializers.SerializerMethodField()
     gallery_images = DepartmentGallerySerializer(many=True, read_only=True)
-    class Meta(BaseDepartmentSerializer.Meta):
+    class Meta:
+        model = Department
         fields = '__all__'
 
     def get_hod(self, obj):

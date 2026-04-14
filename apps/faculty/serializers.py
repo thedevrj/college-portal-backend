@@ -50,6 +50,7 @@ class FacultyListSerializer(BaseFacultySerializer):
         ]
 
 class FacultyDetailSerializer(BaseFacultySerializer):
-    class Meta(BaseFacultySerializer.Meta):
+    class Meta:
+        model = Faculty
         # Return all profile fields, excluding private/internal data
-        exclude = ['staff_no', 'dob']
+        exclude = ['staff_no', 'dob',]
