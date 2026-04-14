@@ -4,6 +4,7 @@ from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin
 from .models import Faculty
 from apps.academics.models import School, Department
+from apps.centres.models import Centre
 
 class FuzzyForeignKeyWidget(ForeignKeyWidget):
     """
@@ -45,21 +46,49 @@ class FacultyResource(resources.ModelResource):
         attribute='department',
         widget=FuzzyForeignKeyWidget(Department, 'name')
     )
+    centre = fields.Field(
+        column_name='centre',
+        attribute='centre',
+        widget=FuzzyForeignKeyWidget(Centre, 'name')
+    )
 
     class Meta:
         model = Faculty
         # Set staff_no as primary identifier since employee_id is often None in user's sheet
         import_id_fields = ('staff_no',)
-        fields = ('employee_id', 'staff_no', 'name', 'dob', 'designation', 'school', 'department', 'insti_email', 'other_email', 'phone1', 'phone2', 'research_int', 'bio')
+        fields = ( 'staff_no', 'name', 'dob', 'designation', 'faculty_type', 'campus', 'qualification', 'teaching_exp', 'research_exp', 'google_scholar_url', 'linkedin_url', 'website_url', 'date_of_joining', 'is_active', 'school', 'department', 'centre', 'insti_email', 'other_email', 'phone1', 'phone2', 'research_int', 'bio')
         export_order = fields
         skip_unchanged = True
         report_skipped = True
 
+
+
+    def get_instance(self, instance_loader, row):
+        """
+        Prevent MultipleObjectsReturned when staff_no is None.
+        If staff_no is missing, try to match by name or treat as a new object.
+        """
+        staff_no = row.get('staff_no')
+        if staff_no is None:
+            name = row.get('name')
+            if name:
+                matches = self._meta.model.objects.filter(name__iexact=str(name).strip())
+                if matches.count() == 1:
+                    return matches.first()
+            return None # Force create (which may subsequently be skipped in skip_row)
+            
+        try:
+            return super().get_instance(instance_loader, row)
+        except self._meta.model.MultipleObjectsReturned:
+            return self.get_queryset().filter(staff_no=staff_no).first()
+
+
+
     def skip_row(self, instance, original, row, import_validation_errors=None):
         """
-        Skip the row if mandatory relationships (School/Dept) could not be mapped.
+        Skip the row only if all relationships (School, Dept, and Centre) are missing.
         """
-        if not instance.school or not instance.department:
+        if not (instance.school or instance.department or instance.centre):
             return True
         return super().skip_row(instance, original, row, import_validation_errors)
 
@@ -99,13 +128,6 @@ class FacultyResource(resources.ModelResource):
                 row['name'] = row_copy[k]
                 break
 
-        # 3. Map Employee ID variations
-        id_keys = ['emp id', 'employee id', 'staff id', 'id', 'employee_id']
-        for k in id_keys:
-            if k in row_copy and not row.get('employee_id'):
-                row['employee_id'] = row_copy[k]
-                break
-
         # 4. Handle staff_no cleanup
         staff_no_key = next((k for k in ['staff_no', 'staff no', 'staff_number', 'staffno'] if k in row_copy), None)
         if staff_no_key:
@@ -131,6 +153,13 @@ class FacultyResource(resources.ModelResource):
                 row['school'] = str(row_copy[k] or '').strip()
                 break
 
+        # 6.5 Map Centre variations
+        centre_keys = ['centre', 'center', 'centre name', 'center name', 'centres']
+        for k in centre_keys:
+            if k in row_copy and not row.get('centre'):
+                row['centre'] = str(row_copy[k] or '').strip()
+                break
+
         # 7. DOB Processing (Handle DD.MM.YYYY string from Excel)
         dob_key = next((k for k in ['dob', 'date of birth', 'birth date', 'birth_date'] if k in row_copy), None)
         if dob_key:
@@ -147,14 +176,69 @@ class FacultyResource(resources.ModelResource):
                     except (ValueError, TypeError):
                         pass
 
-        # 8. Default roles to empty list
+        # 8. New Profile Fields Mappings
+        type_key = next((k for k in ['faculty_type', 'faculty type', 'type'] if k in row_copy), None)
+        if type_key and row_copy[type_key]:
+            val = str(row_copy[type_key]).strip().title() # Handle 'teaching', 'Teaching', 'TEACHING'
+            if val == 'Non Teaching' or val == 'Non-teaching':
+                val = 'Non-Teaching'
+            row['faculty_type'] = val
+            
+        campus_key = next((k for k in ['campus', 'campus name'] if k in row_copy), None)
+        if campus_key and row_copy[campus_key]:
+            val = str(row_copy[campus_key]).strip().upper()
+            if 'SATELLITE' in val or 'AMETHI' in val:
+                row['campus'] = 'Satellite Campus Amethi'
+            else:
+                row['campus'] = 'BBAU Lucknow'
+
+        qual_key = next((k for k in ['qualification', 'qualifications', 'degrees'] if k in row_copy), None)
+        if qual_key and row_copy[qual_key]:
+            row['qualification'] = str(row_copy[qual_key]).strip()
+            
+        teach_exp_key = next((k for k in ['teaching_exp', 'teaching exp', 'teaching experience'] if k in row_copy), None)
+        if teach_exp_key and row_copy[teach_exp_key]:
+            row['teaching_exp'] = str(row_copy[teach_exp_key]).strip()
+            
+        res_exp_key = next((k for k in ['research_exp', 'research exp', 'research experience'] if k in row_copy), None)
+        if res_exp_key and row_copy[res_exp_key]:
+            row['research_exp'] = str(row_copy[res_exp_key]).strip()
+
+        # 9. Additional Profile Mappings
+        gs_key = next((k for k in ['google_scholar', 'google scholar', 'google scholar url'] if k in row_copy), None)
+        if gs_key and row_copy[gs_key]:
+            row['google_scholar_url'] = str(row_copy[gs_key]).strip()
+
+        li_key = next((k for k in ['linkedin', 'linkedin_url', 'linked in'] if k in row_copy), None)
+        if li_key and row_copy[li_key]:
+            row['linkedin_url'] = str(row_copy[li_key]).strip()
+
+        web_key = next((k for k in ['website', 'website_url', 'personal website', 'url'] if k in row_copy), None)
+        if web_key and row_copy[web_key]:
+            row['website_url'] = str(row_copy[web_key]).strip()
+
+        # Date of Joining Processing
+        doj_key = next((k for k in ['date_of_joining', 'date of joining', 'joining date'] if k in row_copy), None)
+        if doj_key:
+            val = row_copy[doj_key]
+            if val and isinstance(val, str):
+                val = val.strip()
+                try:
+                    row['date_of_joining'] = datetime.strptime(val, '%d.%m.%Y').date()
+                except (ValueError, TypeError):
+                    try:
+                        row['date_of_joining'] = datetime.strptime(val.replace('/', '.').replace('-', '.'), '%d.%m.%Y').date()
+                    except (ValueError, TypeError):
+                        pass
+
+        # 10. Default roles to empty list
         if 'roles' not in row:
             row['roles'] = []
 
 @admin.register(Faculty)
 class FacultyAdmin(ImportExportModelAdmin):
     resource_classes = [FacultyResource]
-    list_display = ('name', 'staff_no', 'employee_id', 'dob', 'designation', 'department', 'school')
-    list_filter = ('department', 'school', 'designation')
-    search_fields = ('name', 'employee_id', 'staff_no', 'insti_email')
+    list_display = ('name', 'staff_no', 'faculty_type', 'designation', 'department', 'campus', 'is_active')
+    list_filter = ('is_active', 'campus', 'faculty_type', 'department', 'school', 'designation')
+    search_fields = ('name', 'staff_no', 'insti_email')
     prepopulated_fields = {'slug': ('name',)}
