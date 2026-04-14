@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from django_filters import rest_framework as filters
 from .models import GlobalNotice
-from .serializers import GlobalNoticeSerializer
+from .serializers import GlobalNoticeListSerializer, GlobalNoticeDetailSerializer
 
 class GlobalNoticeFilter(filters.FilterSet):
     category = filters.CharFilter(method='filter_category')
@@ -18,6 +18,10 @@ class GlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows GlobalNotices to be viewed.
     """
     queryset = GlobalNotice.objects.filter(is_active=True).order_by('-date_posted')
-    serializer_class = GlobalNoticeSerializer
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return GlobalNoticeListSerializer
+        return GlobalNoticeDetailSerializer
     filter_backends = [filters.DjangoFilterBackend]
     filterset_class = GlobalNoticeFilter

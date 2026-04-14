@@ -5,24 +5,31 @@ from .models import (
     Timetable, StudyMaterial
 )
 
-class SchoolSerializer(serializers.ModelSerializer):
-    dean = serializers.SerializerMethodField()
+class BaseSchoolSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-    departments = serializers.SerializerMethodField()
-
     class Meta:
         model = School
         fields = '__all__'
-
-    def get_dean(self, obj):
-        from apps.faculty.serializers import FacultySerializer
-        dean = getattr(obj, 'dean', None)
-        if dean:
-            return FacultySerializer(dean, context=self.context).data
-        return None
     def get_image(self, obj):
         if obj.image:
             return obj.image.url
+        return None
+
+class SchoolListSerializer(BaseSchoolSerializer):
+    class Meta(BaseSchoolSerializer.Meta):
+        fields = ['id', 'name', 'slug', 'image', 'contact_email', 'contact_phone']
+
+class SchoolDetailSerializer(BaseSchoolSerializer):
+    dean = serializers.SerializerMethodField()
+    departments = serializers.SerializerMethodField()
+    class Meta(BaseSchoolSerializer.Meta):
+        fields = '__all__'
+
+    def get_dean(self, obj):
+        from apps.faculty.serializers import FacultyListSerializer
+        dean = getattr(obj, 'dean', None)
+        if dean:
+            return FacultyListSerializer(dean, context=self.context).data
         return None
 
     def get_departments(self, obj):
@@ -33,20 +40,28 @@ class DepartmentGallerySerializer(serializers.ModelSerializer):
         model = DepartmentGallery
         fields = '__all__'
 
-class DepartmentSerializer(serializers.ModelSerializer):
+class BaseDepartmentSerializer(serializers.ModelSerializer):
     school_name = serializers.CharField(source='school.name', read_only=True)
-    hod = serializers.SerializerMethodField()
-    gallery_images = DepartmentGallerySerializer(many=True, read_only=True)
-
+    school_slug = serializers.CharField(source='school.slug', read_only=True)
     class Meta:
         model = Department
         fields = '__all__'
 
+class DepartmentListSerializer(BaseDepartmentSerializer):
+    class Meta(BaseDepartmentSerializer.Meta):
+        fields = ['id', 'name', 'slug', 'school', 'school_name', 'school_slug', 'contact_email', 'contact_phone']
+
+class DepartmentDetailSerializer(BaseDepartmentSerializer):
+    hod = serializers.SerializerMethodField()
+    gallery_images = DepartmentGallerySerializer(many=True, read_only=True)
+    class Meta(BaseDepartmentSerializer.Meta):
+        fields = '__all__'
+
     def get_hod(self, obj):
-        from apps.faculty.serializers import FacultySerializer
+        from apps.faculty.serializers import FacultyListSerializer
         hod = getattr(obj, 'hod', None)
         if hod:
-            return FacultySerializer(hod, context=self.context).data
+            return FacultyListSerializer(hod, context=self.context).data
         return None
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -59,16 +74,28 @@ class CBCSCourseSerializer(serializers.ModelSerializer):
         model = CBCSCourse
         fields = '__all__'
 
-class ProgramSerializer(serializers.ModelSerializer):
-    courses = CourseSerializer(many=True, read_only=True)
+class BaseProgramSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)
     school_name = serializers.CharField(source='department.school.name', read_only=True)
-
     class Meta:
         model = Program
         fields = '__all__'
 
-class NoticeSerializer(serializers.ModelSerializer):
+class ProgramListSerializer(BaseProgramSerializer):
+    class Meta(BaseProgramSerializer.Meta):
+        fields = ['id', 'name', 'level', 'duration', 'intake', 'department', 'department_name', 'school_name', 'fees']
+
+class ProgramDetailSerializer(BaseProgramSerializer):
+    courses = CourseSerializer(many=True, read_only=True)
+    class Meta(BaseProgramSerializer.Meta):
+        fields = '__all__'
+
+class NoticeListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notice
+        exclude = ('content',)
+
+class NoticeDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notice
         fields = '__all__'

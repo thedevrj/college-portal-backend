@@ -1,12 +1,86 @@
 from django.contrib import admin
+from import_export import resources, fields
+from import_export.widgets import ForeignKeyWidget
+from import_export.admin import ImportExportModelAdmin
+from apps.faculty.models import Faculty
 from .models import (
     School, Department, Program, Course, CBCSCourse, DepartmentGallery, Notice, Committee, 
     CommitteeMember, ResearchProject, ResearchScholar, 
     Timetable, StudyMaterial
 )
 
+class FuzzyForeignKeyWidget(ForeignKeyWidget):
+    """
+    Custom widget that attempts to find a match by stripping whitespace 
+    and ignoring case sensitivity.
+    """
+    def get_queryset(self, value, row, *args, **kwargs):
+        if value:
+            value = str(value).strip()
+            return self.model.objects.filter(**{f"{self.field}__iexact": value})
+        return self.model.objects.none()
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if value:
+            qs = self.get_queryset(value, row, *args, **kwargs)
+            if qs.exists():
+                return qs.first()
+            value = str(value).strip().lower()
+            for obj in self.model.objects.all():
+                if str(getattr(obj, self.field)).strip().lower() == value:
+                    return obj
+        return None
+
+class SchoolResource(resources.ModelResource):
+    dean = fields.Field(
+        column_name='dean',
+        attribute='dean',
+        widget=FuzzyForeignKeyWidget(Faculty, 'name')
+    )
+
+    class Meta:
+        model = School
+        import_id_fields = ('name',)
+        fields = ('id', 'name', 'dean', 'dean_message', 'about_school', 'contact_email', 'contact_phone')
+        skip_unchanged = True
+        report_skipped = True
+
+class DepartmentResource(resources.ModelResource):
+    school = fields.Field(
+        column_name='school',
+        attribute='school',
+        widget=FuzzyForeignKeyWidget(School, 'name')
+    )
+    hod = fields.Field(
+        column_name='hod',
+        attribute='hod',
+        widget=FuzzyForeignKeyWidget(Faculty, 'name')
+    )
+
+    class Meta:
+        model = Department
+        import_id_fields = ('name',)
+        fields = ('id', 'name', 'school', 'hod', 'about', 'thrust_areas', 'contact_email', 'contact_phone')
+        skip_unchanged = True
+        report_skipped = True
+
+class ProgramResource(resources.ModelResource):
+    department = fields.Field(
+        column_name='department',
+        attribute='department',
+        widget=FuzzyForeignKeyWidget(Department, 'name')
+    )
+
+    class Meta:
+        model = Program
+        import_id_fields = ('name', 'department')
+        fields = ('id', 'name', 'department', 'level', 'duration', 'intake', 'fees', 'eligibility', 'admission_process', 'program_outcomes')
+        skip_unchanged = True
+        report_skipped = True
+
 @admin.register(School)
-class SchoolAdmin(admin.ModelAdmin):
+class SchoolAdmin(ImportExportModelAdmin):
+    resource_classes = [SchoolResource]
     list_display = ('name', 'slug', 'get_dean')
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
@@ -24,7 +98,8 @@ class CBCSCourseInline(admin.TabularInline):
     extra = 1
 
 @admin.register(Department)
-class DepartmentAdmin(admin.ModelAdmin):
+class DepartmentAdmin(ImportExportModelAdmin):
+    resource_classes = [DepartmentResource]
     list_display = ('name', 'school', 'get_hod', 'contact_email')
     list_filter = ('school',)
     search_fields = ('name', 'about')
@@ -40,7 +115,8 @@ class CourseInline(admin.TabularInline):
     extra = 1
 
 @admin.register(Program)
-class ProgramAdmin(admin.ModelAdmin):
+class ProgramAdmin(ImportExportModelAdmin):
+    resource_classes = [ProgramResource]
     list_display = ('name', 'department', 'level', 'duration', 'intake')
     list_filter = ('level', 'department')
     search_fields = ('name',)

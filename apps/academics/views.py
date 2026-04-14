@@ -5,33 +5,49 @@ from .models import (
     ResearchProject, ResearchScholar, Timetable, StudyMaterial
 )
 from .serializers import (
-    SchoolSerializer, DepartmentSerializer, ProgramSerializer, CourseSerializer, CBCSCourseSerializer, NoticeSerializer,
+    SchoolListSerializer, SchoolDetailSerializer,
+    DepartmentListSerializer, DepartmentDetailSerializer,
+    ProgramListSerializer, ProgramDetailSerializer,
+    CourseSerializer, CBCSCourseSerializer,
+    NoticeListSerializer, NoticeDetailSerializer,
     CommitteeSerializer, ResearchProjectSerializer, ResearchScholarSerializer,
     TimetableSerializer, StudyMaterialSerializer
 )
 
 class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = School.objects.all()
-    serializer_class = SchoolSerializer
     lookup_field = 'slug'
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SchoolListSerializer
+        return SchoolDetailSerializer
 
 class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Department.objects.all()
-    serializer_class = DepartmentSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['school__slug']
     search_fields = ['name']
     lookup_field = 'slug'
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return DepartmentListSerializer
+        return DepartmentDetailSerializer
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Program.objects.all()
-    serializer_class = ProgramSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['department', 'department__slug', 'level']
     search_fields = ['name']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ProgramListSerializer
+        return ProgramDetailSerializer
 
     @action(detail=True, methods=['get'])
     def courses(self, request, pk=None):
@@ -58,10 +74,14 @@ class CBCSCourseViewSet(viewsets.ReadOnlyModelViewSet):
 
 class NoticeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Notice.objects.filter(is_active=True).order_by('-date_posted')
-    serializer_class = NoticeSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['department__slug', 'category']
     search_fields = ['title', 'content']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return NoticeListSerializer
+        return NoticeDetailSerializer
 
 class CommitteeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Committee.objects.all()
