@@ -4,42 +4,46 @@ from ckeditor.fields import RichTextField
 
 
 class Faculty(models.Model):
-    FACULTY_TYPE_CHOICES = [
-        ('Teaching', 'Teaching'),
-        ('Non-Teaching', 'Non-Teaching'),
-    ]
 
     CAMPUS_CHOICES = [
-        ('BBAU', 'BBAU'),
-        ('Satellite Campus Amethi', 'Satellite Campus Amethi'),
+        ("BBAU", "BBAU"),
+        ("Satellite Campus Amethi", "Satellite Campus Amethi"),
     ]
 
-    staff_no = models.PositiveIntegerField(
-        unique=True,
-        null=True,
-        blank=True
+    staff_no = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    photo = models.ImageField(upload_to="faculty/", null=True, blank=True)
+    photo_alt_text = models.CharField(
+        max_length=255, blank=True, help_text="GIGW accessibility text for the image"
     )
-    photo = models.ImageField(upload_to="faculty/",null=True,blank=True)
-    photo_alt_text = models.CharField(max_length=255, blank=True, help_text="GIGW accessibility text for the image")
     name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255,unique=True,blank=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
     designation = models.CharField(max_length=255)
     dob = models.DateField(null=True, blank=True)
-    faculty_type = models.CharField(max_length=50, choices=FACULTY_TYPE_CHOICES)
     campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES)
-
-    qualification = RichTextField(blank=True)
-    teaching_exp = models.CharField(max_length=100, blank=True, help_text="e.g., 10 Years 6 Months")
-    research_exp = models.TextField(max_length=100, blank=True, help_text="e.g., 5 Years")
-    research_int = RichTextField(blank=True)   
     bio = RichTextField(blank=True)
 
+    qualification = RichTextField(blank=True)
+    teaching_exp = models.CharField(
+        max_length=100, blank=True, help_text="e.g., 10 Years 6 Months"
+    )
+    research_exp = models.CharField(
+        max_length=100, blank=True, help_text="e.g., 5 Years"
+    )
+    research_int = RichTextField(blank=True)
+
     google_scholar_url = models.URLField(blank=True)
+    scopus_url = models.URLField(blank=True)
+    research_gate_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
     website_url = models.URLField(blank=True, help_text="Personal or lab website")
-    
-    cv_document = models.FileField(upload_to="faculty_cvs/", null=True, blank=True, help_text="Upload CV/Resume in PDF format")
-    
+
+    cv_document = models.FileField(
+        upload_to="faculty_cvs/",
+        null=True,
+        blank=True,
+        help_text="Upload CV/Resume in PDF format",
+    )
+
     roles = models.JSONField(default=list, blank=True)
 
     school = models.ForeignKey(
@@ -47,7 +51,7 @@ class Faculty(models.Model):
         related_name="faculty",
         on_delete=models.CASCADE,
         null=True,
-        blank=True
+        blank=True,
     )
 
     department = models.ForeignKey(
@@ -55,24 +59,26 @@ class Faculty(models.Model):
         related_name="faculty",
         on_delete=models.CASCADE,
         null=True,
-        blank=True
+        blank=True,
     )
     centre = models.ForeignKey(
         "centres.Centre",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="faculty"
+        related_name="faculty",
     )
-    
-    insti_email = models.EmailField(null=True,blank=True)
-    other_email = models.EmailField(null=True,blank=True)
-    phone1 = models.CharField(max_length=10,null=True,blank=True)
-    phone2 = models.CharField(max_length=10,null=True,blank=True)
 
+    insti_email = models.EmailField(null=True, blank=True)
+    other_email = models.EmailField(null=True, blank=True)
+    phone1 = models.CharField(max_length=10, null=True, blank=True)
+    phone2 = models.CharField(max_length=10, null=True, blank=True)
 
     date_of_joining = models.DateField(null=True, blank=True)
-    is_active = models.BooleanField(default=True, help_text="Uncheck if the faculty member leaves the university")
+    date_of_superannuation = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(
+        default=True, help_text="Uncheck if the faculty member leaves the university"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -84,27 +90,29 @@ class Faculty(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
-        
+
         # Ensure slug is unique by appending a suffix if necessary
-        base_slug = self.slug[:250] # Leave room for suffix
+        base_slug = self.slug[:250]  # Leave room for suffix
         unique_slug = base_slug
         counter = 1
-        
+
         # Check for collisions with other records
         while True:
-            collision = Faculty.objects.filter(slug=unique_slug).exclude(pk=self.pk).first()
+            collision = (
+                Faculty.objects.filter(slug=unique_slug).exclude(pk=self.pk).first()
+            )
             if not collision:
                 break
-                
+
             # If the colliding record has a DIFFERENT staff_no, we need a suffix
             if self.staff_no and collision.staff_no != self.staff_no:
                 unique_slug = f"{base_slug}-{counter}"
                 counter += 1
             else:
-                # If it's technically the same person (same staff_no), 
+                # If it's technically the same person (same staff_no),
                 # we don't need a suffix, we keep this slug.
                 break
-        
+
         self.slug = unique_slug
         super().save(*args, **kwargs)
 

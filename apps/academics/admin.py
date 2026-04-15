@@ -5,8 +5,7 @@ from import_export.admin import ImportExportModelAdmin
 from apps.faculty.models import Faculty
 from .models import (
     School, Department, Program, Course, CBCSCourse, DepartmentGallery, Notice, Committee, 
-    CommitteeMember, ResearchProject, ResearchScholar, 
-    Timetable, StudyMaterial
+    CommitteeMember, Timetable, StudyMaterial
 )
 
 class FuzzyForeignKeyWidget(ForeignKeyWidget):
@@ -147,18 +146,6 @@ class CommitteeAdmin(admin.ModelAdmin):
 
     class Media:
         js = ('js/admin_dynamic_fields.js?v=5',)
-
-@admin.register(ResearchProject)
-class ResearchProjectAdmin(admin.ModelAdmin):
-    list_display = ('title', 'department', 'principal_investigator', 'status')
-    list_filter = ('status', 'department')
-    search_fields = ('title', 'funding_agency')
-
-@admin.register(ResearchScholar)
-class ResearchScholarAdmin(admin.ModelAdmin):
-    list_display = ('scholar_name', 'enrollment_no', 'department', 'supervisor')
-    list_filter = ('department', 'registration_year')
-    search_fields = ('scholar_name', 'enrollment_no')
 
 @admin.register(Timetable)
 class TimetableAdmin(admin.ModelAdmin):

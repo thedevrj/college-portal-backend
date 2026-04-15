@@ -1,0 +1,71 @@
+from rest_framework import viewsets, filters
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import (
+    ResearchArea, ResearchFacility, ResearchProject, ResearchScholar,
+    Publication, Patent, ResearchDevelopmentCellMember
+)
+from .serializers import (
+    ResearchAreaSerializer, ResearchFacilitySerializer, 
+    ResearchProjectListSerializer, ResearchProjectDetailSerializer,
+    ResearchScholarListSerializer, ResearchScholarDetailSerializer,
+    PublicationSerializer, PatentSerializer,
+    ResearchDevelopmentCellMemberSerializer
+)
+
+class ResearchAreaViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ResearchArea.objects.all()
+    serializer_class = ResearchAreaSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['department__slug', 'department__id']
+    search_fields = ['name', 'description']
+
+class ResearchFacilityViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ResearchFacility.objects.all()
+    serializer_class = ResearchFacilitySerializer
+    lookup_field = 'slug'
+    search_fields = ['name', 'description', 'location']
+
+class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ResearchProject.objects.select_related('principal_investigator', 'department').prefetch_related('co_investigators')
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'funding_agency', 'department__slug', 'principal_investigator__slug']
+    search_fields = ['title', 'description', 'funding_agency']
+    ordering_fields = ['amount_sanctioned', 'start_date']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ResearchProjectListSerializer
+        return ResearchProjectDetailSerializer
+
+class ResearchScholarViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ResearchScholar.objects.select_related('supervisor', 'department', 'co_supervisor')
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'registration_year', 'department__slug', 'supervisor__slug']
+    search_fields = ['scholar_name', 'enrollment_no', 'research_topic']
+    ordering_fields = ['registration_year', 'scholar_name']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ResearchScholarListSerializer
+        return ResearchScholarDetailSerializer
+
+class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Publication.objects.select_related('faculty', 'department')
+    serializer_class = PublicationSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['publication_type', 'publication_year', 'faculty__slug', 'department__slug']
+    search_fields = ['title', 'journal_name', 'citation']
+    ordering_fields = ['publication_year']
+
+class PatentViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Patent.objects.select_related('faculty', 'department')
+    serializer_class = PatentSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'year', 'faculty__slug', 'department__slug']
+    search_fields = ['title', 'patent_number']
+    ordering_fields = ['year']
+
+class ResearchDevelopmentCellMemberViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ResearchDevelopmentCellMember.objects.select_related('faculty')
+    serializer_class = ResearchDevelopmentCellMemberSerializer
+    ordering = ['order', 'faculty__name']
