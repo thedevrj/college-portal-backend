@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.faculty",
     "apps.centres",
     "apps.notices",
+    "apps.research",
 ]
 
 MIDDLEWARE = [

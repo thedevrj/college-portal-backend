@@ -188,30 +188,6 @@ class CommitteeMember(models.Model):
     def __str__(self):
         return f"{self.faculty.name} - {self.designation_in_committee}"
 
-class ResearchProject(models.Model):
-    department = models.ForeignKey(Department, related_name="research_projects", on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    principal_investigator = models.ForeignKey('faculty.Faculty', related_name="pi_projects", on_delete=models.CASCADE)
-    co_investigators = models.ManyToManyField('faculty.Faculty', related_name="co_pi_projects", blank=True)
-    funding_agency = models.CharField(max_length=255)
-    amount_sanctioned = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    status = models.CharField(max_length=50, choices=[('Ongoing', 'Ongoing'), ('Completed', 'Completed')], default='Ongoing')
-
-    def __str__(self):
-        return self.title
-
-class ResearchScholar(models.Model):
-    department = models.ForeignKey(Department, related_name="scholars", on_delete=models.CASCADE)
-    scholar_name = models.CharField(max_length=255)
-    enrollment_no = models.CharField(max_length=50, unique=True)
-    supervisor = models.ForeignKey('faculty.Faculty', related_name="supervised_scholars", on_delete=models.CASCADE)
-    co_supervisor = models.ForeignKey('faculty.Faculty', related_name="co_supervised_scholars", on_delete=models.SET_NULL, null=True, blank=True)
-    research_topic = models.CharField(max_length=500)
-    registration_year = models.PositiveIntegerField()
-
-    def __str__(self):
-        return self.scholar_name
-
 class Timetable(models.Model):
     department = models.ForeignKey(Department, related_name="timetables", on_delete=models.CASCADE)
     program = models.ForeignKey(Program, related_name="timetables", on_delete=models.CASCADE, null=True, blank=True)

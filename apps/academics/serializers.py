@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     School, Department, Program, Course, CBCSCourse, DepartmentGallery, Notice, Committee, 
-    CommitteeMember, ResearchProject, ResearchScholar, 
+    CommitteeMember, 
     Timetable, StudyMaterial
 )
 
@@ -100,8 +100,12 @@ class BaseProgramSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProgramListSerializer(BaseProgramSerializer):
+    courses = CourseSerializer(many=True, read_only=True)
     class Meta(BaseProgramSerializer.Meta):
-        fields = ['id', 'name', 'level', 'duration', 'intake', 'department', 'department_name', 'school_name', 'fees']
+        fields = [
+            'id', 'name', 'level', 'duration', 'intake', 'department', 
+            'department_name', 'school_name', 'fees', 'courses', 'syllabus'
+        ]
 
 class ProgramDetailSerializer(BaseProgramSerializer):
     courses = CourseSerializer(many=True, read_only=True)
@@ -128,27 +132,6 @@ class CommitteeSerializer(serializers.ModelSerializer):
     members = CommitteeMemberSerializer(many=True, read_only=True)
     class Meta:
         model = Committee
-        fields = '__all__'
-
-class ResearchProjectSerializer(serializers.ModelSerializer):
-    pi_name = serializers.CharField(source='principal_investigator.name', read_only=True)
-    co_investigators_names = serializers.SerializerMethodField()
-    department_slug = serializers.CharField(source='department.slug', read_only=True)
-
-    class Meta:
-        model = ResearchProject
-        fields = '__all__'
-
-    def get_co_investigators_names(self, obj):
-        return [faculty.name for faculty in obj.co_investigators.all()]
-
-class ResearchScholarSerializer(serializers.ModelSerializer):
-    supervisor_name = serializers.CharField(source='supervisor.name', read_only=True)
-    co_supervisor_name = serializers.CharField(source='co_supervisor.name', read_only=True, default=None)
-    department_slug = serializers.CharField(source='department.slug', read_only=True)
-    
-    class Meta:
-        model = ResearchScholar
         fields = '__all__'
 
 class TimetableSerializer(serializers.ModelSerializer):

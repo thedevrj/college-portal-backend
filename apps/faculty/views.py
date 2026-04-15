@@ -21,10 +21,9 @@ class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
         'school__slug': ['exact'],
         'centre__slug': ['exact'],
         'designation': ['exact'],
-        'faculty_type': ['exact'],
         'campus': ['exact'],
     }
     search_fields = ['name', 'designation', 'qualification', 'research_int']
-    ordering_fields = ['name', 'designation', 'date_of_joining']
+    ordering_fields = ['name', 'designation', 'date_of_joining', 'date_of_superannuation']
     ordering = ['name']  # default A-Z
     lookup_field = 'slug'
