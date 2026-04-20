@@ -7,11 +7,11 @@ class ResearchArea(models.Model):
     department = models.ForeignKey(
         "academics.Department", related_name="research_areas", on_delete=models.CASCADE
     )
-    name = models.CharField(max_length=255)
+    available_research_areas_or_Specialization = models.CharField(max_length=255)
     description = RichTextField(blank=True)
 
     def __str__(self):
-        return f"{self.name} ({self.department.name})"
+        return f"{self.available_research_areas_or_Specialization} ({self.department.name})"
 
 
 class ResearchFacility(models.Model):
@@ -45,6 +45,16 @@ class ResearchProject(models.Model):
         ("Ongoing", "Ongoing"),
         ("Completed", "Completed"),
     ]
+    Funding_Agencies = [
+        ("DST", "DST"),
+        ("UGC", "UGC"),
+        ("DRDO", "DRDO"),
+        ("ICMR", "ICMR"),
+        ("ISRO", "ISRO"),
+        ("NHRC", "NHRC"),
+        ("ICSSR", "ICSSR"),
+        ("Others", "Others"),
+    ]
     department = models.ForeignKey(
         "academics.Department",
         related_name="research_projects_new",
@@ -55,9 +65,18 @@ class ResearchProject(models.Model):
         "faculty.Faculty", related_name="pi_projects_new", on_delete=models.CASCADE
     )
     co_investigators = models.ManyToManyField(
-        "faculty.Faculty", related_name="co_pi_projects_new", blank=True
+        "faculty.Faculty",
+        related_name="co_pi_projects_new",
+        blank=True,
+        help_text="Select multiple time to add many co-investigator(s)",
     )
-    funding_agency = models.CharField(max_length=255)
+    funding_agency = models.CharField(max_length=20, choices=Funding_Agencies)
+    others_funding_agency = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Please specify funding agency name if 'Others' is selected",
+    )
     amount_sanctioned = models.DecimalField(
         max_digits=15, decimal_places=2, null=True, blank=True
     )
@@ -80,22 +99,25 @@ class ResearchScholar(models.Model):
         "academics.Department", related_name="scholars_new", on_delete=models.CASCADE
     )
     scholar_name = models.CharField(max_length=255)
-    enrollment_no = models.CharField(max_length=100, unique=True)
+    enrollment_no = models.CharField(max_length=100, unique=True, null=True)
     supervisor = models.ForeignKey(
         "faculty.Faculty",
         related_name="supervised_scholars_new",
         on_delete=models.CASCADE,
     )
-    co_supervisor = models.ForeignKey(
+    co_supervisor = models.ManyToManyField(
         "faculty.Faculty",
         related_name="co_supervised_scholars_new",
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
+        help_text="Select multiple time to add many co-supervisor(s)",
     )
-    research_topic = models.CharField(max_length=500)
-    registration_year = models.PositiveIntegerField()
+    research_topic = models.CharField(max_length=500, null=True)
+    subject = models.CharField(max_length=255, null=True, blank=True)
+    date_of_registration = models.DateField(null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pursuing")
+    thesis_submission_date = models.DateField(null=True)
+    viva_voce_date = models.DateField(null=True)
+    award_date = models.DateField(null=True)
 
     def __str__(self):
         return self.scholar_name
@@ -107,7 +129,13 @@ class Publication(models.Model):
         ("Conference", "Conference Paper"),
         ("Book", "Book"),
         ("Book Chapter", "Book Chapter"),
-        ("Patent", "Patent"),
+        ("Others", "Others"),
+    ]
+    Indexing_Choice = [
+        ("Scopus", "Scopus"),
+        ("Web of Science", "Web of Science"),
+        ("SJR", "SJR"),
+        ("Scimago", "Scimago"),
         ("Others", "Others"),
     ]
     faculty = models.ForeignKey(
@@ -117,19 +145,29 @@ class Publication(models.Model):
         "academics.Department", related_name="publications", on_delete=models.CASCADE
     )
     title = models.TextField()
-    journal_name = models.CharField(max_length=255, blank=True, null=True)
-    publication_year = models.PositiveIntegerField()
+    name_of_journal_or_conference_or_publisher = models.CharField(
+        max_length=255, blank=True, null=True
+    )
+    publication_date = models.DateField(null=True, blank=True)
     doi_url = models.URLField(max_length=500, blank=True, null=True)
-    publication_type = models.CharField(max_length=50, choices=PUBLICATION_TYPE_CHOICES)
-    citation = models.TextField(
-        blank=True, help_text="Full citation string if available"
+    publication_type = models.CharField(
+        max_length=50, blank=True, choices=PUBLICATION_TYPE_CHOICES
+    )
+    indexing = models.CharField(
+        max_length=50, blank=True, null=True, choices=Indexing_Choice
+    )
+    others_indexing = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Please specify indexing name if 'Others' is selected",
     )
 
     class Meta:
-        ordering = ["-publication_year"]
+        ordering = ["-publication_date"]
 
     def __str__(self):
-        return f"{self.title[:50]}... ({self.publication_year})"
+        return f"{self.title[:50]}... ({self.publication_date})"
 
 
 class Patent(models.Model):
