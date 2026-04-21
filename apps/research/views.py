@@ -34,7 +34,7 @@ class ResearchFacilityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ResearchFacility.objects.all()
     serializer_class = ResearchFacilitySerializer
     lookup_field = "slug"
-    search_fields = ["name", "description", "location"]
+    search_fields = ["name", "description"]
 
 
 class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
@@ -111,9 +111,9 @@ class PatentViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["status", "year", "faculty__slug", "department__slug"]
+    filterset_fields = ["status", "date_of_filing", "faculty__slug", "department__slug"]
     search_fields = ["title", "patent_number"]
-    ordering_fields = ["year"]
+    ordering_fields = ["date_of_filing"]
 
 
 class ResearchDevelopmentCellMemberViewSet(viewsets.ReadOnlyModelViewSet):

@@ -26,7 +26,6 @@ class ResearchFacility(models.Model):
         blank=True,
         related_name="managed_facilities",
     )
-    location = models.CharField(max_length=255, blank=True)
 
     class Meta:
         verbose_name_plural = "Research Facilities"
@@ -125,9 +124,9 @@ class ResearchScholar(models.Model):
 
 class Publication(models.Model):
     PUBLICATION_TYPE_CHOICES = [
-        ("Journal", "Journal Paper"),
-        ("Conference", "Conference Paper"),
-        ("Book", "Book"),
+        ("Journal Paper", "Journal Paper"),
+        ("Conference Paper", "Conference Paper"),
+        ("Research Paper", "Research Paper"),
         ("Book Chapter", "Book Chapter"),
         ("Others", "Others"),
     ]
@@ -139,10 +138,18 @@ class Publication(models.Model):
         ("Others", "Others"),
     ]
     faculty = models.ForeignKey(
-        "faculty.Faculty", related_name="publications", on_delete=models.CASCADE
+        "faculty.Faculty",
+        related_name="publications",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
     department = models.ForeignKey(
-        "academics.Department", related_name="publications", on_delete=models.CASCADE
+        "academics.Department",
+        related_name="publications",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
     title = models.TextField()
     name_of_journal_or_conference_or_publisher = models.CharField(
@@ -180,16 +187,20 @@ class Patent(models.Model):
         "faculty.Faculty", related_name="patents", on_delete=models.CASCADE
     )
     department = models.ForeignKey(
-        "academics.Department", related_name="patents", on_delete=models.CASCADE
+        "academics.Department",
+        related_name="patents",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     title = models.TextField()
     patent_number = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Filed")
-    year = models.PositiveIntegerField()
+    date_of_filing = models.DateField(blank=True, null=True)
     description = RichTextField(blank=True)
 
     def __str__(self):
-        return f"{self.title[:50]}... ({self.year})"
+        return f"{self.title[:50]}... ({self.date_of_filing})"
 
 
 class ResearchDevelopmentCellMember(models.Model):

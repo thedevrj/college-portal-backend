@@ -42,9 +42,9 @@ class ResearchAreaAdmin(admin.ModelAdmin):
 
 @admin.register(ResearchFacility)
 class ResearchFacilityAdmin(admin.ModelAdmin):
-    list_display = ("name", "incharge", "location")
+    list_display = ("name", "incharge")
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = ("name", "location")
+    search_fields = ("name",)
     autocomplete_fields = ("incharge",)
 
 
@@ -95,8 +95,8 @@ class PublicationAdmin(ImportExportModelAdmin):
 @admin.register(Patent)
 class PatentAdmin(ImportExportModelAdmin):
     resource_class = PatentResource
-    list_display = ("title", "faculty", "year", "status")
-    list_filter = ("status", "year", "department")
+    list_display = ("title", "faculty", "date_of_filing", "status")
+    list_filter = ("status", "date_of_filing", "department")
     search_fields = ("title", "faculty__name", "patent_number")
     autocomplete_fields = ("faculty",)
 
