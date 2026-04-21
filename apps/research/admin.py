@@ -74,8 +74,14 @@ class ResearchScholarAdmin(ImportExportModelAdmin):
         "date_of_registration",
         "status",
     )
-    list_filter = ("status", "date_of_registration", "department")
-    search_fields = ("scholar_name", "enrollment_no", "subject", "supervisor__name")
+    list_filter = ("status", "date_of_registration", "department", "gender")
+    search_fields = (
+        "scholar_name",
+        "enrollment_no",
+        "subject",
+        "supervisor__name",
+        "state",
+    )
     autocomplete_fields = ("supervisor", "co_supervisor")
 
 

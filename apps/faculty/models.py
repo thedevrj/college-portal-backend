@@ -84,12 +84,28 @@ class Faculty(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-
         ordering = ["name"]
+
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from django.apps import apps
+
+        if self.staff_no:
+            try:
+                Staff = apps.get_model("staff", "Staff")
+                if Staff.objects.filter(staff_no=self.staff_no).exists():
+                    raise ValidationError(
+                        {
+                            "staff_no": "A Non-Teaching Staff member with this staff number already exists."
+                        }
+                    )
+            except LookupError:
+                pass
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = slugify(self.name) or "faculty"
 
         # Ensure slug is unique by appending a suffix if necessary
         base_slug = self.slug[:250]  # Leave room for suffix
@@ -104,14 +120,12 @@ class Faculty(models.Model):
             if not collision:
                 break
 
-            # If the colliding record has a DIFFERENT staff_no, we need a suffix
-            if self.staff_no and collision.staff_no != self.staff_no:
-                unique_slug = f"{base_slug}-{counter}"
-                counter += 1
-            else:
-                # If it's technically the same person (same staff_no),
-                # we don't need a suffix, we keep this slug.
+            # If they share a valid staff_no, they represent the same faculty member
+            if self.staff_no and collision.staff_no == self.staff_no:
                 break
+
+            unique_slug = f"{base_slug}-{counter}"
+            counter += 1
 
         self.slug = unique_slug
         super().save(*args, **kwargs)
