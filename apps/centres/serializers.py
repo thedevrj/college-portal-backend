@@ -5,22 +5,6 @@ from apps.academics.models import Department
 from apps.faculty.serializers import FacultyListSerializer
 
 
-class CentreListSerializer(serializers.ModelSerializer):
-    school_name = serializers.CharField(source="school.name", read_only=True)
-    school_slug = serializers.CharField(source="school.slug", read_only=True)
-
-    class Meta:
-        model = Centre
-        fields = [
-            "id",
-            "name",
-            "slug",
-            "school",
-            "school_name",
-            "school_slug",
-        ]
-
-
 class CentreDetailSerializer(serializers.ModelSerializer):
     head = FacultyListSerializer(read_only=True)
     head_title = serializers.SerializerMethodField()
