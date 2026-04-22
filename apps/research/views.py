@@ -75,8 +75,9 @@ class ResearchScholarViewSet(viewsets.ReadOnlyModelViewSet):
         "date_of_registration",
         "department__slug",
         "supervisor__slug",
+        "gender",
     ]
-    search_fields = ["scholar_name", "enrollment_no", "research_topic"]
+    search_fields = ["scholar_name", "enrollment_no", "research_topic", "state"]
     ordering_fields = ["date_of_registration", "scholar_name"]
 
     def get_serializer_class(self):

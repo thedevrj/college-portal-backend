@@ -98,7 +98,15 @@ class ResearchScholar(models.Model):
         "academics.Department", related_name="scholars_new", on_delete=models.CASCADE
     )
     scholar_name = models.CharField(max_length=255)
-    enrollment_no = models.CharField(max_length=100, unique=True, null=True)
+    enrollment_no = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    gender = models.CharField(
+        max_length=10,
+        choices=[("Male", "Male"), ("Female", "Female"), ("Other", "Other")],
+        null=True,
+    )
+    date_of_birth = models.DateField(null=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True)
     supervisor = models.ForeignKey(
         "faculty.Faculty",
         related_name="supervised_scholars_new",
@@ -110,13 +118,13 @@ class ResearchScholar(models.Model):
         blank=True,
         help_text="Select multiple time to add many co-supervisor(s)",
     )
-    research_topic = models.CharField(max_length=500, null=True)
+    research_topic = models.CharField(max_length=500, null=True, blank=True)
     subject = models.CharField(max_length=255, null=True, blank=True)
-    date_of_registration = models.DateField(null=True)
+    date_of_registration = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pursuing")
-    thesis_submission_date = models.DateField(null=True)
-    viva_voce_date = models.DateField(null=True)
-    award_date = models.DateField(null=True)
+    thesis_submission_date = models.DateField(null=True, blank=True)
+    viva_voce_date = models.DateField(null=True, blank=True)
+    award_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.scholar_name
@@ -127,6 +135,7 @@ class Publication(models.Model):
         ("Journal Paper", "Journal Paper"),
         ("Conference Paper", "Conference Paper"),
         ("Research Paper", "Research Paper"),
+        ("Book", "Book"),
         ("Book Chapter", "Book Chapter"),
         ("Others", "Others"),
     ]

@@ -40,6 +40,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 3. Static Field (Centre Head Title)
+    const headTitleSelect = document.getElementById('id_head_title');
+    const headTitleOtherInput = document.getElementById('id_head_title_other');
+    if (headTitleSelect && headTitleOtherInput) {
+        toggleDisable(headTitleSelect, headTitleOtherInput);
+        headTitleSelect.addEventListener('change', function () {
+            toggleDisable(this, headTitleOtherInput);
+        });
+    }
+
     // Event Delegation for dynamically changing selects
     document.body.addEventListener('change', function(event) {
         const target = event.target;
