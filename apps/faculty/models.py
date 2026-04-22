@@ -20,22 +20,22 @@ class Faculty(models.Model):
     designation = models.CharField(max_length=255)
     dob = models.DateField(null=True, blank=True)
     campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES)
-    bio = RichTextField(blank=True)
+    bio = RichTextField(blank=True, null=True)
 
-    qualification = RichTextField(blank=True)
+    qualification = RichTextField(blank=True, null=True)
     teaching_exp = models.CharField(
-        max_length=100, blank=True, help_text="e.g., 10 Years 6 Months"
+        max_length=100, blank=True, null=True, help_text="e.g., 10 Years 6 Months"
     )
     research_exp = models.CharField(
-        max_length=100, blank=True, help_text="e.g., 5 Years"
+        max_length=100, blank=True, null=True, help_text="e.g., 5 Years"
     )
-    research_int = RichTextField(blank=True)
+    research_int = RichTextField(blank=True, null=True)
 
-    google_scholar_url = models.URLField(blank=True)
-    scopus_url = models.URLField(blank=True)
-    research_gate_url = models.URLField(blank=True)
-    linkedin_url = models.URLField(blank=True)
-    website_url = models.URLField(blank=True, help_text="Personal or lab website")
+    google_scholar_url = models.URLField(blank=True, null=True)
+    scopus_url = models.URLField(blank=True, null=True)
+    research_gate_url = models.URLField(blank=True, null=True)
+    linkedin_url = models.URLField(blank=True, null=True)
+    website_url = models.URLField(blank=True, null=True, help_text="Personal or lab website")
 
     cv_document = models.FileField(
         upload_to="faculty_cvs/",

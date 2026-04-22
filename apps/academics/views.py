@@ -41,7 +41,7 @@ class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
 class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Department.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["school__slug"]
+    filterset_fields = ["school__slug", "campus"]
     search_fields = ["name"]
     lookup_field = "slug"
 

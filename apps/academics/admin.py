@@ -77,9 +77,7 @@ class DepartmentResource(resources.ModelResource):
         widget=FuzzyForeignKeyWidget(Faculty, "name"),
     )
     cbcs_courses = fields.Field(
-        column_name="cbcs_courses",
-        attribute="get_cbcs_summary",
-        readonly=True
+        column_name="cbcs_courses", attribute="get_cbcs_summary", readonly=True
     )
 
     class Meta:
@@ -179,9 +177,9 @@ class CBCSCourseInline(admin.TabularInline):
 @admin.register(Department)
 class DepartmentAdmin(ImportExportModelAdmin):
     resource_classes = [DepartmentResource]
-    list_display = ("name", "school", "get_hod", "contact_email")
-    list_filter = ("school",)
-    search_fields = ("name", "about")
+    list_display = ("name", "campus", "school", "hod")
+    list_filter = ("campus", "school")
+    search_fields = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("hod",)
     inlines = [DepartmentGalleryInline, CBCSCourseInline]

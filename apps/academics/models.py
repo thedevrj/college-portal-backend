@@ -37,6 +37,11 @@ class School(models.Model):
 
 
 class Department(models.Model):
+    CAMPUS_CHOICES = [
+        ("BBAU", "BBAU"),
+        ("Satellite Campus Amethi", "Satellite Campus Amethi"),
+    ]
+
     school = models.ForeignKey(
         School,
         related_name="departments",
@@ -61,6 +66,7 @@ class Department(models.Model):
     )
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES, default="BBAU")
 
     class Meta:
         ordering = ["name"]
@@ -68,6 +74,9 @@ class Department(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+            # Add campus suffix for satellite campuses to ensure slug uniqueness
+            if self.campus != "BBAU":
+                self.slug = f"{self.slug}-amethi"
         self.slug = self.slug[:255]
         super().save(*args, **kwargs)
 
@@ -77,7 +86,11 @@ class Department(models.Model):
 
 class Program(models.Model):
     department = models.ForeignKey(
-        Department, related_name="programs", on_delete=models.CASCADE
+        Department,
+        related_name="programs",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     name = models.CharField(max_length=255)
     level = models.CharField(
@@ -141,7 +154,7 @@ class Course(models.Model):
         ("Others", "Others"),
     ]
     program = models.ForeignKey(
-        Program, related_name="courses", on_delete=models.CASCADE
+        Program, related_name="courses", on_delete=models.CASCADE, null=True, blank=True
     )
     semester = models.PositiveIntegerField(help_text="e.g., 1, 2, 3...")
     course_code = models.CharField(max_length=50)
@@ -207,7 +220,11 @@ def department_gallery_upload_path(instance, filename):
 
 class DepartmentGallery(models.Model):
     department = models.ForeignKey(
-        Department, related_name="gallery_images", on_delete=models.CASCADE
+        Department,
+        related_name="gallery_images",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     image = models.ImageField(upload_to=department_gallery_upload_path)
     caption = models.CharField(
@@ -263,7 +280,11 @@ class Notice(models.Model):
 
 class Committee(models.Model):
     department = models.ForeignKey(
-        Department, related_name="committees", on_delete=models.CASCADE
+        Department,
+        related_name="committees",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     name = models.CharField(max_length=255)
     description = RichTextField(blank=True, null=True)
@@ -280,9 +301,15 @@ class CommitteeMember(models.Model):
         ("Others", "Others"),
     ]
     committee = models.ForeignKey(
-        Committee, related_name="members", on_delete=models.CASCADE
+        Committee,
+        related_name="members",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
-    faculty = models.ForeignKey("faculty.Faculty", on_delete=models.CASCADE)
+    faculty = models.ForeignKey(
+        "faculty.Faculty", on_delete=models.CASCADE, null=True, blank=True
+    )
     designation_in_committee = models.CharField(
         max_length=100, choices=DESIGNATION_CHOICES
     )
@@ -308,7 +335,11 @@ class CommitteeMember(models.Model):
 
 class Timetable(models.Model):
     department = models.ForeignKey(
-        Department, related_name="timetables", on_delete=models.CASCADE
+        Department,
+        related_name="timetables",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     program = models.ForeignKey(
         Program,
