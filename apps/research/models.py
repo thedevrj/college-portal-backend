@@ -8,7 +8,7 @@ class ResearchArea(models.Model):
         "academics.Department", related_name="research_areas", on_delete=models.CASCADE
     )
     available_research_areas_or_Specialization = models.CharField(max_length=255)
-    description = RichTextField(blank=True)
+    description = RichTextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.available_research_areas_or_Specialization} ({self.department.name})"
@@ -17,7 +17,7 @@ class ResearchArea(models.Model):
 class ResearchFacility(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    description = RichTextField(blank=True)
+    description = RichTextField(blank=True, null=True)
     image = models.ImageField(upload_to="research/facilities/", null=True, blank=True)
     incharge = models.ForeignKey(
         "faculty.Faculty",
@@ -61,7 +61,11 @@ class ResearchProject(models.Model):
     )
     title = models.CharField(max_length=255)
     principal_investigator = models.ForeignKey(
-        "faculty.Faculty", related_name="pi_projects_new", on_delete=models.CASCADE
+        "faculty.Faculty",
+        related_name="pi_projects_new",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     co_investigators = models.ManyToManyField(
         "faculty.Faculty",
@@ -82,7 +86,7 @@ class ResearchProject(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Ongoing")
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
-    description = RichTextField(blank=True)
+    description = RichTextField(blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -111,6 +115,8 @@ class ResearchScholar(models.Model):
         "faculty.Faculty",
         related_name="supervised_scholars_new",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     co_supervisor = models.ManyToManyField(
         "faculty.Faculty",
@@ -160,14 +166,14 @@ class Publication(models.Model):
         blank=True,
         null=True,
     )
-    title = models.TextField()
+    title = models.TextField(null=True, blank=True)
     name_of_journal_or_conference_or_publisher = models.CharField(
         max_length=255, blank=True, null=True
     )
     publication_date = models.DateField(null=True, blank=True)
     doi_url = models.URLField(max_length=500, blank=True, null=True)
     publication_type = models.CharField(
-        max_length=50, blank=True, choices=PUBLICATION_TYPE_CHOICES
+        max_length=50, blank=True, null=True, choices=PUBLICATION_TYPE_CHOICES
     )
     indexing = models.CharField(
         max_length=50, blank=True, null=True, choices=Indexing_Choice
@@ -193,7 +199,11 @@ class Patent(models.Model):
         ("Granted", "Granted"),
     ]
     faculty = models.ForeignKey(
-        "faculty.Faculty", related_name="patents", on_delete=models.CASCADE
+        "faculty.Faculty",
+        related_name="patents",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     department = models.ForeignKey(
         "academics.Department",
@@ -206,7 +216,7 @@ class Patent(models.Model):
     patent_number = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Filed")
     date_of_filing = models.DateField(blank=True, null=True)
-    description = RichTextField(blank=True)
+    description = RichTextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.date_of_filing})"
