@@ -11,16 +11,58 @@ class Centre(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='centres'
+        related_name="centres",
     )
+
+    HEAD_TITLE_CHOICES = [
+        ("Director", "Director"),
+        ("In-Charge", "In-Charge"),
+        ("Coordinator", "Coordinator"),
+        ("Others", "Others"),
+    ]
+    head = models.ForeignKey(
+        "faculty.Faculty",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="headed_centres",
+        verbose_name="Leadership",
+    )
+    head_title = models.CharField(
+        max_length=50,
+        choices=HEAD_TITLE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="Leadership Title",
+    )
+    head_title_other = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Provide the title if 'Others' is selected",
+        verbose_name="Other Leadership Title",
+    )
+
     class Meta:
         ordering = ["name"]
 
     description = models.TextField(blank=True, null=True)
 
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+
+        if self.head_title == "Others" and not self.head_title_other:
+            raise ValidationError(
+                {
+                    "head_title_other": "This field is required when Leadership Title is 'Others'."
+                }
+            )
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+
         # enforce DB length safety
         self.slug = self.slug[:255]
         super().save(*args, **kwargs)

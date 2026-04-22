@@ -85,6 +85,7 @@ class Faculty(models.Model):
 
     class Meta:
         ordering = ["name"]
+        verbose_name_plural = "Faculty"
 
     def clean(self):
         super().clean()
