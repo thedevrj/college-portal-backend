@@ -76,6 +76,11 @@ class DepartmentResource(resources.ModelResource):
         attribute="hod",
         widget=FuzzyForeignKeyWidget(Faculty, "name"),
     )
+    cbcs_courses = fields.Field(
+        column_name="cbcs_courses",
+        attribute="get_cbcs_summary",
+        readonly=True
+    )
 
     class Meta:
         model = Department
@@ -89,9 +94,14 @@ class DepartmentResource(resources.ModelResource):
             "thrust_areas",
             "contact_email",
             "contact_phone",
+            "cbcs_courses",
         )
         skip_unchanged = True
         report_skipped = True
+
+    def get_cbcs_summary(self, obj):
+        courses = obj.cbcs_courses.all()
+        return ", ".join([f"{c.course_code}: {c.course_title}" for c in courses])
 
 
 class ProgramResource(resources.ModelResource):
@@ -115,6 +125,28 @@ class ProgramResource(resources.ModelResource):
             "eligibility",
             "admission_process",
             "program_outcomes",
+        )
+        skip_unchanged = True
+        report_skipped = True
+
+
+class CBCSCourseResource(resources.ModelResource):
+    department = fields.Field(
+        column_name="department",
+        attribute="department",
+        widget=FuzzyForeignKeyWidget(Department, "name"),
+    )
+
+    class Meta:
+        model = CBCSCourse
+        import_id_fields = ("course_code", "department")
+        fields = (
+            "id",
+            "department",
+            "semester",
+            "course_code",
+            "course_title",
+            "credits",
         )
         skip_unchanged = True
         report_skipped = True
@@ -202,6 +234,14 @@ class CommitteeAdmin(admin.ModelAdmin):
 
     class Media:
         js = ("js/admin_dynamic_fields.js?v=5",)
+
+
+@admin.register(CBCSCourse)
+class CBCSCourseAdmin(ImportExportModelAdmin):
+    resource_classes = [CBCSCourseResource]
+    list_display = ("course_code", "course_title", "department", "semester", "credits")
+    list_filter = ("department", "semester")
+    search_fields = ("course_code", "course_title")
 
 
 @admin.register(Timetable)
