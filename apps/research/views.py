@@ -28,6 +28,7 @@ class ResearchAreaViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["department__slug", "department__id", "campus"]
     search_fields = ["available_research_areas_or_Specialization", "description"]
+    pagination_class = None
 
 
 class ResearchFacilityViewSet(viewsets.ReadOnlyModelViewSet):
@@ -35,6 +36,7 @@ class ResearchFacilityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ResearchFacilitySerializer
     lookup_field = "slug"
     search_fields = ["name", "description"]
+    pagination_class = None
 
 
 class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
@@ -129,3 +131,4 @@ class ResearchDevelopmentCellMemberViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ResearchDevelopmentCellMember.objects.select_related("faculty")
     serializer_class = ResearchDevelopmentCellMemberSerializer
     ordering = ["order", "faculty__name"]
+    pagination_class = None
