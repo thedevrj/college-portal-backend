@@ -35,14 +35,15 @@ class PatentResource(resources.ModelResource):
 
 @admin.register(ResearchArea)
 class ResearchAreaAdmin(admin.ModelAdmin):
-    list_display = ("available_research_areas_or_Specialization", "department")
-    list_filter = ("department",)
+    list_display = ("available_research_areas_or_Specialization", "department", "campus")
+    list_filter = ("campus", "department")
     search_fields = ("available_research_areas_or_Specialization", "department__name")
 
 
 @admin.register(ResearchFacility)
 class ResearchFacilityAdmin(admin.ModelAdmin):
-    list_display = ("name", "incharge")
+    list_display = ("name", "incharge", "campus")
+    list_filter = ("campus",)
     prepopulated_fields = {"slug": ("name",)}
     search_fields = ("name",)
     autocomplete_fields = ("incharge",)
@@ -57,8 +58,9 @@ class ResearchProjectAdmin(ImportExportModelAdmin):
         "funding_agency",
         "status",
         "amount_sanctioned",
+        "campus",
     )
-    list_filter = ("status", "funding_agency", "department")
+    list_filter = ("campus", "status", "funding_agency", "department")
     search_fields = ("title", "principal_investigator__name", "funding_agency")
     autocomplete_fields = ("principal_investigator", "co_investigators")
 
@@ -73,8 +75,9 @@ class ResearchScholarAdmin(ImportExportModelAdmin):
         "supervisor",
         "date_of_registration",
         "status",
+        "campus",
     )
-    list_filter = ("status", "date_of_registration", "department", "gender")
+    list_filter = ("campus", "status", "date_of_registration", "department", "gender")
     search_fields = (
         "scholar_name",
         "enrollment_no",
@@ -88,8 +91,8 @@ class ResearchScholarAdmin(ImportExportModelAdmin):
 @admin.register(Publication)
 class PublicationAdmin(ImportExportModelAdmin):
     resource_class = PublicationResource
-    list_display = ("title", "faculty", "publication_date", "publication_type")
-    list_filter = ("publication_type", "publication_date", "department")
+    list_display = ("title", "faculty", "publication_date", "publication_type", "campus")
+    list_filter = ("campus", "publication_type", "publication_date", "department")
     search_fields = (
         "title",
         "faculty__name",
@@ -101,8 +104,8 @@ class PublicationAdmin(ImportExportModelAdmin):
 @admin.register(Patent)
 class PatentAdmin(ImportExportModelAdmin):
     resource_class = PatentResource
-    list_display = ("title", "faculty", "date_of_filing", "status")
-    list_filter = ("status", "date_of_filing", "department")
+    list_display = ("title", "faculty", "date_of_filing", "status", "campus")
+    list_filter = ("campus", "status", "date_of_filing", "department")
     search_fields = ("title", "faculty__name", "patent_number")
     autocomplete_fields = ("faculty",)
 

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "ckeditor",
     "import_export",
+    "django_filters",
 
     "apps.academics",
     "apps.faculty",
