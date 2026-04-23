@@ -68,7 +68,7 @@ class SchoolDetailSerializer(BaseSchoolSerializer):
 
     def get_departments(self, obj):
         return [
-            {"id": dept.id, "name": dept.name, "slug": dept.slug}
+            {"id": dept.id, "name": dept.name, "slug": dept.slug, "campus": dept.campus}
             for dept in obj.departments.all()
         ]
 
@@ -96,6 +96,7 @@ class DepartmentListSerializer(BaseDepartmentSerializer):
             "id",
             "name",
             "slug",
+            "campus",
             "school",
             "school_name",
             "school_slug",
