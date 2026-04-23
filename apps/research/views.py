@@ -26,7 +26,7 @@ class ResearchAreaViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ResearchArea.objects.all()
     serializer_class = ResearchAreaSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["department__slug", "department__id"]
+    filterset_fields = ["department__slug", "department__id", "campus"]
     search_fields = ["available_research_areas_or_Specialization", "description"]
 
 
@@ -46,12 +46,14 @@ class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = [
-        "status",
-        "funding_agency",
-        "department__slug",
-        "principal_investigator__slug",
-    ]
+    filterset_fields = {
+        "status": ["exact"],
+        "funding_agency": ["exact"],
+        "department__slug": ["exact"],
+        "principal_investigator__slug": ["exact"],
+        "campus": ["exact"],
+        "start_date": ["year", "exact"],
+    }
     search_fields = ["title", "description", "funding_agency"]
     ordering_fields = ["amount_sanctioned", "start_date"]
 
@@ -62,21 +64,20 @@ class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ResearchScholarViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ResearchScholar.objects.select_related(
-        "supervisor", "department", "co_supervisor"
-    )
+    queryset = ResearchScholar.objects.select_related("supervisor", "department")
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = [
-        "status",
-        "date_of_registration",
-        "department__slug",
-        "supervisor__slug",
-        "gender",
-    ]
+    filterset_fields = {
+        "status": ["exact"],
+        "date_of_registration": ["year", "exact"],
+        "department__slug": ["exact"],
+        "supervisor__slug": ["exact"],
+        "gender": ["exact"],
+        "campus": ["exact"],
+    }
     search_fields = ["scholar_name", "enrollment_no", "research_topic", "state"]
     ordering_fields = ["date_of_registration", "scholar_name"]
 
@@ -94,12 +95,13 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = [
-        "publication_type",
-        "publication_date",
-        "faculty__slug",
-        "department__slug",
-    ]
+    filterset_fields = {
+        "publication_type": ["exact"],
+        "publication_date": ["year", "exact"],
+        "faculty__slug": ["exact"],
+        "department__slug": ["exact"],
+        "campus": ["exact"],
+    }
     search_fields = ["title", "name_of_journal_or_conference_or_publisher"]
     ordering_fields = ["publication_date"]
 
@@ -112,7 +114,13 @@ class PatentViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["status", "date_of_filing", "faculty__slug", "department__slug"]
+    filterset_fields = {
+        "status": ["exact"],
+        "date_of_filing": ["exact", "year"],
+        "faculty__slug": ["exact"],
+        "department__slug": ["exact"],
+        "campus": ["exact"],
+    }
     search_fields = ["title", "patent_number"]
     ordering_fields = ["date_of_filing"]
 

@@ -81,6 +81,8 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
+        if self.campus != "BBAU":
+            return f"{self.name} (Amethi)"
         return self.name
 
 

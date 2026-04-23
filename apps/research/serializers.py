@@ -22,6 +22,7 @@ class ResearchAreaSerializer(serializers.ModelSerializer):
             "description",
             "department",
             "department_name",
+            "campus",
         ]
 
 
@@ -53,6 +54,7 @@ class ResearchProjectListSerializer(serializers.ModelSerializer):
             "status",
             "department_name",
             "department_slug",
+            "campus",
         ]
 
     def get_co_investigators_names(self, obj):
@@ -75,6 +77,7 @@ class ResearchScholarListSerializer(serializers.ModelSerializer):
     co_supervisors_names = serializers.SerializerMethodField()
     department_name = serializers.CharField(source="department.name", read_only=True)
     department_slug = serializers.CharField(source="department.slug", read_only=True)
+    registration_year = serializers.SerializerMethodField()
 
     class Meta:
         model = ResearchScholar
@@ -86,13 +89,18 @@ class ResearchScholarListSerializer(serializers.ModelSerializer):
             "supervisor_name",
             "co_supervisors_names",
             "date_of_registration",
+            "registration_year",
             "status",
             "department_name",
             "department_slug",
+            "campus",
         ]
 
     def get_co_supervisors_names(self, obj):
         return [faculty.name for faculty in obj.co_supervisor.all()]
+
+    def get_registration_year(self, obj):
+        return obj.date_of_registration.year if obj.date_of_registration else None
 
 
 class ResearchScholarDetailSerializer(serializers.ModelSerializer):
