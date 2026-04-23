@@ -31,6 +31,7 @@ from .serializers import (
 class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = School.objects.all()
     lookup_field = "slug"
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -44,6 +45,7 @@ class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["school__slug", "campus"]
     search_fields = ["name"]
     lookup_field = "slug"
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -108,6 +110,7 @@ class CommitteeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CommitteeSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["department__slug"]
+    pagination_class = None
 
 
 class TimetableViewSet(viewsets.ReadOnlyModelViewSet):
