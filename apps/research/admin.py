@@ -62,7 +62,6 @@ class ConsultancyAdmin(admin.ModelAdmin):
     )
     search_fields = ("faculty__name", "nature_of_consultancy")
     autocomplete_fields = ("faculty",)
-    varbose_name = "Consultancies"
 
 
 @admin.register(ResearchFacility)

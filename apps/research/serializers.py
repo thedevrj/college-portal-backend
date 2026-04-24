@@ -92,20 +92,7 @@ class ResearchScholarListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResearchScholar
-        fields = [
-            "id",
-            "scholar_name",
-            "enrollment_no",
-            "subject",
-            "supervisor_name",
-            "co_supervisors_names",
-            "date_of_registration",
-            "registration_year",
-            "status",
-            "department_name",
-            "department_slug",
-            "campus",
-        ]
+        fields = "__all__"
 
     def get_co_supervisors_names(self, obj):
         return [faculty.name for faculty in obj.co_supervisor.all()]
@@ -114,14 +101,14 @@ class ResearchScholarListSerializer(serializers.ModelSerializer):
         return obj.date_of_registration.year if obj.date_of_registration else None
 
 
-class ResearchScholarDetailSerializer(serializers.ModelSerializer):
-    supervisor = FacultyListSerializer(read_only=True)
-    co_supervisor = FacultyListSerializer(many=True, read_only=True)
-    department_name = serializers.CharField(source="department.name", read_only=True)
+# class ResearchScholarDetailSerializer(serializers.ModelSerializer):
+#     supervisor = FacultyListSerializer(read_only=True)
+#     co_supervisor = FacultyListSerializer(many=True, read_only=True)
+#     department_name = serializers.CharField(source="department.name", read_only=True)
 
-    class Meta:
-        model = ResearchScholar
-        fields = "__all__"
+#     class Meta:
+#         model = ResearchScholar
+#         fields = "__all__"
 
 
 class PublicationSerializer(serializers.ModelSerializer):
