@@ -7,6 +7,7 @@ from .models import (
     Publication,
     Patent,
     ResearchDevelopmentCellMember,
+    Consultancy,
 )
 from apps.faculty.serializers import FacultyListSerializer
 
@@ -24,6 +25,16 @@ class ResearchAreaSerializer(serializers.ModelSerializer):
             "department_name",
             "campus",
         ]
+
+
+class ConsultancySerializer(serializers.ModelSerializer):
+    faculty_name = serializers.CharField(source="faculty.name", read_only=True)
+    department_name = serializers.CharField(source="department.name", read_only=True)
+    department_slug = serializers.CharField(source="department.slug", read_only=True)
+
+    class Meta:
+        model = Consultancy
+        fields = "__all__"
 
 
 class ResearchFacilitySerializer(serializers.ModelSerializer):

@@ -226,6 +226,48 @@ class Publication(models.Model):
         return f"{self.title[:50]}... ({self.publication_date})"
 
 
+class Consultancy(models.Model):
+    faculty = models.ForeignKey(
+        "faculty.Faculty",
+        related_name="consultancies",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+    department = models.ForeignKey(
+        "academics.Department",
+        related_name="consultancies",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+    nature_of_consultancy = models.CharField(max_length=100, null=True, blank=True)
+    name_of_awarding_agency_organization = models.CharField(
+        max_length=100, null=True, blank=True
+    )
+    amount_sanctioned = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    campus = models.CharField(
+        max_length=50,
+        choices=[
+            ("BBAU", "BBAU"),
+            ("Satellite Campus Amethi", "Satellite Campus Amethi"),
+        ],
+        default="BBAU",
+    )
+
+    class Meta:
+        verbose_name_plural = "Consultancies"
+
+    def __str__(self):
+        faculty_name = self.faculty.name if self.faculty else "No Faculty"
+        consultancy = self.nature_of_consultancy or "No Consultancy"
+        return f"{consultancy} ({faculty_name})"
+
+
 class Patent(models.Model):
     STATUS_CHOICES = [
         ("Filed", "Filed"),

@@ -158,12 +158,14 @@ class Course(models.Model):
     program = models.ForeignKey(
         Program, related_name="courses", on_delete=models.CASCADE, null=True, blank=True
     )
-    semester = models.PositiveIntegerField(help_text="e.g., 1, 2, 3...")
+    semester = models.PositiveIntegerField(
+        help_text="e.g., 1, 2, 3...", null=True, blank=True
+    )
     course_code = models.CharField(max_length=50)
     course_title = models.CharField(max_length=255)
     credits = models.PositiveIntegerField()
     course_type = models.CharField(
-        max_length=50, choices=COURSE_TYPE_CHOICES, default="Core"
+        max_length=50, choices=COURSE_TYPE_CHOICES, null=True, blank=True
     )
     other_course_type = models.CharField(
         max_length=100,
