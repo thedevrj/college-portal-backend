@@ -8,6 +8,7 @@ from apps.faculty.models import Faculty
 class CentreViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Centre.objects.select_related("school").prefetch_related("faculty")
+    pagination_class = None
 
     def get_serializer_class(self):
         return CentreDetailSerializer
