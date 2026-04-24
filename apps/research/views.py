@@ -8,6 +8,7 @@ from .models import (
     Publication,
     Patent,
     ResearchDevelopmentCellMember,
+    Consultancy,
 )
 from .serializers import (
     ResearchAreaSerializer,
@@ -19,6 +20,7 @@ from .serializers import (
     PublicationSerializer,
     PatentSerializer,
     ResearchDevelopmentCellMemberSerializer,
+    ConsultancySerializer,
 )
 
 
@@ -36,6 +38,28 @@ class ResearchFacilityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ResearchFacilitySerializer
     lookup_field = "slug"
     search_fields = ["name", "description"]
+    pagination_class = None
+
+
+class ConsultancyViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Consultancy.objects.select_related("faculty", "department")
+    serializer_class = ConsultancySerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = {
+        "status": ["exact"],
+        "nature_of_consultancy": ["exact"],
+        "department__slug": ["exact"],
+        "faculty__slug": ["exact"],
+        "campus": ["exact"],
+        "start_date": ["year", "exact"],
+        "end_date": ["year", "exact"],
+    }
+    search_fields = ["nature_of_consultancy"]
+    ordering_fields = ["amount_sanctioned", "start_date", "end_date"]
     pagination_class = None
 
 

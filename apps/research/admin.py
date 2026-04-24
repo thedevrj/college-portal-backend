@@ -9,6 +9,7 @@ from .models import (
     Publication,
     Patent,
     ResearchDevelopmentCellMember,
+    Consultancy,
 )
 
 
@@ -33,11 +34,35 @@ class PatentResource(resources.ModelResource):
         model = Patent
 
 
+class ConsultancyResource(resources.ModelResource):
+    class Meta:
+        model = Consultancy
+
+
 @admin.register(ResearchArea)
 class ResearchAreaAdmin(admin.ModelAdmin):
-    list_display = ("available_research_areas_or_Specialization", "department", "campus")
+    list_display = (
+        "available_research_areas_or_Specialization",
+        "department",
+        "campus",
+    )
     list_filter = ("campus", "department")
     search_fields = ("available_research_areas_or_Specialization", "department__name")
+
+
+@admin.register(Consultancy)
+class ConsultancyAdmin(admin.ModelAdmin):
+    list_display = ("faculty", "nature_of_consultancy", "campus")
+    list_filter = (
+        "campus",
+        "nature_of_consultancy",
+        "faculty",
+        "start_date",
+        "end_date",
+    )
+    search_fields = ("faculty__name", "nature_of_consultancy")
+    autocomplete_fields = ("faculty",)
+    varbose_name = "Consultancies"
 
 
 @admin.register(ResearchFacility)
@@ -91,7 +116,13 @@ class ResearchScholarAdmin(ImportExportModelAdmin):
 @admin.register(Publication)
 class PublicationAdmin(ImportExportModelAdmin):
     resource_class = PublicationResource
-    list_display = ("title", "faculty", "publication_date", "publication_type", "campus")
+    list_display = (
+        "title",
+        "faculty",
+        "publication_date",
+        "publication_type",
+        "campus",
+    )
     list_filter = ("campus", "publication_type", "publication_date", "department")
     search_fields = (
         "title",
