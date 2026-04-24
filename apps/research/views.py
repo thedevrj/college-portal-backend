@@ -50,7 +50,6 @@ class ConsultancyViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     filterset_fields = {
-        "status": ["exact"],
         "nature_of_consultancy": ["exact"],
         "department__slug": ["exact"],
         "faculty__slug": ["exact"],
