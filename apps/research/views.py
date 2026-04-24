@@ -16,7 +16,6 @@ from .serializers import (
     ResearchProjectListSerializer,
     ResearchProjectDetailSerializer,
     ResearchScholarListSerializer,
-    ResearchScholarDetailSerializer,
     PublicationSerializer,
     PatentSerializer,
     ResearchDevelopmentCellMemberSerializer,
@@ -107,9 +106,7 @@ class ResearchScholarViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["date_of_registration", "scholar_name"]
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return ResearchScholarListSerializer
-        return ResearchScholarDetailSerializer
+        return ResearchScholarListSerializer
 
 
 class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
