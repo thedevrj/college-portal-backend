@@ -1,6 +1,8 @@
 from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+from apps.accounts.mixins import PortalSecurityMixin
+from apps.accounts.filters import SoftDeleteListFilter
 from .models import (
     ResearchArea,
     ResearchFacility,
@@ -12,133 +14,90 @@ from .models import (
     Consultancy,
 )
 
-
 # Resources for Import/Export
 class ResearchProjectResource(resources.ModelResource):
     class Meta:
         model = ResearchProject
 
-
 class ResearchScholarResource(resources.ModelResource):
     class Meta:
         model = ResearchScholar
-
 
 class PublicationResource(resources.ModelResource):
     class Meta:
         model = Publication
 
-
 class PatentResource(resources.ModelResource):
     class Meta:
         model = Patent
-
 
 class ConsultancyResource(resources.ModelResource):
     class Meta:
         model = Consultancy
 
-
 @admin.register(ResearchArea)
-class ResearchAreaAdmin(admin.ModelAdmin):
-    list_display = (
-        "available_research_areas_or_Specialization",
-        "department",
-        "campus",
-    )
-    list_filter = ("campus", "department")
+class ResearchAreaAdmin(PortalSecurityMixin, admin.ModelAdmin):
+    list_display = ("available_research_areas_or_Specialization", "department", "campus")
+    list_display_links = ("available_research_areas_or_Specialization", "department")
+    list_filter = (SoftDeleteListFilter, "campus", "department")
     search_fields = ("available_research_areas_or_Specialization", "department__name")
 
-
 @admin.register(Consultancy)
-class ConsultancyAdmin(admin.ModelAdmin):
+class ConsultancyAdmin(PortalSecurityMixin, admin.ModelAdmin):
     list_display = ("faculty", "nature_of_consultancy", "campus")
-    list_filter = (
-        "campus",
-        "nature_of_consultancy",
-        "faculty",
-        "start_date",
-        "end_date",
-    )
+    list_display_links = ("faculty", "nature_of_consultancy")
+    list_filter = (SoftDeleteListFilter, "campus", "faculty", "start_date", "end_date")
     search_fields = ("faculty__name", "nature_of_consultancy")
     autocomplete_fields = ("faculty",)
 
-
 @admin.register(ResearchFacility)
-class ResearchFacilityAdmin(admin.ModelAdmin):
+class ResearchFacilityAdmin(PortalSecurityMixin, admin.ModelAdmin):
     list_display = ("name", "incharge", "campus")
-    list_filter = ("campus",)
+    list_filter = (SoftDeleteListFilter, "campus")
     prepopulated_fields = {"slug": ("name",)}
     search_fields = ("name",)
     autocomplete_fields = ("incharge",)
 
+    def has_module_permission(self, request):
+        if request.user.is_superuser: return True
+        try: return request.user.portal_profile.is_rd_admin()
+        except: return False
 
 @admin.register(ResearchProject)
-class ResearchProjectAdmin(ImportExportModelAdmin):
+class ResearchProjectAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     resource_class = ResearchProjectResource
-    list_display = (
-        "title",
-        "principal_investigator",
-        "funding_agency",
-        "status",
-        "amount_sanctioned",
-        "campus",
-    )
-    list_filter = ("campus", "status", "funding_agency", "department")
+    list_display = ("title", "principal_investigator", "funding_agency", "status", "campus")
+    list_display_links = ("title", "principal_investigator")
+    list_filter = (SoftDeleteListFilter, "campus", "status", "funding_agency", "department")
     search_fields = ("title", "principal_investigator__name", "funding_agency")
     autocomplete_fields = ("principal_investigator", "co_investigators")
 
-
 @admin.register(ResearchScholar)
-class ResearchScholarAdmin(ImportExportModelAdmin):
+class ResearchScholarAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     resource_class = ResearchScholarResource
-    list_display = (
-        "scholar_name",
-        "enrollment_no",
-        "subject",
-        "supervisor",
-        "date_of_registration",
-        "status",
-        "campus",
-    )
-    list_filter = ("campus", "status", "date_of_registration", "department", "gender")
-    search_fields = (
-        "scholar_name",
-        "enrollment_no",
-        "subject",
-        "supervisor__name",
-        "state",
-    )
+    list_display = ("scholar_name", "enrollment_no", "subject", "supervisor", "status", "campus")
+    list_display_links = ("scholar_name", "enrollment_no")
+    list_filter = (SoftDeleteListFilter, "campus", "status", "department", "gender")
+    search_fields = ("scholar_name", "enrollment_no", "subject", "supervisor__name")
     autocomplete_fields = ("supervisor", "co_supervisor")
 
-
 @admin.register(Publication)
-class PublicationAdmin(ImportExportModelAdmin):
+class PublicationAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     resource_class = PublicationResource
-    list_display = (
-        "title",
-        "faculty",
-        "publication_date",
-        "publication_type",
-        "campus",
-    )
-    list_filter = ("campus", "publication_type", "publication_date", "department")
-    search_fields = (
-        "title",
-        "faculty__name",
-        "name_of_journal_or_conference_or_publisher",
-    )
+    list_display = ("title", "faculty", "publication_date", "campus")
+    list_display_links = ("title", "faculty")
+    list_filter = (SoftDeleteListFilter, "campus", "publication_type", "publication_date", "department")
+    search_fields = ("title", "faculty__name", "name_of_journal_or_conference_or_publisher")
     autocomplete_fields = ("faculty",)
-
 
 @admin.register(Patent)
-class PatentAdmin(ImportExportModelAdmin):
+class PatentAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     resource_class = PatentResource
     list_display = ("title", "faculty", "date_of_filing", "status", "campus")
-    list_filter = ("campus", "status", "date_of_filing", "department")
+    list_display_links = ("title", "faculty")
+    list_filter = (SoftDeleteListFilter, "campus", "status", "date_of_filing", "department")
     search_fields = ("title", "faculty__name", "patent_number")
     autocomplete_fields = ("faculty",)
-
 
 @admin.register(ResearchDevelopmentCellMember)
 class ResearchDevelopmentCellMemberAdmin(admin.ModelAdmin):
@@ -146,3 +105,7 @@ class ResearchDevelopmentCellMemberAdmin(admin.ModelAdmin):
     list_editable = ("order",)
     ordering = ("order",)
     autocomplete_fields = ("faculty",)
+    def has_module_permission(self, request):
+        if request.user.is_superuser: return True
+        try: return request.user.portal_profile.is_rd_admin()
+        except: return False

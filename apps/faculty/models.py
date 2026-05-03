@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
+from simple_history.models import HistoricalRecords
 
 
 class Faculty(models.Model):
@@ -9,8 +10,19 @@ class Faculty(models.Model):
         ("BBAU", "BBAU"),
         ("Satellite Campus Amethi", "Satellite Campus Amethi"),
     ]
+    
+    user = models.OneToOneField(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="faculty_profile",
+        help_text="Link this faculty record to a user account for login access."
+    )
 
-    staff_no = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    staff_no = models.PositiveIntegerField(
+        unique=True,
+    )
     photo = models.ImageField(upload_to="faculty/", null=True, blank=True)
     photo_alt_text = models.CharField(
         max_length=255, blank=True, help_text="GIGW accessibility text for the image"
@@ -20,31 +32,6 @@ class Faculty(models.Model):
     designation = models.CharField(max_length=255)
     dob = models.DateField(null=True, blank=True)
     campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES)
-    bio = RichTextField(blank=True, null=True)
-
-    qualification = RichTextField(blank=True, null=True)
-    teaching_exp = models.CharField(
-        max_length=100, blank=True, null=True, help_text="e.g., 10 Years 6 Months"
-    )
-    research_exp = models.CharField(
-        max_length=100, blank=True, null=True, help_text="e.g., 5 Years"
-    )
-    research_int = RichTextField(blank=True, null=True)
-
-    google_scholar_url = models.URLField(blank=True, null=True)
-    scopus_url = models.URLField(blank=True, null=True)
-    research_gate_url = models.URLField(blank=True, null=True)
-    linkedin_url = models.URLField(blank=True, null=True)
-    website_url = models.URLField(blank=True, null=True, help_text="Personal or lab website")
-
-    cv_document = models.FileField(
-        upload_to="faculty_cvs/",
-        null=True,
-        blank=True,
-        help_text="Upload CV/Resume in PDF format",
-    )
-
-    roles = models.JSONField(default=list, blank=True)
 
     school = models.ForeignKey(
         "academics.School",
@@ -69,6 +56,34 @@ class Faculty(models.Model):
         related_name="faculty",
     )
 
+    bio = RichTextField(blank=True, null=True)
+
+    qualification = RichTextField(blank=True, null=True)
+    teaching_exp = models.CharField(
+        max_length=100, blank=True, null=True, help_text="e.g., 10 Years 6 Months"
+    )
+    research_exp = models.CharField(
+        max_length=100, blank=True, null=True, help_text="e.g., 5 Years"
+    )
+    research_int = RichTextField(blank=True, null=True)
+
+    google_scholar_url = models.URLField(blank=True, null=True)
+    scopus_url = models.URLField(blank=True, null=True)
+    research_gate_url = models.URLField(blank=True, null=True)
+    linkedin_url = models.URLField(blank=True, null=True)
+    website_url = models.URLField(
+        blank=True, null=True, help_text="Personal or lab website"
+    )
+
+    cv_document = models.FileField(
+        upload_to="faculty_cvs/",
+        null=True,
+        blank=True,
+        help_text="Upload CV/Resume in PDF format",
+    )
+
+    roles = models.JSONField(default=list, blank=True)
+
     insti_email = models.EmailField(null=True, blank=True)
     other_email = models.EmailField(null=True, blank=True)
     phone1 = models.CharField(max_length=10, null=True, blank=True)
@@ -82,6 +97,7 @@ class Faculty(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["name"]

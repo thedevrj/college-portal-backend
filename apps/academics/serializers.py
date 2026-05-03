@@ -1,6 +1,9 @@
+from dataclasses import field
 from rest_framework import serializers
 from .models import (
     School,
+    SchoolBoardCommittee,
+    SchoolBoardMOM,
     Department,
     Program,
     Course,
@@ -9,6 +12,7 @@ from .models import (
     Notice,
     Committee,
     CommitteeMember,
+    MinutesOfTheMeeting,
     Timetable,
     StudyMaterial,
 )
@@ -73,10 +77,29 @@ class SchoolDetailSerializer(BaseSchoolSerializer):
         ]
 
 
+class SchoolBoardCommitteeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SchoolBoardCommittee
+        fields = "__all__"
+
+
+class SchoolBoardMOMSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SchoolBoardMOM
+        fields = "__all__"
+
+
 class DepartmentGallerySerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = DepartmentGallery
         fields = "__all__"
+
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
 
 class BaseDepartmentSerializer(serializers.ModelSerializer):
@@ -167,6 +190,7 @@ class ProgramListSerializer(BaseProgramSerializer):
             "school_name",
             "fees",
             "courses",
+            "notification_or_document_file",
             "syllabus",
         ]
 
@@ -191,7 +215,7 @@ class NoticeDetailSerializer(serializers.ModelSerializer):
 
 
 class CommitteeMemberSerializer(serializers.ModelSerializer):
-    faculty_name = serializers.CharField(source="faculty.name", read_only=True)
+    # faculty_name = serializers.CharField(source="faculty.name", read_only=True)
 
     class Meta:
         model = CommitteeMember
@@ -203,6 +227,12 @@ class CommitteeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Committee
+        fields = "__all__"
+
+
+class MinutesSerialization(serializers.ModelSerializer):
+    class Meta:
+        model = MinutesOfTheMeeting
         fields = "__all__"
 
 

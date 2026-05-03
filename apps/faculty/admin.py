@@ -2,6 +2,7 @@ from django.contrib import admin
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin
+from apps.accounts.mixins import PortalSecurityMixin
 from .models import Faculty
 from apps.academics.models import School, Department
 from apps.centres.models import Centre
@@ -351,8 +352,11 @@ class FacultyResource(resources.ModelResource):
             row["roles"] = []
 
 
+from simple_history.admin import SimpleHistoryAdmin
+
+
 @admin.register(Faculty)
-class FacultyAdmin(ImportExportModelAdmin):
+class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_classes = [FacultyResource]
     list_display = (
         "name",
@@ -365,3 +369,89 @@ class FacultyAdmin(ImportExportModelAdmin):
     list_filter = ("is_active", "campus", "department", "school", "designation")
     search_fields = ("name", "staff_no", "insti_email")
     prepopulated_fields = {"slug": ("name",)}
+    actions = ["generate_portal_accounts"]
+
+    @admin.action(description="Generate Portal Login Accounts for Selected Faculty")
+    def generate_portal_accounts(self, request, queryset):
+        from django.contrib.auth.models import User
+        from apps.accounts.models import UserProfile, PortalAccess, PortalRole
+
+        created_count = 0
+        skipped_count = 0
+
+        for faculty in queryset:
+            # Skip if they already have an account
+            if faculty.user is not None:
+                skipped_count += 1
+                continue
+
+            # Use staff_no for unique username (or fallback to id if staff_no is weirdly missing)
+            username = (
+                f"fac_{faculty.staff_no}" if faculty.staff_no else f"fac_{faculty.id}"
+            )
+
+            # Create the User account
+            user, user_created = User.objects.get_or_create(username=username)
+            if user_created:
+                # Set default password
+                user.set_password("Bbau@2026")
+                if faculty.insti_email:
+                    user.email = faculty.insti_email
+                user.save()
+
+            # Link the User to the Faculty model
+            faculty.user = user
+            faculty.save()
+
+            # Setup the Portal Profile
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.is_portal_user = True
+            profile.force_password_change = True
+            if faculty.staff_no:
+                profile.employee_id = str(faculty.staff_no)
+            profile.save()
+
+            # Setup the RBAC Portal Access for Faculty role
+            PortalAccess.objects.get_or_create(
+                user=user, role=PortalRole.FACULTY, defaults={"is_active": True}
+            )
+
+            # Trigger permission sync
+            profile.sync_permissions()
+            created_count += 1
+
+        self.message_user(
+            request,
+            f"Successfully created {created_count} new login accounts. {skipped_count} faculty already had accounts.",
+            level="SUCCESS" if created_count > 0 else "WARNING",
+        )
+
+    def has_module_permission(self, request):
+        if request.user.is_superuser:
+            return True
+        try:
+            profile = request.user.portal_profile
+            active_roles = request.user.access_entries.filter(
+                is_active=True
+            ).values_list("role", flat=True)
+            # If they are ONLY an RD_ADMIN, hide the module entirely from the sidebar
+            if profile.is_rd_admin() and len(active_roles) == 1:
+                return False
+        except Exception:
+            pass
+        return super().has_module_permission(request)
+
+    def has_add_permission(self, request):
+        if request.user.is_superuser:
+            return True
+        try:
+            profile = request.user.portal_profile
+            active_roles = request.user.access_entries.filter(
+                is_active=True
+            ).values_list("role", flat=True)
+            # RD_ADMIN should never be able to add a faculty profile
+            if profile.is_rd_admin() and len(active_roles) == 1:
+                return False
+        except Exception:
+            pass
+        return super().has_add_permission(request)

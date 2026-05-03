@@ -1,19 +1,25 @@
+from django_filters.filters import QuerySetRequestMixin
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     School,
+    SchoolBoardCommittee,
+    SchoolBoardMOM,
     Department,
     Program,
     Course,
     CBCSCourse,
     Notice,
     Committee,
+    MinutesOfTheMeeting,
     Timetable,
     StudyMaterial,
 )
 from .serializers import (
     SchoolListSerializer,
     SchoolDetailSerializer,
+    SchoolBoardCommitteeSerializer,
+    SchoolBoardMOMSerializer,
     DepartmentListSerializer,
     DepartmentDetailSerializer,
     ProgramListSerializer,
@@ -23,6 +29,7 @@ from .serializers import (
     NoticeListSerializer,
     NoticeDetailSerializer,
     CommitteeSerializer,
+    MinutesSerialization,
     TimetableSerializer,
     StudyMaterialSerializer,
 )
@@ -37,6 +44,21 @@ class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == "list":
             return SchoolListSerializer
         return SchoolDetailSerializer
+
+
+class SchoolBoardCommitteeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SchoolBoardCommittee.objects.all()
+    serializer_class = SchoolBoardCommitteeSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["school__slug"]
+    pagination_class = None
+
+
+class SchoolBoardMOMViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SchoolBoardMOM.objects.all()
+    serializer_class = SchoolBoardMOMSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["school__slug"]
 
 
 class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
@@ -111,6 +133,13 @@ class CommitteeViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["department__slug"]
     pagination_class = None
+
+
+class MinutesViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MinutesOfTheMeeting.objects.all()
+    serializer_class = MinutesSerialization
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["department__slug"]
 
 
 class TimetableViewSet(viewsets.ReadOnlyModelViewSet):

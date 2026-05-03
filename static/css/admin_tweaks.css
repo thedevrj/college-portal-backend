@@ -1,0 +1,43 @@
+/* Custom Styles for Locked/Disabled Fields in the Portal Admin */
+
+input:disabled,
+select:disabled,
+textarea:disabled,
+.select2-container--disabled {
+    background-color: #f0f0f0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+    border: 1px solid #ddd !important;
+    color: #666 !important;
+}
+
+/* Ensure the cursor change is obvious on hover */
+input:disabled:hover,
+select:disabled:hover,
+textarea:disabled:hover {
+    cursor: not-allowed !important;
+}
+
+/* Style for Django Admin's "readonly" fields to match */
+.readonly {
+    background-color: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px dashed #ccc;
+    cursor: not-allowed;
+}
+
+/* Fix for Select2 (Autocomplete) invisible text on hover */
+.select2-results__option--highlighted[aria-selected],
+.select2-results__option--highlighted[data-selected] {
+    background-color: #417690 !important;
+    /* Django Admin Blue */
+    color: #ffffff !important;
+    /* Force White Text */
+}
+
+/* Ensure standard select2 options are readable */
+.select2-results__option {
+    color: #333333 !important;
+    background-color: #ffffff !important;
+}

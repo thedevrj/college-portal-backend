@@ -1,0 +1,16 @@
+/* Modern Academic - Light Blue Style Copy */
+:root {
+  --bg-light: #f1f5f9;
+  --card-bg: #ffffff;
+  --accent-blue: #2563eb;
+  --accent-hover: #1d4ed8;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --error: #ef4444;
+  --success: #22c55e;
+  --input-bg: #f8fafc;
+  --radius: 14px;
+}
+.brand-panel { background: #f8fafc; }
+.login-wrapper { box-shadow: 0 40px 100px rgba(15, 23, 42, 0.08); }
