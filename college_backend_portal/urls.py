@@ -15,13 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
+from django.views.generic import RedirectView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Redirect admin logout to portal logout (Fixes Django 5.0 GET logout issue)
+    path("admin/logout/", RedirectView.as_view(pattern_name="portal_logout", permanent=False)),
+    path("admin/", admin.site.urls),
     # path("api/v1/", include("apps.core.urls")),
     path("api/v1/", include("apps.academics.urls")),
     path("api/v1/", include("apps.faculty.urls")),
@@ -29,7 +36,12 @@ urlpatterns = [
     path("api/v1/", include("apps.notices.urls")),
     path("api/v1/", include("apps.research.urls")),
     path("api/v1/", include("apps.staff.urls")),
+    # Authentication (JWT for public API)
+    path("api/v1/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
+    # ERP Portal Login
+    path("portal/", include("apps.accounts.urls")),
 ]
 
 if settings.DEBUG:

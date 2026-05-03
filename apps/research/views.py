@@ -1,5 +1,7 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, permissions
+from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from apps.academics.permissions import IsDepartmentAdmin
 from .models import (
     ResearchArea,
     ResearchFacility,
@@ -8,7 +10,7 @@ from .models import (
     Publication,
     Patent,
     ResearchDevelopmentCellMember,
-    Consultancy,
+    Consultancy
 )
 from .serializers import (
     ResearchAreaSerializer,
@@ -23,7 +25,22 @@ from .serializers import (
 )
 
 
-class ResearchAreaViewSet(viewsets.ReadOnlyModelViewSet):
+class ResearchBaseViewSet(viewsets.ModelViewSet):
+    """
+    Base ViewSet to handle common logic for research models.
+    - Public (anonymous) users only see PUBLISHED records.
+    - Authenticated users see all records (for management).
+    """
+    permission_classes = [IsDepartmentAdmin]
+
+    def perform_create(self, serializer):
+        if hasattr(self.request.user, "managed_department"):
+            serializer.save(department=self.request.user.managed_department)
+        else:
+            serializer.save()
+
+
+class ResearchAreaViewSet(ResearchBaseViewSet):
     queryset = ResearchArea.objects.all()
     serializer_class = ResearchAreaSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -32,7 +49,7 @@ class ResearchAreaViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class ResearchFacilityViewSet(viewsets.ReadOnlyModelViewSet):
+class ResearchFacilityViewSet(ResearchBaseViewSet):
     queryset = ResearchFacility.objects.all()
     serializer_class = ResearchFacilitySerializer
     lookup_field = "slug"
@@ -40,7 +57,7 @@ class ResearchFacilityViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class ConsultancyViewSet(viewsets.ReadOnlyModelViewSet):
+class ConsultancyViewSet(ResearchBaseViewSet):
     queryset = Consultancy.objects.select_related("faculty", "department")
     serializer_class = ConsultancySerializer
     filter_backends = [
@@ -52,16 +69,30 @@ class ConsultancyViewSet(viewsets.ReadOnlyModelViewSet):
         "nature_of_consultancy": ["exact"],
         "department__slug": ["exact"],
         "faculty__slug": ["exact"],
+        "faculty__name": ["icontains"],
         "campus": ["exact"],
-        "start_date": ["year", "exact"],
-        "end_date": ["year", "exact"],
+        "start_date": ["year", "exact", "gte", "lte"],
+        "end_date": ["year", "exact", "gte", "lte"],
     }
     search_fields = ["nature_of_consultancy"]
-    ordering_fields = ["amount_sanctioned", "start_date", "end_date"]
+    ordering_fields = ["amount", "start_date", "end_date"]
     pagination_class = None
 
 
-class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
+class ResearchProjectFilter(django_filters.FilterSet):
+    project_date = django_filters.DateFromToRangeFilter(field_name="start_date")
+    department_slug = django_filters.CharFilter(field_name="department__slug")
+    pi_slug = django_filters.CharFilter(field_name="principal_investigator__slug")
+    pi_name = django_filters.CharFilter(
+        field_name="principal_investigator__name", lookup_expr="icontains"
+    )
+
+    class Meta:
+        model = ResearchProject
+        fields = ["status", "funding_agency", "campus"]
+
+
+class ResearchProjectViewSet(ResearchBaseViewSet):
     queryset = ResearchProject.objects.select_related(
         "principal_investigator", "department"
     ).prefetch_related("co_investigators")
@@ -70,14 +101,7 @@ class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = {
-        "status": ["exact"],
-        "funding_agency": ["exact"],
-        "department__slug": ["exact"],
-        "principal_investigator__slug": ["exact"],
-        "campus": ["exact"],
-        "start_date": ["year", "exact"],
-    }
+    filterset_class = ResearchProjectFilter
     search_fields = ["title", "description", "funding_agency"]
     ordering_fields = ["amount_sanctioned", "start_date"]
 
@@ -87,21 +111,30 @@ class ResearchProjectViewSet(viewsets.ReadOnlyModelViewSet):
         return ResearchProjectDetailSerializer
 
 
-class ResearchScholarViewSet(viewsets.ReadOnlyModelViewSet):
+
+
+
+class ResearchScholarFilter(django_filters.FilterSet):
+    registration_date = django_filters.DateFromToRangeFilter(field_name="date_of_registration")
+    department_slug = django_filters.CharFilter(field_name="department__slug")
+    supervisor_slug = django_filters.CharFilter(field_name="supervisor__slug")
+    supervisor_name = django_filters.CharFilter(
+        field_name="supervisor__name", lookup_expr="icontains"
+    )
+
+    class Meta:
+        model = ResearchScholar
+        fields = ["status", "gender", "campus"]
+
+
+class ResearchScholarViewSet(ResearchBaseViewSet):
     queryset = ResearchScholar.objects.select_related("supervisor", "department")
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = {
-        "status": ["exact"],
-        "date_of_registration": ["year", "exact"],
-        "department__slug": ["exact"],
-        "supervisor__slug": ["exact"],
-        "gender": ["exact"],
-        "campus": ["exact"],
-    }
+    filterset_class = ResearchScholarFilter
     search_fields = ["scholar_name", "enrollment_no", "research_topic", "state"]
     ordering_fields = ["date_of_registration", "scholar_name"]
 
@@ -109,7 +142,22 @@ class ResearchScholarViewSet(viewsets.ReadOnlyModelViewSet):
         return ResearchScholarListSerializer
 
 
-class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
+class PublicationFilter(django_filters.FilterSet):
+    publication_date_range = django_filters.DateFromToRangeFilter(
+        field_name="publication_date"
+    )
+    faculty_slug = django_filters.CharFilter(field_name="faculty__slug")
+    faculty_name = django_filters.CharFilter(
+        field_name="faculty__name", lookup_expr="icontains"
+    )
+    department_slug = django_filters.CharFilter(field_name="department__slug")
+
+    class Meta:
+        model = Publication
+        fields = ["publication_type", "campus"]
+
+
+class PublicationViewSet(ResearchBaseViewSet):
     queryset = Publication.objects.select_related("faculty", "department")
     serializer_class = PublicationSerializer
     filter_backends = [
@@ -117,18 +165,25 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = {
-        "publication_type": ["exact"],
-        "publication_date": ["year", "exact"],
-        "faculty__slug": ["exact"],
-        "department__slug": ["exact"],
-        "campus": ["exact"],
-    }
+    filterset_class = PublicationFilter
     search_fields = ["title", "name_of_journal_or_conference_or_publisher"]
     ordering_fields = ["publication_date"]
 
 
-class PatentViewSet(viewsets.ReadOnlyModelViewSet):
+class PatentFilter(django_filters.FilterSet):
+    filing_date = django_filters.DateFromToRangeFilter(field_name="date_of_filing")
+    faculty_slug = django_filters.CharFilter(field_name="faculty__slug")
+    faculty_name = django_filters.CharFilter(
+        field_name="faculty__name", lookup_expr="icontains"
+    )
+    department_slug = django_filters.CharFilter(field_name="department__slug")
+
+    class Meta:
+        model = Patent
+        fields = ["status", "campus"]
+
+
+class PatentViewSet(ResearchBaseViewSet):
     queryset = Patent.objects.select_related("faculty", "department")
     serializer_class = PatentSerializer
     filter_backends = [
@@ -136,19 +191,14 @@ class PatentViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = {
-        "status": ["exact"],
-        "date_of_filing": ["exact", "year"],
-        "faculty__slug": ["exact"],
-        "department__slug": ["exact"],
-        "campus": ["exact"],
-    }
+    filterset_class = PatentFilter
     search_fields = ["title", "patent_number"]
     ordering_fields = ["date_of_filing"]
 
 
-class ResearchDevelopmentCellMemberViewSet(viewsets.ReadOnlyModelViewSet):
+class ResearchDevelopmentCellMemberViewSet(viewsets.ModelViewSet):
     queryset = ResearchDevelopmentCellMember.objects.select_related("faculty")
     serializer_class = ResearchDevelopmentCellMemberSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     ordering = ["order", "faculty__name"]
     pagination_class = None

@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -23,47 +24,57 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dyrzlo#c7jt^pps1usz3rbr_e4bbju41l+22zrc$01&46-oxr(')
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "django-insecure-dyrzlo#c7jt^pps1usz3rbr_e4bbju41l+22zrc$01&46-oxr("
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "jazzmin",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
     "ckeditor",
     "import_export",
     "django_filters",
-
+    "apps.accounts",
     "apps.academics",
     "apps.faculty",
     "apps.centres",
     "apps.notices",
-    "apps.research",
     "apps.staff",
+    "apps.research",
+    "simple_history",
 ]
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+# Portal Login URL (used by @login_required)
+LOGIN_URL = "/portal/login/"
+LOGIN_REDIRECT_URL = "/admin/"
+LOGOUT_REDIRECT_URL = "/portal/login/"
 
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "apps.accounts.middleware.ForcePasswordChangeMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -73,25 +84,26 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-ROOT_URLCONF = 'college_backend_portal.urls'
+ROOT_URLCONF = "college_backend_portal.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "apps.accounts.context_processors.dashboard_stats",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'college_backend_portal.wsgi.application'
+WSGI_APPLICATION = "college_backend_portal.wsgi.application"
 
 
 # Database
@@ -114,19 +126,22 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
@@ -136,6 +151,16 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_PAGINATION_CLASS": "college_backend_portal.pagination.FlexiblePagination",
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
 # REST_FRAMEWORK = {
@@ -151,9 +176,9 @@ REST_FRAMEWORK = {
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'Asia/Kolkata'
+TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
 
@@ -163,30 +188,151 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Media files (User uploaded files)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': 'Custom',
-        'toolbar_Custom': [
-            ['Bold', 'Italic', 'Underline'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
-            ['Link', 'Unlink'],
-            ['RemoveFormat', 'Source']
-        ]
+    "default": {
+        "toolbar": "Custom",
+        "toolbar_Custom": [
+            ["Bold", "Italic", "Underline"],
+            [
+                "NumberedList",
+                "BulletedList",
+                "-",
+                "Outdent",
+                "Indent",
+                "-",
+                "JustifyLeft",
+                "JustifyCenter",
+                "JustifyRight",
+                "JustifyBlock",
+            ],
+            ["Link", "Unlink"],
+            ["RemoveFormat", "Source"],
+        ],
     }
+}
+
+# ------------------------------------------------------------------ #
+#  Jazzmin ERP Theme Configuration                                     #
+# ------------------------------------------------------------------ #
+JAZZMIN_SETTINGS = {
+    # Branding
+    "site_title": "BBAU Portal",
+    "site_header": "BBAU ERP",
+    "site_brand": "BBAU",
+    "welcome_sign": "Welcome to the BBAU ERP Portal",
+    "copyright": "Babasaheb Bhimrao Ambedkar University",
+    # Login page
+    "site_logo": "img/bbau_logo.png",
+    "login_logo": "img/bbau_logo.png",
+    "login_logo_dark": "img/bbau_logo.png",
+    "logout_url": "portal_logout",
+    # Search
+    "search_model": ["accounts.CustomUser"],
+    # Top menu
+    "topmenu_links": [
+        {
+            "name": "Portal Home",
+            "url": "/portal/",
+            "permissions": ["accounts.view_portalaccess"],
+        },
+        {"name": "University Website", "url": "https://bbau.ac.in", "new_window": True},
+    ],
+    # User menu (top right)
+    "usermenu_links": [
+        {"name": "My Profile", "url": "/portal/profile/", "icon": "fas fa-user"},
+    ],
+    # Sidebar
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    # App ordering in sidebar
+    "order_with_respect_to": [
+        "accounts",
+        "research",
+        "academics",
+        "faculty",
+        "centres",
+        "notices",
+        "staff",
+    ],
+    # Custom icons (FontAwesome 5)
+    "icons": {
+        "accounts.CustomUser": "fas fa-users-cog",
+        "accounts.PortalAccess": "fas fa-key",
+        "auth.Group": "fas fa-users",
+        "research.ResearchProject": "fas fa-flask",
+        "research.ResearchScholar": "fas fa-user-graduate",
+        "research.Publication": "fas fa-book-open",
+        "research.Patent": "fas fa-certificate",
+        "research.Consultancy": "fas fa-handshake",
+        "research.ResearchArea": "fas fa-microscope",
+        "research.ResearchFacility": "fas fa-building",
+        "research.ResearchDevelopmentCellMember": "fas fa-atom",
+        "academics.School": "fas fa-university",
+        "academics.Department": "fas fa-door-open",
+        "academics.Program": "fas fa-graduation-cap",
+        "academics.Notice": "fas fa-bell",
+        "academics.Committee": "fas fa-users",
+        "faculty.Faculty": "fas fa-chalkboard-teacher",
+        "staff.Staff": "fas fa-id-badge",
+        "centres.Centre": "fas fa-network-wired",
+    },
+    "default_icon_parents": "fas fa-folder",
+    "default_icon_children": "fas fa-circle",
+    # UI Tweaks
+    "related_modal_active": True,
+    # Custom CSS/JS to include from static files
+    "custom_css": "css/portal_dashboard.css",
+    "custom_js": "js/portal_dashboard.js",
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,  # Set to True temporarily to preview theme options
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": False,
+    "accent": "accent-primary",
+    "navbar": "navbar-white navbar-light",
+    "no_navbar_border": True,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "flatly",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
 }

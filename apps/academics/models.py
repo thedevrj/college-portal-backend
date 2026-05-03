@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
+from simple_history.models import HistoricalRecords
 
 
 class School(models.Model):
@@ -22,6 +23,7 @@ class School(models.Model):
     about_school = RichTextField(blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["name"]
@@ -34,6 +36,67 @@ class School(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class SchoolBoardCommittee(models.Model):
+    DESIGNATION_CHOICES = [
+        ("Chairperson", "Chairperson"),
+        ("Member", "Member"),
+        ("Member & Convener", "Member & Convener"),
+        ("Others", "Others"),
+    ]
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="school_board_committee",
+    )
+    members = models.CharField(max_length=255)
+    designation = models.CharField(
+        max_length=255,
+        choices=DESIGNATION_CHOICES,
+    )
+    other_designation = models.CharField(max_length=255, blank=True, null=True)
+    notification_or_document = models.FileField(
+        upload_to="schools/board-committee-documents/"
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name_plural = "School Board Committees"
+
+    def __str__(self):
+        return f"School Board Committee - {self.school.name}"
+
+    def clean(self):
+        super().clean()
+        if self.designation == "Others" and not self.other_designation:
+            raise ValidationError(
+                {
+                    "other_designation": "This field is required when designation is 'Others'."
+                }
+            )
+
+
+class SchoolBoardMOM(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="school_board_mom",
+    )
+    date_of_meeting = models.DateField(
+        help_text="Date of the Meeting in yyyy-mm-dd format"
+    )
+    minutes = models.FileField(
+        upload_to="schools/school-board-mom/", help_text="Upload Minutes of the Meeting"
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["-date_of_meeting"]
+        verbose_name_plural = "School Board Minutes"
+
+    def __str__(self):
+        return f"School Board MOM - {self.school.name}"
 
 
 class Department(models.Model):
@@ -58,6 +121,8 @@ class Department(models.Model):
         blank=True,
         related_name="hod_of_departments",
     )
+    history = HistoricalRecords()
+
     about = RichTextField(blank=True, null=True)
     thrust_areas = RichTextField(
         blank=True,
@@ -94,12 +159,13 @@ class Program(models.Model):
         null=True,
         blank=True,
     )
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, verbose_name="Name of Program")
     level = models.CharField(
         max_length=50,
         choices=[
             ("UG", "Undergraduate"),
             ("PG", "Postgraduate"),
+            ("Integrated", "Integrated"),
             ("PHD", "PhD"),
             ("Others", "Others"),
         ],
@@ -116,14 +182,18 @@ class Program(models.Model):
     intake = models.CharField(
         max_length=100, null=True, blank=True, help_text="Number of seats available"
     )
-    fees = models.CharField(
-        max_length=255, blank=True, null=True, help_text="Fee structure details"
-    )
+    fees = RichTextField(blank=True, null=True, help_text="Fee structure details")
     eligibility = RichTextField(
         blank=True, null=True, help_text="Eligibility criteria for the program"
     )
     admission_process = RichTextField(
         blank=True, null=True, help_text="Admission process for the program"
+    )
+    notification_or_document_file = models.FileField(
+        upload_to="programs/documents/",
+        blank=True,
+        null=True,
+        help_text="Downloadable document related to the program",
     )
     syllabus = models.FileField(
         upload_to="programs/syllabus/",
@@ -161,7 +231,7 @@ class Course(models.Model):
     semester = models.PositiveIntegerField(
         help_text="e.g., 1, 2, 3...", null=True, blank=True
     )
-    course_code = models.CharField(max_length=50)
+    course_code = models.CharField(max_length=50, verbose_name="Course/ Paper Code")
     course_title = models.CharField(max_length=255)
     credits = models.PositiveIntegerField()
     course_type = models.CharField(
@@ -176,6 +246,7 @@ class Course(models.Model):
 
     class Meta:
         ordering = ["semester", "course_code"]
+        verbose_name_plural = "Course structure"
 
     def clean(self):
         super().clean()
@@ -195,6 +266,13 @@ class Course(models.Model):
 class CBCSCourse(models.Model):
     department = models.ForeignKey(
         Department,
+        related_name="cbcs_courses",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    program = models.ForeignKey(
+        Program,
         related_name="cbcs_courses",
         on_delete=models.CASCADE,
         null=True,
@@ -292,6 +370,12 @@ class Committee(models.Model):
     )
     name = models.CharField(max_length=255)
     description = RichTextField(blank=True, null=True)
+    notification_document = models.FileField(
+        upload_to="committees/notification/",
+        blank=True,
+        null=True,
+        help_text="Notification or document related to the committee",
+    )
 
     def __str__(self):
         return f"{self.name} ({self.department.name})"
@@ -311,9 +395,12 @@ class CommitteeMember(models.Model):
         null=True,
         blank=True,
     )
-    faculty = models.ForeignKey(
-        "faculty.Faculty", on_delete=models.CASCADE, null=True, blank=True
+    name_of_member = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Name of Committee Member"
     )
+    # faculty = models.ForeignKey(
+    #     "faculty.Faculty", on_delete=models.CASCADE, null=True, blank=True
+    # )
     designation_in_committee = models.CharField(
         max_length=100, choices=DESIGNATION_CHOICES
     )
@@ -334,7 +421,33 @@ class CommitteeMember(models.Model):
             )
 
     def __str__(self):
-        return f"{self.faculty.name} - {self.designation_in_committee}"
+        return f"{self.name_of_member} - {self.designation_in_committee}"
+
+
+class MinutesOfTheMeeting(models.Model):
+    department = models.ForeignKey(
+        Department,
+        related_name="minutes",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    date_of_meeting = models.DateField(
+        help_text="Enter date of meeting in YYYY-MM-DD format"
+    )
+    minutes_of_meeting = models.FileField(
+        upload_to="committees/minutes/",
+        blank=True,
+        null=True,
+        help_text="Upload Minutes of the meeting",
+    )
+
+    def __str__(self):
+        return f"Minutes of {self.department.name} - {self.date_of_meeting}"
+
+    class Meta:
+        ordering = ["-date_of_meeting"]
+        verbose_name_plural = "Minutes (MOM)"
 
 
 class Timetable(models.Model):
