@@ -3,16 +3,40 @@
 from django.db import migrations, models
 
 
+def populate_staff_no(apps, schema_editor):
+    Faculty = apps.get_model("faculty", "Faculty")
+    db_alias = schema_editor.connection.alias
+
+    # Get all records where staff_no is NULL
+    null_records = Faculty.objects.using(db_alias).filter(staff_no__isnull=True)
+
+    if null_records.exists():
+        from django.db.models import Max
+
+        # Find the current maximum staff_no to avoid collisions
+        max_val = (
+            Faculty.objects.using(db_alias).aggregate(Max("staff_no"))["staff_no__max"]
+            or 0
+        )
+        current_no = max_val + 1
+
+        for record in null_records:
+            record.staff_no = current_no
+            record.save()
+            current_no += 1
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('faculty', '0022_alter_faculty_options'),
+        ("faculty", "0022_alter_faculty_options"),
     ]
 
     operations = [
+        migrations.RunPython(populate_staff_no, reverse_code=migrations.RunPython.noop),
         migrations.AlterField(
-            model_name='faculty',
-            name='staff_no',
+            model_name="faculty",
+            name="staff_no",
             field=models.PositiveIntegerField(unique=True),
         ),
     ]
