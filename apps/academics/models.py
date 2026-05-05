@@ -12,12 +12,23 @@ class School(models.Model):
     image_alt_text = models.CharField(
         max_length=255, blank=True, help_text="GIGW accessibility text for the image"
     )
+
+    LEADERSHIP_TITLE_CHOICES = [
+        ("Dean", "Dean"),
+        ("Director", "Director"),
+    ]
+    leadership_title = models.CharField(
+        max_length=50,
+        choices=LEADERSHIP_TITLE_CHOICES,
+        default="Dean",
+    )
     dean = models.ForeignKey(
         "faculty.Faculty",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="dean_of_schools",
+        verbose_name="Leadership",
     )
     dean_message = RichTextField(blank=True, null=True)
     about_school = RichTextField(blank=True, null=True)
@@ -85,7 +96,11 @@ class SchoolBoardCommitteeMember(models.Model):
         verbose_name_plural = "School Board Committee Members"
 
     def __str__(self):
-        committee_name = self.committee.school.name if self.committee and self.committee.school else "Unknown School"
+        committee_name = (
+            self.committee.school.name
+            if self.committee and self.committee.school
+            else "Unknown School"
+        )
         return f"{self.members} - {self.designation} ({committee_name})"
 
     def clean(self):
@@ -104,11 +119,20 @@ class SchoolBoardMOM(models.Model):
         on_delete=models.CASCADE,
         related_name="school_board_mom",
     )
+    meeting_title = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Title of the Meeting",
+    )
     date_of_meeting = models.DateField(
         help_text="Date of the Meeting in yyyy-mm-dd format"
     )
     minutes = models.FileField(
-        upload_to="schools/school-board-mom/", help_text="Upload Minutes of the Meeting"
+        upload_to="schools/school-board-mom/",
+        help_text="Upload Minutes of the Meeting",
+        null=True,
+        blank=True,
     )
     history = HistoricalRecords()
 
@@ -135,12 +159,23 @@ class Department(models.Model):
     )
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, null=True)
+
+    LEADERSHIP_TITLE_CHOICES = [
+        ("HOD", "HOD"),
+        ("Coordinator", "Coordinator"),
+    ]
+    leadership_title = models.CharField(
+        max_length=50,
+        choices=LEADERSHIP_TITLE_CHOICES,
+        default="HOD",
+    )
     hod = models.ForeignKey(
         "faculty.Faculty",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="hod_of_departments",
+        verbose_name="Leadership",
     )
     history = HistoricalRecords()
 
