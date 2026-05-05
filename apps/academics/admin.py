@@ -83,8 +83,8 @@ class SchoolBoardCommitteeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(SchoolBoardMOM)
 class SchoolBoardMOMAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("school", "date_of_meeting", "minutes")
-    list_display_links = ("school", "date_of_meeting")
+    list_display = ("school", "meeting_title", "date_of_meeting", "minutes")
+    list_display_links = ("school", "meeting_title")
     list_filter = ("school", "date_of_meeting")
     search_fields = ("school__name",)
     ordering = ["-date_of_meeting"]

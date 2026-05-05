@@ -55,7 +55,6 @@ class PortalConfig:
             "notice",
             "timetable",
             "studymaterial",
-            "faculty",
             "cbcscourse",
             "committee",
             "researcharea",
