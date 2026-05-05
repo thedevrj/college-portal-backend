@@ -39,16 +39,38 @@ class School(models.Model):
 
 
 class SchoolBoardCommittee(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="school_board_committee",
+    )
+    name = models.CharField(max_length=255, null=True, blank=True)
+    description = RichTextField(max_length=255, blank=True, null=True)
+    notification_or_document = models.FileField(
+        upload_to="schools/board-committee-documents/", null=True, blank=True
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name_plural = "School Board Committee"
+
+    def __str__(self):
+        return f"{self.name} - {self.school.name}"
+
+
+class SchoolBoardCommitteeMember(models.Model):
     DESIGNATION_CHOICES = [
         ("Chairperson", "Chairperson"),
         ("Member", "Member"),
         ("Member & Convener", "Member & Convener"),
         ("Others", "Others"),
     ]
-    school = models.ForeignKey(
-        School,
+    committee = models.ForeignKey(
+        SchoolBoardCommittee,
         on_delete=models.CASCADE,
-        related_name="school_board_committee",
+        related_name="members",
+        null=True,
+        blank=True,
     )
     members = models.CharField(max_length=255)
     designation = models.CharField(
@@ -56,16 +78,15 @@ class SchoolBoardCommittee(models.Model):
         choices=DESIGNATION_CHOICES,
     )
     other_designation = models.CharField(max_length=255, blank=True, null=True)
-    notification_or_document = models.FileField(
-        upload_to="schools/board-committee-documents/"
-    )
+
     history = HistoricalRecords()
 
     class Meta:
-        verbose_name_plural = "School Board Committees"
+        verbose_name_plural = "School Board Committee Members"
 
     def __str__(self):
-        return f"School Board Committee - {self.school.name}"
+        committee_name = self.committee.school.name if self.committee and self.committee.school else "Unknown School"
+        return f"{self.members} - {self.designation} ({committee_name})"
 
     def clean(self):
         super().clean()
@@ -204,6 +225,7 @@ class Program(models.Model):
     program_outcomes = RichTextField(
         blank=True, null=True, help_text="Detailed program outcomes/objectives"
     )
+    history = HistoricalRecords()
 
     def clean(self):
         super().clean()
@@ -243,6 +265,7 @@ class Course(models.Model):
         null=True,
         help_text="Please specify if course type is 'Others'",
     )
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["semester", "course_code"]
@@ -251,8 +274,6 @@ class Course(models.Model):
     def clean(self):
         super().clean()
         if self.course_type == "Others" and not self.other_course_type:
-            from django.core.exceptions import ValidationError
-
             raise ValidationError(
                 {
                     "other_course_type": "This field is required when course type is 'Others'."
@@ -282,6 +303,7 @@ class CBCSCourse(models.Model):
     course_code = models.CharField(max_length=50)
     course_title = models.CharField(max_length=255)
     credits = models.PositiveIntegerField()
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["semester", "course_code"]
@@ -345,6 +367,7 @@ class Notice(models.Model):
     attachment = models.FileField(upload_to="notices/", blank=True, null=True)
     date_posted = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["-date_posted"]
@@ -376,6 +399,7 @@ class Committee(models.Model):
         null=True,
         help_text="Notification or document related to the committee",
     )
+    history = HistoricalRecords()
 
     def __str__(self):
         return f"{self.name} ({self.department.name})"
@@ -410,6 +434,7 @@ class CommitteeMember(models.Model):
         null=True,
         help_text="Please specify the designation if 'Others' is selected",
     )
+    history = HistoricalRecords()
 
     def clean(self):
         super().clean()
@@ -432,6 +457,9 @@ class MinutesOfTheMeeting(models.Model):
         null=True,
         blank=True,
     )
+    meeting_title = models.CharField(
+        max_length=255, null=True, blank=True, help_text="Title of the meeting"
+    )
     date_of_meeting = models.DateField(
         help_text="Enter date of meeting in YYYY-MM-DD format"
     )
@@ -441,13 +469,14 @@ class MinutesOfTheMeeting(models.Model):
         null=True,
         help_text="Upload Minutes of the meeting",
     )
+    history = HistoricalRecords()
 
     def __str__(self):
         return f"Minutes of {self.department.name} - {self.date_of_meeting}"
 
     class Meta:
         ordering = ["-date_of_meeting"]
-        verbose_name_plural = "Minutes (MOM)"
+        verbose_name_plural = "Departmental Minutes "
 
 
 class Timetable(models.Model):
@@ -468,6 +497,7 @@ class Timetable(models.Model):
     title = models.CharField(max_length=255, help_text="e.g., B.Tech Sem 3 Timetable")
     attachment = models.FileField(upload_to="timetables/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.title
@@ -489,6 +519,7 @@ class StudyMaterial(models.Model):
     )
     attachment = models.FileField(upload_to="study_materials/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.title

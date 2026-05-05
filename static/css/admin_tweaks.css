@@ -41,3 +41,26 @@ textarea:disabled:hover {
     color: #333333 !important;
     background-color: #ffffff !important;
 }
+
+/* Fix for invisible/shrunken Select2 (Autocomplete) boxes */
+.select2-container--admin-autocomplete,
+.select2-container--default {
+    width: 100% !important;
+    min-width: 300px;
+    display: inline-block;
+}
+
+.select2-container--admin-autocomplete .select2-selection--multiple,
+.select2-container--admin-autocomplete .select2-selection--single,
+.select2-container--default .select2-selection--multiple,
+.select2-container--default .select2-selection--single {
+    min-height: 35px;
+    border: 1px solid #ccc !important;
+    background-color: #fff !important;
+}
+
+
+/* Ensure the placeholder or empty state is visible */
+.select2-container .select2-selection--multiple .select2-selection__rendered {
+    min-height: 45px;
+}

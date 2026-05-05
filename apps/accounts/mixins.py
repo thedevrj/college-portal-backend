@@ -45,14 +45,8 @@ class PortalSecurityMixin:
         if request.user.is_superuser:
             return qs
 
-        # Bypass row-level security for Autocomplete requests on reference models
-        if "/autocomplete/" in request.path and self.model.__name__ in [
-            "Faculty",
-            "Department",
-            "School",
-            "Centre",
-        ]:
-            return qs
+        # Enforce row-level security even for autocomplete requests to filter dropdowns
+        # (Removed previous bypass that allowed all faculty to be seen)
 
         try:
             profile = getattr(request.user, "portal_profile", None)
@@ -151,18 +145,22 @@ class PortalSecurityMixin:
         # Check ALL active roles for permission (Multi-role support)
         active_access = request.user.access_entries.filter(is_active=True)
         for access in active_access:
-            if access.entity_type == EntityType.DEPARTMENT:
-                dept_name = access.entity.name if hasattr(access.entity, "name") else None
-                if self.model.__name__ == "Department":
-                    if dept_name and obj.name == dept_name: return True
-                elif hasattr(obj, "department") and obj.department:
-                    if dept_name and obj.department.name == dept_name: return True
+            # High-level management models (Programs, Notices, etc.)
+            management_models = ["Program", "Notice", "Timetable", "StudyMaterial", "Cbcscourse", "Committee", "MinutesOfTheMeeting", "DepartmentGallery", "Department"]
             
-            elif access.entity_type == EntityType.SCHOOL:
-                if self.model.__name__ == "Department":
-                    if hasattr(obj, "school_id") and obj.school_id == access.object_id: return True
-                elif hasattr(obj, "department") and obj.department:
-                    if obj.department.school_id == access.object_id: return True
+            if self.model.__name__ in management_models:
+                if access.entity_type == EntityType.DEPARTMENT:
+                    dept_name = access.entity.name if hasattr(access.entity, "name") else None
+                    if self.model.__name__ == "Department":
+                        if dept_name and obj.name == dept_name: return True
+                    elif hasattr(obj, "department") and obj.department:
+                        if dept_name and obj.department.name == dept_name: return True
+                
+                elif access.entity_type == EntityType.SCHOOL:
+                    if self.model.__name__ == "Department":
+                        if hasattr(obj, "school_id") and obj.school_id == access.object_id: return True
+                    elif hasattr(obj, "department") and obj.department:
+                        if obj.department.school_id == access.object_id: return True
 
         # 5. Fallback to standard Django permissions if no owner is set yet
         # (This handles old records or records being assigned)
@@ -273,66 +271,44 @@ class PortalSecurityMixin:
 
             # --- Lock sensitive fields on the Faculty model for ALL non-superusers ---
             if self.model.__name__ == "Faculty":
-                if "user" in form.base_fields:
-                    form.base_fields["user"].disabled = True
-                if "is_active" in form.base_fields:
-                    form.base_fields["is_active"].disabled = True
+                for field in ["user", "is_active", "department", "staff_no", "insti_email"]:
+                    if field in form.base_fields:
+                        form.base_fields[field].disabled = True
 
-            access = request.user.access_entries.filter(is_active=True).first()
-            if access:
+            active_access_list = request.user.access_entries.filter(is_active=True)
+            
+            # Aggregate constraints from all roles
+            for access in active_access_list:
                 # --- Auto-fill and Lock for Faculty Role ---
                 if access.role == PortalRole.FACULTY:
-                    Faculty = apps.get_model("faculty", "Faculty")
-                    faculty_profile = Faculty.objects.filter(user=request.user).first()
+                    FacultyModel = apps.get_model("faculty", "Faculty")
+                    faculty_profile = FacultyModel.objects.filter(user=request.user).first()
                     if faculty_profile:
+                        # Auto-fill ownership fields
+                        for field in ["faculty", "principal_investigator", "supervisor"]:
+                            if field in form.base_fields and self.model.__name__ != "Faculty":
+                                form.base_fields[field].initial = faculty_profile
+                                # Only lock if they DON'T have an admin role
+                                if not active_access_list.exclude(role=PortalRole.FACULTY).exists():
+                                    form.base_fields[field].disabled = True
+                        
                         if "department" in form.base_fields:
-                            form.base_fields["department"].initial = (
-                                faculty_profile.department
-                            )
-                            form.base_fields["department"].disabled = True
-                        if "principal_investigator" in form.base_fields:
-                            form.base_fields["principal_investigator"].initial = (
-                                faculty_profile
-                            )
-                            form.base_fields["principal_investigator"].disabled = True
-                        if "supervisor" in form.base_fields:
-                            form.base_fields["supervisor"].initial = faculty_profile
-                            form.base_fields["supervisor"].disabled = True
-                        if (
-                            "faculty" in form.base_fields
-                            and self.model.__name__ != "Faculty"
-                        ):
-                            form.base_fields["faculty"].initial = faculty_profile
-                            form.base_fields["faculty"].disabled = True
+                            form.base_fields["department"].initial = faculty_profile.department
+                            # Only lock if they DON'T have an admin role
+                            if not active_access_list.exclude(role=PortalRole.FACULTY).exists():
+                                form.base_fields["department"].disabled = True
 
                 # --- Auto-fill and Lock for Department Role (HODs) ---
-                elif access.entity_type == EntityType.DEPARTMENT:
+                if access.entity_type == EntityType.DEPARTMENT:
                     if "department" in form.base_fields:
-                        dept_name = (
-                            access.entity.name
-                            if hasattr(access.entity, "name")
-                            else None
-                        )
-                        Department = apps.get_model("academics", "Department")
-                        # Smart Lock: Only disable if there is only one campus for this department
-                        if (
-                            dept_name
-                            and Department.objects.filter(name=dept_name).count() > 1
-                        ):
-                            form.base_fields["department"].disabled = False
-                        else:
-                            form.base_fields["department"].initial = access.entity
-                            form.base_fields["department"].disabled = True
+                        form.base_fields["department"].initial = access.entity
+                        form.base_fields["department"].disabled = True
 
-                    if self.model.__name__ == "Department":
-                        if "name" in form.base_fields:
-                            form.base_fields["name"].disabled = True
-                        if "school" in form.base_fields:
-                            form.base_fields["school"].disabled = True
-                        if "campus" in form.base_fields:
-                            form.base_fields["campus"].disabled = True
-                        if "hod" in form.base_fields:
-                            form.base_fields["hod"].disabled = True
+                # --- Auto-fill and Lock for School Role (Deans) ---
+                if access.entity_type == EntityType.SCHOOL:
+                    if "school" in form.base_fields:
+                        form.base_fields["school"].initial = access.entity
+                        form.base_fields["school"].disabled = True
         except Exception:
             pass
         return form
@@ -359,7 +335,9 @@ class PortalSecurityMixin:
                             combined_q |= models.Q(department__name=dept_name) if dept_name else models.Q(department=access.entity)
                     
                     elif access.entity_type == EntityType.SCHOOL:
-                        if db_field.name == "department":
+                        if db_field.name == "school":
+                            combined_q |= models.Q(pk=access.object_id)
+                        elif db_field.name == "department":
                             combined_q |= models.Q(school_id=access.object_id)
                         elif db_field.name == "program":
                             combined_q |= models.Q(department__school_id=access.object_id)

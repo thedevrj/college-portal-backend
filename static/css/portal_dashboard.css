@@ -122,6 +122,10 @@ body {
     border-radius: 8px !important;
 }
 
+.nav-link {
+    padding: 0.7rem !important;
+}
+
 /* --- Glassmorphism Dashboard Cards (Research/Faculty) --- */
 .card {
     background: var(--portal-glass) !important;

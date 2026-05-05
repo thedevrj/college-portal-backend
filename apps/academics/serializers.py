@@ -1,8 +1,8 @@
-from dataclasses import field
 from rest_framework import serializers
 from .models import (
     School,
     SchoolBoardCommittee,
+    SchoolBoardCommitteeMember,
     SchoolBoardMOM,
     Department,
     Program,
@@ -77,7 +77,15 @@ class SchoolDetailSerializer(BaseSchoolSerializer):
         ]
 
 
+class SchoolBoardCommitteeMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SchoolBoardCommitteeMember
+        fields = "__all__"
+
+
 class SchoolBoardCommitteeSerializer(serializers.ModelSerializer):
+    members = SchoolBoardCommitteeMemberSerializer(many=True, read_only=True)
+
     class Meta:
         model = SchoolBoardCommittee
         fields = "__all__"
@@ -230,7 +238,7 @@ class CommitteeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class MinutesSerialization(serializers.ModelSerializer):
+class MinutesSerializer(serializers.ModelSerializer):
     class Meta:
         model = MinutesOfTheMeeting
         fields = "__all__"

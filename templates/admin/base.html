@@ -1,0 +1,15 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    {% if request.user.is_authenticated %}
+    <script>
+        // Inject user data for sidebar UI updates
+        window.PORTAL_USER = {
+            displayName: "{{ request.user.first_name|default:request.user.username|escapejs }}",
+            avatarUrl: "{% if request.user.portal_profile.profile_photo %}{{ request.user.portal_profile.profile_photo.url }}{% elif request.user.faculty_profile.photo %}{{ request.user.faculty_profile.photo.url }}{% endif %}"
+        };
+    </script>
+    {% endif %}
+{% endblock %}

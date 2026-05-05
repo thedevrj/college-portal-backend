@@ -243,7 +243,7 @@ JAZZMIN_SETTINGS = {
     "login_logo_dark": "img/bbau_logo.png",
     "logout_url": "portal_logout",
     # Search
-    "search_model": ["accounts.CustomUser"],
+    "search_model": ["auth.User"],
     # Top menu
     "topmenu_links": [
         {
@@ -262,11 +262,12 @@ JAZZMIN_SETTINGS = {
     "navigation_expanded": True,
     "hide_apps": [],
     "hide_models": [],
+    "user_avatar": "portal_profile.profile_photo",
     # App ordering in sidebar
     "order_with_respect_to": [
         "accounts",
-        "research",
         "academics",
+        "research",
         "faculty",
         "centres",
         "notices",
@@ -274,7 +275,7 @@ JAZZMIN_SETTINGS = {
     ],
     # Custom icons (FontAwesome 5)
     "icons": {
-        "accounts.CustomUser": "fas fa-users-cog",
+        "auth.User": "fas fa-users-cog",
         "accounts.PortalAccess": "fas fa-key",
         "auth.Group": "fas fa-users",
         "research.ResearchProject": "fas fa-flask",
