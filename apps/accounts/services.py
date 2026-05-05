@@ -12,7 +12,7 @@ class PortalConfig:
     ROLE_MODELS = {
         PortalRole.DEAN: [
             "school",
-            "schoolboardcommittee",
+            "SchoolBoardCommitteeMember",
             "schoolboardmom",
             "department",
             "faculty",
@@ -87,14 +87,17 @@ class PortalPermissionService:
                 user.is_staff = True
                 user.save()
 
-            active_access = user.access_entries.filter(is_active=True).first()
-            if not active_access:
+            active_access_list = user.access_entries.filter(is_active=True)
+            if not active_access_list.exists():
                 return
 
-            models_to_grant = PortalConfig.ROLE_MODELS.get(active_access.role, [])
+            models_to_grant = set()
+            for access in active_access_list:
+                role_models = PortalConfig.ROLE_MODELS.get(access.role, [])
+                models_to_grant.update(role_models)
 
             permissions = Permission.objects.filter(
-                content_type__model__in=models_to_grant
+                content_type__model__in=list(models_to_grant)
             ).filter(
                 Q(codename__startswith="view_")
                 | Q(codename__startswith="add_")
@@ -117,10 +120,15 @@ class PortalStatsService:
         FRESH START: Returning simplified stats to verify connection.
         """
         user = user_profile.user
-        access = user.access_entries.filter(is_active=True).first()
-
-        if not access:
+        active_access_list = user.access_entries.filter(is_active=True)
+        if not active_access_list.exists():
             return {}
+
+        # Prioritize DEAN stats over HOD stats
+        access = (
+            active_access_list.filter(role=PortalRole.DEAN).first()
+            or active_access_list.first()
+        )
 
         try:
             # We use the internal app names verified by diagnostic
@@ -128,7 +136,32 @@ class PortalStatsService:
             Scholar = apps.get_model("research", "ResearchScholar")
             Pub = apps.get_model("research", "Publication")
 
-            if access.entity_type == EntityType.DEPARTMENT:
+            if (
+                access.role == PortalRole.DEAN
+                or access.entity_type == EntityType.SCHOOL
+            ):
+                school = access.entity
+                return {
+                    "projects": Project.objects.filter(
+                        department__school=school
+                    ).count(),
+                    "projects_ongoing": Project.objects.filter(
+                        department__school=school, status="ONGOING"
+                    ).count(),
+                    "scholars": Scholar.objects.filter(
+                        department__school=school
+                    ).count(),
+                    "scholars_active": Scholar.objects.filter(
+                        department__school=school, status="PURSUING"
+                    ).count(),
+                    "publications": Pub.objects.filter(
+                        department__school=school
+                    ).count(),
+                }
+            elif (
+                access.role == PortalRole.HOD
+                or access.entity_type == EntityType.DEPARTMENT
+            ):
                 dept = access.entity
                 return {
                     "projects": Project.objects.filter(department=dept).count(),
@@ -137,7 +170,7 @@ class PortalStatsService:
                     ).count(),
                     "scholars": Scholar.objects.filter(department=dept).count(),
                     "scholars_active": Scholar.objects.filter(
-                        department=dept, scholar_status="ACTIVE"
+                        department=dept, status="PURSUING"
                     ).count(),
                     "publications": Pub.objects.filter(department=dept).count(),
                 }

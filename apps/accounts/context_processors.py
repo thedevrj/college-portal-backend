@@ -12,7 +12,9 @@ def dashboard_stats(request):
             profile = request.user.portal_profile
             if profile.is_portal_user:
                 return {
-                    'portal_stats': profile.get_dashboard_stats()
+                    'portal_stats': profile.get_dashboard_stats(),
+                    'user_name': request.user.first_name or request.user.username,
+                    'user_avatar': profile.profile_photo.url if profile.profile_photo else None
                 }
         except:
             pass

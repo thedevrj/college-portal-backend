@@ -9,6 +9,7 @@ from apps.faculty.models import Faculty
 from .models import (
     School,
     SchoolBoardCommittee,
+    SchoolBoardCommitteeMember,
     SchoolBoardMOM,
     Department,
     Program,
@@ -23,7 +24,11 @@ from .models import (
     StudyMaterial,
 )
 
+
 # --- Inlines ---
+class SchoolBoardCommitteeMemberInline(admin.TabularInline):
+    model = SchoolBoardCommitteeMember
+    extra = 1
 
 
 class DepartmentGalleryInline(admin.TabularInline):
@@ -68,11 +73,12 @@ class SchoolAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(SchoolBoardCommittee)
 class SchoolBoardCommitteeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("school", "members", "designation")
-    list_display_links = ("school", "members")
-    list_filter = ("school", "designation")
-    search_fields = ("school__name", "members", "designation")
-    ordering = ["school", "designation"]
+    list_display = ("school", "name", "description")
+    list_display_links = ("school", "name")
+    list_filter = ("school",)
+    search_fields = ("school__name", "name")
+    ordering = ["school", "name"]
+    inlines = [SchoolBoardCommitteeMemberInline]
 
 
 @admin.register(SchoolBoardMOM)
@@ -96,7 +102,7 @@ class DepartmentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModel
 
 
 @admin.register(Program)
-class ProgramAdmin(PortalSecurityMixin, ImportExportModelAdmin):
+class ProgramAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     list_display = ("name", "department", "level", "duration", "intake")
     list_display_links = ("name", "department")
     list_filter = ("level", "department")
@@ -105,7 +111,7 @@ class ProgramAdmin(PortalSecurityMixin, ImportExportModelAdmin):
 
 
 @admin.register(Notice)
-class NoticeAdmin(PortalSecurityMixin, admin.ModelAdmin):
+class NoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("title", "department", "category", "date_posted", "is_active")
     list_display_links = ("title", "department")
     list_filter = ("category", "department", "date_posted", "is_active")
@@ -113,7 +119,7 @@ class NoticeAdmin(PortalSecurityMixin, admin.ModelAdmin):
 
 
 @admin.register(Committee)
-class CommitteeAdmin(PortalSecurityMixin, admin.ModelAdmin):
+class CommitteeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("name", "department")
     list_display_links = ("name", "department")
     list_filter = ("department",)
@@ -122,11 +128,11 @@ class CommitteeAdmin(PortalSecurityMixin, admin.ModelAdmin):
 
 
 @admin.register(MinutesOfTheMeeting)
-class MinuterAdmin(PortalSecurityMixin, admin.ModelAdmin):
-    list_display = ("date_of_meeting", "department")
-    list_display_links = ("date_of_meeting", "department")
-    list_filter = ("department",)
-    search_fields = ("date_of_meeting",)
+class MinutesAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    list_display = ("meeting_title", "date_of_meeting", "department")
+    list_display_links = ("meeting_title", "date_of_meeting", "department")
+    list_filter = ("department", "date_of_meeting")
+    search_fields = ("meeting_title", "date_of_meeting")
 
 
 @admin.register(CBCSCourse)
@@ -152,14 +158,14 @@ class DepartmentGalleryAdmin(PortalSecurityMixin, ImportExportModelAdmin):
 
 
 @admin.register(Timetable)
-class TimetableAdmin(PortalSecurityMixin, admin.ModelAdmin):
+class TimetableAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("title", "department", "program", "uploaded_at")
     list_filter = ("department", "program")
     search_fields = ("title",)
 
 
 @admin.register(StudyMaterial)
-class StudyMaterialAdmin(PortalSecurityMixin, admin.ModelAdmin):
+class StudyMaterialAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("title", "department", "program", "uploaded_at")
     list_filter = ("department", "program")
     search_fields = ("title",)

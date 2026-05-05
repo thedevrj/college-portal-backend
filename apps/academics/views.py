@@ -1,4 +1,3 @@
-from django_filters.filters import QuerySetRequestMixin
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
@@ -29,7 +28,7 @@ from .serializers import (
     NoticeListSerializer,
     NoticeDetailSerializer,
     CommitteeSerializer,
-    MinutesSerialization,
+    MinutesSerializer,
     TimetableSerializer,
     StudyMaterialSerializer,
 )
@@ -47,7 +46,7 @@ class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class SchoolBoardCommitteeViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = SchoolBoardCommittee.objects.all()
+    queryset = SchoolBoardCommittee.objects.all().prefetch_related("members")
     serializer_class = SchoolBoardCommitteeSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["school__slug"]
@@ -137,7 +136,7 @@ class CommitteeViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MinutesViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MinutesOfTheMeeting.objects.all()
-    serializer_class = MinutesSerialization
+    serializer_class = MinutesSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["department__slug"]
 
