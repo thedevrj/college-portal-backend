@@ -16,9 +16,16 @@ class GlobalNoticeFilter(filters.FilterSet):
 class GlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows GlobalNotices to be viewed.
+    Public users see only public notices.
+    Authenticated users see both public and private notices.
     """
-    queryset = GlobalNotice.objects.filter(is_active=True).order_by('-date_posted')
-    
+
+    def get_queryset(self):
+        queryset = GlobalNotice.objects.filter(is_active=True).order_by("-date_posted")
+        if not self.request.user.is_authenticated:
+            return queryset.filter(is_private=False)
+        return queryset
+
     def get_serializer_class(self):
         if self.action == 'list':
             return GlobalNoticeListSerializer
