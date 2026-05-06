@@ -1,9 +1,10 @@
 from django.contrib import admin
+from apps.accounts.mixins import PortalSecurityMixin
 from .models import Centre
 
 
 @admin.register(Centre)
-class CentreAdmin(admin.ModelAdmin):
+class CentreAdmin(PortalSecurityMixin, admin.ModelAdmin):
 
     list_display = ("name", "slug", "school", "head", "head_title")
     list_filter = ("school", "head_title")
@@ -12,4 +13,4 @@ class CentreAdmin(admin.ModelAdmin):
     autocomplete_fields = ("head",)
 
     class Media:
-        js = ("js/admin_dynamic_fields.js?v=6",)
+        js = ("/static/js/admin_dynamic_fields.js?v=6",)

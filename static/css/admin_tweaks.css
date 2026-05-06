@@ -64,3 +64,39 @@ textarea:disabled:hover {
 .select2-container .select2-selection--multiple .select2-selection__rendered {
     min-height: 45px;
 }
+
+/* === Jazzmin Layout Override === */
+/* Force the main form and the submit button sidebar to stack vertically (100% width) instead of side-by-side */
+#content-main>form>.row>.col-12.col-lg-9 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+}
+
+/* === Fix Tabular Inline Scrolling === */
+/* Prevent the table from forcing a horizontal scroll */
+/* .tabular.inline-related .table-responsive {
+    overflow-x: auto !important;
+}
+
+.tabular.inline-related table {
+    width: 100% !important;
+    table-layout: auto !important;
+} */
+
+/* Allow text to wrap instead of pushing the table wider */
+/* .tabular.inline-related table th,
+.tabular.inline-related table td {
+    white-space: normal !important;
+} */
+
+/* Ensure form inputs scale down properly instead of holding a fixed rigid width */
+/* .tabular.inline-related table input[type="text"],
+.tabular.inline-related table input[type="number"],
+.tabular.inline-related table input[type="url"],
+.tabular.inline-related table select,
+.tabular.inline-related table textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100px;
+    box-sizing: border-box !important;
+} */
