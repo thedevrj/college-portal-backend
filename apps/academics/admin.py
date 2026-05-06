@@ -58,6 +58,7 @@ class CommitteeMemberInline(admin.TabularInline):
 class SchoolAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("name", "slug", "dean")
     list_display_links = ("name", "dean")
+    list_filter = ("leadership_title",)
 
     def has_module_permission(self, request):
         if request.user.is_superuser:
@@ -92,9 +93,9 @@ class SchoolBoardMOMAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(Department)
 class DepartmentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
-    list_display = ("name", "campus", "school", "hod")
+    list_display = ("name", "campus", "school", "leadership_title", "hod")
     list_display_links = ("name", "campus")
-    list_filter = ("campus", "school")
+    list_filter = ("campus", "school", "leadership_title")
     search_fields = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("hod",)

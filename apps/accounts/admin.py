@@ -100,7 +100,13 @@ class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = "Portal Profile"
-    fields = ("employee_id", "phone", "profile_photo", "is_portal_user", "force_password_change")
+    fields = (
+        "employee_id",
+        "phone",
+        "profile_photo",
+        "is_portal_user",
+        "force_password_change",
+    )
 
 
 class PortalAccessInline(admin.TabularInline):
@@ -111,7 +117,7 @@ class PortalAccessInline(admin.TabularInline):
     fields = ("role", "entity_type", "dynamic_entity", "is_active")
 
     class Media:
-        js = ("js/portal_access_admin.js",)
+        js = ("/static/js/portal_access_admin.js",)
 
 
 admin.site.unregister(User)
@@ -146,7 +152,7 @@ class PortalAccessAdmin(admin.ModelAdmin):
     exclude = ("content_type", "object_id")  # Hide the technical fields
 
     class Media:
-        js = ("js/portal_access_admin.js",)
+        js = ("/static/js/portal_access_admin.js",)
 
 
 @admin.register(LogEntry)

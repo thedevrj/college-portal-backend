@@ -29,8 +29,8 @@ class SoftDeleteModel(models.Model):
 
 
 class PortalRole(models.TextChoices):
-    DEAN = "DEAN", "Dean"
-    HOD = "HOD", "Head of Department"
+    DEAN = "DEAN", "Dean / Director"
+    HOD = "HOD", "HOD / Coordinator"
     DEPT_STAFF = "DEPT_STAFF", "Department Staff"
     RD_ADMIN = "RD_ADMIN", "R&D Cell Admin"
     FACULTY = "FACULTY", "Faculty Member"

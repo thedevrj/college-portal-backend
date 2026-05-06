@@ -60,35 +60,59 @@ class PortalSecurityMixin:
             # Combine querysets from ALL active roles (Multi-role support)
             final_qs = qs.none()
             for access in active_access:
-                role_qs = qs.all()
+                role_qs = qs.none()  # Default to none for safety
+
+                # 1. Role-based Logic (FACULTY)
                 if access.role == PortalRole.FACULTY:
-                    if hasattr(self.model, "faculty"):
-                        role_qs = role_qs.filter(faculty__user=request.user)
-                    elif hasattr(self.model, "principal_investigator"):
-                        role_qs = role_qs.filter(principal_investigator__user=request.user)
-                    elif hasattr(self.model, "supervisor"):
-                        role_qs = role_qs.filter(supervisor__user=request.user)
-                    elif self.model.__name__ == "Faculty":
-                        role_qs = role_qs.filter(user=request.user)
+                    # Faculty should NOT see structural entities in the admin
+                    structural_models = ["School", "Department", "Centre", "SchoolBoardCommittee", "SchoolBoardMOM"]
+                    if self.model.__name__ in structural_models:
+                        role_qs = qs.none()
                     else:
-                        role_qs = role_qs.none()
+                        role_qs = qs.all()
+                        if hasattr(self.model, "faculty"):
+                            role_qs = role_qs.filter(faculty__user=request.user)
+                        elif hasattr(self.model, "principal_investigator"):
+                            role_qs = role_qs.filter(principal_investigator__user=request.user)
+                        elif hasattr(self.model, "supervisor"):
+                            role_qs = role_qs.filter(supervisor__user=request.user)
+                        elif self.model.__name__ == "Faculty":
+                            role_qs = role_qs.filter(user=request.user)
+                        else:
+                            role_qs = role_qs.none()
                 
+                # 2. Entity-based Logic (DEPARTMENT / SCHOOL / CENTRE)
                 elif access.entity_type == EntityType.DEPARTMENT:
-                    dept_name = access.entity.name if hasattr(access.entity, "name") else None
+                    role_qs = qs.all()
                     if self.model.__name__ == "Department":
-                        role_qs = role_qs.filter(name=dept_name) if dept_name else role_qs.filter(pk=access.object_id)
+                        role_qs = role_qs.filter(pk=access.object_id)
                     elif hasattr(self.model, "department"):
-                        role_qs = role_qs.filter(department__name=dept_name) if dept_name else role_qs.filter(department=access.entity)
+                        # Use _id for direct FK filtering to avoid extra joins/leaks
+                        role_qs = role_qs.filter(department_id=access.object_id)
                     else:
                         role_qs = role_qs.none()
 
                 elif access.entity_type == EntityType.SCHOOL:
+                    role_qs = qs.all()
                     if self.model.__name__ == "School":
                         role_qs = role_qs.filter(pk=access.object_id)
                     elif self.model.__name__ == "Department":
                         role_qs = role_qs.filter(school_id=access.object_id)
+                    elif self.model.__name__ in ["SchoolBoardCommittee", "SchoolBoardMOM"]:
+                        role_qs = role_qs.filter(school_id=access.object_id)
                     elif hasattr(self.model, "department"):
                         role_qs = role_qs.filter(department__school_id=access.object_id)
+                    elif hasattr(self.model, "school"):
+                        role_qs = role_qs.filter(school_id=access.object_id)
+                    else:
+                        role_qs = role_qs.none()
+                
+                elif access.entity_type == EntityType.CENTRE:
+                    role_qs = qs.all()
+                    if self.model.__name__ == "Centre":
+                        role_qs = role_qs.filter(pk=access.object_id)
+                    elif hasattr(self.model, "centre"):
+                        role_qs = role_qs.filter(centre_id=access.object_id)
                     else:
                         role_qs = role_qs.none()
                 
@@ -276,11 +300,14 @@ class PortalSecurityMixin:
                         form.base_fields[field].disabled = True
 
             active_access_list = request.user.access_entries.filter(is_active=True)
+            dept_access = active_access_list.filter(entity_type=EntityType.DEPARTMENT)
+            school_access = active_access_list.filter(entity_type=EntityType.SCHOOL)
             
-            # Aggregate constraints from all roles
-            for access in active_access_list:
-                # --- Auto-fill and Lock for Faculty Role ---
-                if access.role == PortalRole.FACULTY:
+            # --- Auto-fill and Lock for Faculty Role ---
+            # (Only if they DON'T have a management role like HOD or Dean)
+            if not dept_access.exists() and not school_access.exists():
+                faculty_access = active_access_list.filter(role=PortalRole.FACULTY).first()
+                if faculty_access:
                     FacultyModel = apps.get_model("faculty", "Faculty")
                     faculty_profile = FacultyModel.objects.filter(user=request.user).first()
                     if faculty_profile:
@@ -288,27 +315,32 @@ class PortalSecurityMixin:
                         for field in ["faculty", "principal_investigator", "supervisor"]:
                             if field in form.base_fields and self.model.__name__ != "Faculty":
                                 form.base_fields[field].initial = faculty_profile
-                                # Only lock if they DON'T have an admin role
-                                if not active_access_list.exclude(role=PortalRole.FACULTY).exists():
-                                    form.base_fields[field].disabled = True
+                                form.base_fields[field].disabled = True
                         
                         if "department" in form.base_fields:
                             form.base_fields["department"].initial = faculty_profile.department
-                            # Only lock if they DON'T have an admin role
-                            if not active_access_list.exclude(role=PortalRole.FACULTY).exists():
-                                form.base_fields["department"].disabled = True
+                            form.base_fields["department"].disabled = True
 
-                # --- Auto-fill and Lock for Department Role (HODs) ---
-                if access.entity_type == EntityType.DEPARTMENT:
-                    if "department" in form.base_fields:
-                        form.base_fields["department"].initial = access.entity
-                        form.base_fields["department"].disabled = True
+            # --- Auto-fill and Lock for Department Role (HODs/Coordinators) ---
+            if dept_access.count() == 1:
+                access = dept_access.first()
+                if "department" in form.base_fields:
+                    form.base_fields["department"].initial = access.entity
+                    form.base_fields["department"].disabled = True
+            elif dept_access.count() > 1:
+                # Multiple departments - allow selection (dropdown will be filtered by formfield_for_foreignkey)
+                if "department" in form.base_fields:
+                    form.base_fields["department"].disabled = False
 
-                # --- Auto-fill and Lock for School Role (Deans) ---
-                if access.entity_type == EntityType.SCHOOL:
-                    if "school" in form.base_fields:
-                        form.base_fields["school"].initial = access.entity
-                        form.base_fields["school"].disabled = True
+            # --- Auto-fill and Lock for School Role (Deans/Directors) ---
+            if school_access.count() == 1:
+                access = school_access.first()
+                if "school" in form.base_fields:
+                    form.base_fields["school"].initial = access.entity
+                    form.base_fields["school"].disabled = True
+            elif school_access.count() > 1:
+                if "school" in form.base_fields:
+                    form.base_fields["school"].disabled = False
         except Exception:
             pass
         return form
