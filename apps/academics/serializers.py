@@ -211,12 +211,16 @@ class ProgramDetailSerializer(BaseProgramSerializer):
 
 
 class NoticeListSerializer(serializers.ModelSerializer):
+    department_name = serializers.CharField(source="department.name", read_only=True)
+
     class Meta:
         model = Notice
         fields = "__all__"
 
 
 class NoticeDetailSerializer(serializers.ModelSerializer):
+    department_name = serializers.CharField(source="department.name", read_only=True)
+
     class Meta:
         model = Notice
         fields = "__all__"
