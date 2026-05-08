@@ -1,5 +1,8 @@
 from django.contrib import admin
 from django import forms
+from simple_history.admin import SimpleHistoryAdmin
+from apps.accounts.filters import SoftDeleteListFilter
+from apps.accounts.mixins import PortalSecurityMixin
 from .models import GlobalNotice
 
 
@@ -20,7 +23,7 @@ class GlobalNoticeForm(forms.ModelForm):
 
 
 @admin.register(GlobalNotice)
-class GlobalNoticeAdmin(admin.ModelAdmin):
+class GlobalNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     form = GlobalNoticeForm
     list_display = (
         "title",
@@ -31,7 +34,7 @@ class GlobalNoticeAdmin(admin.ModelAdmin):
         "date_posted",
         "posted_by",
     )
-    list_filter = ("is_private", "show_in_marquee", "is_active", "date_posted")
+    list_filter = (SoftDeleteListFilter, "is_private", "show_in_marquee", "is_active", "date_posted")
     search_fields = ("title",)
     readonly_fields = ("posted_by", "date_posted")
 

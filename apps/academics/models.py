@@ -3,9 +3,10 @@ from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
+from apps.accounts.models import SoftDeleteModel
 
 
-class School(models.Model):
+class School(SoftDeleteModel):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     image = models.ImageField(upload_to="schools/", blank=True, null=True)
@@ -49,7 +50,7 @@ class School(models.Model):
         return self.name
 
 
-class SchoolBoardCommittee(models.Model):
+class SchoolBoardCommittee(SoftDeleteModel):
     school = models.ForeignKey(
         School,
         on_delete=models.CASCADE,
@@ -69,7 +70,7 @@ class SchoolBoardCommittee(models.Model):
         return f"{self.name} - {self.school.name}"
 
 
-class SchoolBoardCommitteeMember(models.Model):
+class SchoolBoardCommitteeMember(SoftDeleteModel):
     DESIGNATION_CHOICES = [
         ("Chairperson", "Chairperson"),
         ("Member", "Member"),
@@ -113,7 +114,7 @@ class SchoolBoardCommitteeMember(models.Model):
             )
 
 
-class SchoolBoardMOM(models.Model):
+class SchoolBoardMOM(SoftDeleteModel):
     school = models.ForeignKey(
         School,
         on_delete=models.CASCADE,
@@ -144,7 +145,7 @@ class SchoolBoardMOM(models.Model):
         return f"School Board MOM - {self.school.name}"
 
 
-class Department(models.Model):
+class Department(SoftDeleteModel):
     CAMPUS_CHOICES = [
         ("BBAU", "BBAU"),
         ("Satellite Campus Amethi", "Satellite Campus Amethi"),
@@ -207,7 +208,7 @@ class Department(models.Model):
         return self.name
 
 
-class Program(models.Model):
+class Program(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
         related_name="programs",
@@ -273,7 +274,7 @@ class Program(models.Model):
         return f"{self.name} - {self.department.name}"
 
 
-class Course(models.Model):
+class Course(SoftDeleteModel):
     COURSE_TYPE_CHOICES = [
         ("Core", "Core"),
         ("Elective", "Elective"),
@@ -319,7 +320,7 @@ class Course(models.Model):
         return f"{self.course_code} - {self.course_title}"
 
 
-class CBCSCourse(models.Model):
+class CBCSCourse(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
         related_name="cbcs_courses",
@@ -357,7 +358,7 @@ def department_gallery_upload_path(instance, filename):
     return f"departments/{dept_slug}/gallery/{filename}"
 
 
-class DepartmentGallery(models.Model):
+class DepartmentGallery(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
         related_name="gallery_images",
@@ -381,7 +382,7 @@ class DepartmentGallery(models.Model):
         return f"Gallery image for {self.department.name}"
 
 
-class Notice(models.Model):
+class Notice(SoftDeleteModel):
     NOTICE_CATEGORY_CHOICES = [
         ("General", "General"),
         ("Academic", "Academic"),
@@ -418,7 +419,7 @@ class Notice(models.Model):
         return f"[{self.category}] {self.title}"
 
 
-class Committee(models.Model):
+class Committee(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
         related_name="committees",
@@ -440,7 +441,7 @@ class Committee(models.Model):
         return f"{self.name} ({self.department.name})"
 
 
-class CommitteeMember(models.Model):
+class CommitteeMember(SoftDeleteModel):
     DESIGNATION_CHOICES = [
         ("Chairperson", "Chairperson"),
         ("Member", "Member"),
@@ -484,7 +485,7 @@ class CommitteeMember(models.Model):
         return f"{self.name_of_member} - {self.designation_in_committee}"
 
 
-class MinutesOfTheMeeting(models.Model):
+class MinutesOfTheMeeting(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
         related_name="minutes",
@@ -514,7 +515,7 @@ class MinutesOfTheMeeting(models.Model):
         verbose_name_plural = "Departmental Minutes "
 
 
-class Timetable(models.Model):
+class Timetable(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
         related_name="timetables",
@@ -538,7 +539,7 @@ class Timetable(models.Model):
         return self.title
 
 
-class StudyMaterial(models.Model):
+class StudyMaterial(SoftDeleteModel):
     department = models.ForeignKey(
         Department, related_name="study_materials", on_delete=models.CASCADE
     )

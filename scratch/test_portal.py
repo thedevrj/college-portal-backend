@@ -13,7 +13,7 @@ def run_diagnostic():
     print("--- STARTING PORTAL DIAGNOSTIC ---")
     
     # 1. Check User
-    user = User.objects.filter(username='cs_hod').first()
+    user = User.objects.filter(username='rd_cell_admin').first()
     if not user:
         print("ERROR: User 'cs_hod' not found!")
         return

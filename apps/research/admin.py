@@ -1,4 +1,5 @@
 from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from apps.accounts.mixins import PortalSecurityMixin
@@ -36,14 +37,14 @@ class ConsultancyResource(resources.ModelResource):
         model = Consultancy
 
 @admin.register(ResearchArea)
-class ResearchAreaAdmin(PortalSecurityMixin, admin.ModelAdmin):
+class ResearchAreaAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     list_display = ("available_research_areas_or_Specialization", "department", "campus")
     list_display_links = ("available_research_areas_or_Specialization", "department")
     list_filter = (SoftDeleteListFilter, "campus", "department")
     search_fields = ("available_research_areas_or_Specialization", "department__name")
 
 @admin.register(Consultancy)
-class ConsultancyAdmin(PortalSecurityMixin, admin.ModelAdmin):
+class ConsultancyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     list_display = ("faculty", "nature_of_consultancy", "campus")
     list_display_links = ("faculty", "nature_of_consultancy")
     list_filter = (SoftDeleteListFilter, "campus", "faculty", "start_date", "end_date")
@@ -51,7 +52,7 @@ class ConsultancyAdmin(PortalSecurityMixin, admin.ModelAdmin):
     autocomplete_fields = ("faculty",)
 
 @admin.register(ResearchFacility)
-class ResearchFacilityAdmin(PortalSecurityMixin, admin.ModelAdmin):
+class ResearchFacilityAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     list_display = ("name", "incharge", "campus")
     list_filter = (SoftDeleteListFilter, "campus")
     prepopulated_fields = {"slug": ("name",)}
@@ -64,7 +65,7 @@ class ResearchFacilityAdmin(PortalSecurityMixin, admin.ModelAdmin):
         except: return False
 
 @admin.register(ResearchProject)
-class ResearchProjectAdmin(PortalSecurityMixin, ImportExportModelAdmin):
+class ResearchProjectAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = ResearchProjectResource
     list_display = ("title", "principal_investigator", "funding_agency", "status", "campus")
     list_display_links = ("title", "principal_investigator")
@@ -73,7 +74,7 @@ class ResearchProjectAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     autocomplete_fields = ("principal_investigator", "co_investigators")
 
 @admin.register(ResearchScholar)
-class ResearchScholarAdmin(PortalSecurityMixin, ImportExportModelAdmin):
+class ResearchScholarAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = ResearchScholarResource
     list_display = ("scholar_name", "enrollment_no", "subject", "supervisor", "status", "campus")
     list_display_links = ("scholar_name", "enrollment_no")
@@ -82,7 +83,7 @@ class ResearchScholarAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     autocomplete_fields = ("supervisor", "co_supervisor")
 
 @admin.register(Publication)
-class PublicationAdmin(PortalSecurityMixin, ImportExportModelAdmin):
+class PublicationAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = PublicationResource
     list_display = ("title", "faculty", "publication_date", "campus")
     list_display_links = ("title", "faculty")
@@ -91,7 +92,7 @@ class PublicationAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     autocomplete_fields = ("faculty",)
 
 @admin.register(Patent)
-class PatentAdmin(PortalSecurityMixin, ImportExportModelAdmin):
+class PatentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = PatentResource
     list_display = ("title", "faculty", "date_of_filing", "status", "campus")
     list_display_links = ("title", "faculty")
@@ -100,7 +101,7 @@ class PatentAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     autocomplete_fields = ("faculty",)
 
 @admin.register(ResearchDevelopmentCellMember)
-class ResearchDevelopmentCellMemberAdmin(admin.ModelAdmin):
+class ResearchDevelopmentCellMemberAdmin(SimpleHistoryAdmin, admin.ModelAdmin):
     list_display = ("faculty", "designation", "order")
     list_editable = ("order",)
     ordering = ("order",)

@@ -18,7 +18,9 @@ def create_user_profile(sender, instance, created, **kwargs):
     from apps.accounts.models import UserProfile
 
     if created:
-        UserProfile.objects.get_or_create(user=instance)
+        UserProfile.objects.get_or_create(
+            user=instance, defaults={"force_password_change": True}
+        )
 
 
 from django.db.models.signals import pre_save

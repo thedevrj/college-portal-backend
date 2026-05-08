@@ -353,6 +353,7 @@ class FacultyResource(resources.ModelResource):
 
 
 from simple_history.admin import SimpleHistoryAdmin
+from apps.accounts.filters import SoftDeleteListFilter
 
 
 @admin.register(Faculty)
@@ -366,7 +367,7 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
         "campus",
         "is_active",
     )
-    list_filter = ("is_active", "campus", "department", "school", "designation")
+    list_filter = (SoftDeleteListFilter, "is_active", "campus", "department", "school", "designation")
     search_fields = ("name", "staff_no", "insti_email")
     prepopulated_fields = {"slug": ("name",)}
     actions = ["generate_portal_accounts"]

@@ -2,9 +2,9 @@ from django.db import models
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
+from apps.accounts.models import SoftDeleteModel
 
-
-class Faculty(models.Model):
+class Faculty(SoftDeleteModel):
 
     CAMPUS_CHOICES = [
         ("BBAU", "BBAU"),
@@ -121,6 +121,44 @@ class Faculty(models.Model):
                 pass
 
     def save(self, *args, **kwargs):
+        # 1. Sync or Create User if staff_no exists
+        if self.staff_no:
+            from django.contrib.auth.models import User
+            from apps.accounts.models import UserProfile
+            username = f"faculty_{self.staff_no}"
+            
+            is_new = self.pk is None
+            
+            if not self.user:
+                # Check if user already exists with this username
+                existing_user = User.objects.filter(username=username).first()
+                if existing_user:
+                    self.user = existing_user
+                else:
+                    user = User.objects.create_user(
+                        username=username,
+                        email=self.insti_email or "",
+                        password=f"bbau@{self.staff_no}" # Default password
+                    )
+                    self.user = user
+            
+            # Sync User fields
+            if self.user:
+                self.user.email = self.insti_email or ""
+                self.user.first_name = self.name.split(" ")[0]
+                self.user.last_name = " ".join(self.name.split(" ")[1:])
+                self.user.save()
+                
+                # Ensure UserProfile exists
+                profile, _ = UserProfile.objects.get_or_create(user=self.user)
+                
+                # If this is a newly linked account or the profile was just activated for the portal
+                if not profile.is_portal_user:
+                    profile.force_password_change = True
+                    profile.employee_id = str(self.staff_no)
+                    profile.is_portal_user = True
+                    profile.save()
+
         if not self.slug:
             self.slug = slugify(self.name) or "faculty"
 

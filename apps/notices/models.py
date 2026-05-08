@@ -1,8 +1,9 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from simple_history.models import HistoricalRecords
+from apps.accounts.models import SoftDeleteModel
 
-
-class GlobalNotice(models.Model):
+class GlobalNotice(SoftDeleteModel):
     CATEGORY_CHOICES = [
         ("Announcement", "Announcement"),
         ("Event", "Event"),
@@ -39,6 +40,7 @@ class GlobalNotice(models.Model):
 
     is_active = models.BooleanField(default=True)
     date_posted = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["-date_posted"]

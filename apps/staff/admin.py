@@ -1,6 +1,9 @@
 from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
+from apps.accounts.filters import SoftDeleteListFilter
+from apps.accounts.mixins import PortalSecurityMixin
 from .models import Staff
 
 
@@ -142,7 +145,7 @@ class StaffResource(resources.ModelResource):
 
 
 @admin.register(Staff)
-class StaffAdmin(ImportExportModelAdmin):
+class StaffAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = StaffResource
     list_display = (
         "name",
@@ -152,7 +155,7 @@ class StaffAdmin(ImportExportModelAdmin):
         "staff_type",
         "is_active",
     )
-    list_filter = ("staff_type", "campus", "is_active")
+    list_filter = (SoftDeleteListFilter, "staff_type", "campus", "is_active")
     search_fields = (
         "name",
         "staff_no",

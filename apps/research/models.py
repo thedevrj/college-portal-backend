@@ -3,6 +3,7 @@ from apps.accounts.models import SoftDeleteModel
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
+from simple_history.models import HistoricalRecords
 
 
 class ResearchArea(SoftDeleteModel):
@@ -16,6 +17,7 @@ class ResearchArea(SoftDeleteModel):
     available_research_areas_or_Specialization = models.CharField(max_length=255)
     description = RichTextField(blank=True, null=True)
     campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f"{self.available_research_areas_or_Specialization} ({self.department.name})"
@@ -38,6 +40,7 @@ class ResearchFacility(SoftDeleteModel):
         blank=True,
         related_name="managed_facilities",
     )
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name_plural = "Research Facilities"
@@ -106,6 +109,7 @@ class ResearchProject(SoftDeleteModel):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     description = RichTextField(blank=True, null=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.title
@@ -176,6 +180,7 @@ class ResearchScholar(SoftDeleteModel):
     thesis_submission_date = models.DateField(null=True, blank=True)
     viva_voce_date = models.DateField(null=True, blank=True)
     award_date = models.DateField(null=True, blank=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.scholar_name
@@ -253,6 +258,7 @@ class Publication(SoftDeleteModel):
         null=True,
         help_text="Please specify indexing name if 'Others' is selected",
     )
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["-publication_date"]
@@ -303,6 +309,7 @@ class Consultancy(SoftDeleteModel):
             ("Satellite Campus Amethi", "Satellite Campus Amethi"),
         ],
     )
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name_plural = "Consultancies"
@@ -345,6 +352,7 @@ class Patent(SoftDeleteModel):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Filed")
     date_of_filing = models.DateField(blank=True, null=True)
     description = RichTextField(blank=True, null=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.date_of_filing})"
@@ -358,6 +366,7 @@ class ResearchDevelopmentCellMember(SoftDeleteModel):
         max_length=255, help_text="Designation in R&D Cell e.g. Director, Member"
     )
     order = models.PositiveIntegerField(default=0)
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["order", "faculty__name"]
