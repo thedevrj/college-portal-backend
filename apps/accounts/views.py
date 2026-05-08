@@ -3,6 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views import View
 from django.utils.decorators import method_decorator
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from .serializers import CustomTokenObtainPairSerializer, ChangePasswordSerializer
 
 from .models import PortalRole
 
@@ -146,3 +152,35 @@ def get_entities_api(request):
         return JsonResponse({"entities": entities})
     except LookupError:
         return JsonResponse({"entities": []})
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom JWT login view that includes the 'force_password_change' flag.
+    """
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class ChangePasswordView(APIView):
+    """
+    API endpoint to change password and clear the 'force_password_change' flag.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            
+            # Clear the force change flag
+            try:
+                profile = user.portal_profile
+                profile.force_password_change = False
+                profile.save()
+            except Exception:
+                pass
+                
+            return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

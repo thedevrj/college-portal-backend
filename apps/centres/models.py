@@ -1,8 +1,10 @@
 from django.db import models
 from django.utils.text import slugify
+from simple_history.models import HistoricalRecords
+from apps.accounts.models import SoftDeleteModel
 
 
-class Centre(models.Model):
+class Centre(SoftDeleteModel):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
 
@@ -47,6 +49,7 @@ class Centre(models.Model):
         ordering = ["name"]
 
     description = models.TextField(blank=True, null=True)
+    history = HistoricalRecords()
 
     def clean(self):
         super().clean()
