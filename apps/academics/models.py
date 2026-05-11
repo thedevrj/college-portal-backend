@@ -282,7 +282,8 @@ class Program(SoftDeleteModel):
             raise ValidationError("A program cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
-        return f"{self.name} - {self.department.name}"
+        owner = self.department.name if self.department else self.centre.name if self.centre else "Unknown"
+        return f"{self.name} - {owner}"
 
 
 class Course(SoftDeleteModel):
@@ -484,7 +485,8 @@ class Committee(SoftDeleteModel):
             raise ValidationError("A Committee cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
-        return f"{self.name} ({self.department.name})"
+        owner = self.department.name if self.department else self.centre.name if self.centre else "Unknown"
+        return f"{self.name} ({owner})"
 
 
 class CommitteeMember(SoftDeleteModel):
@@ -568,7 +570,8 @@ class MinutesOfTheMeeting(SoftDeleteModel):
             raise ValidationError("Minutes of Meeting cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
-        return f"Minutes of {self.department.name} - {self.date_of_meeting}"
+        owner = self.department.name if self.department else self.centre.name if self.centre else "Unknown"
+        return f"Minutes of {owner} - {self.date_of_meeting}"
 
     class Meta:
         ordering = ["-date_of_meeting"]
