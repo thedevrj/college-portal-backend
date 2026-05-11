@@ -1,10 +1,21 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Faculty
 from .serializers import FacultyListSerializer, FacultyDetailSerializer
 from college_backend_portal.pagination import FlexiblePagination
+
+
+class FacultyFilter(django_filters.FilterSet):
+    centre_slug = django_filters.CharFilter(field_name="centre__slug")
+    department_slug = django_filters.CharFilter(field_name="department__slug")
+    school_slug = django_filters.CharFilter(field_name="school__slug")
+
+    class Meta:
+        model = Faculty
+        fields = ["designation", "campus"]
 
 
 class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -23,13 +34,7 @@ class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = {
-        "department__slug": ["exact"],
-        "school__slug": ["exact"],
-        "centre__slug": ["exact"],
-        "designation": ["exact"],
-        "campus": ["exact"],
-    }
+    filterset_class = FacultyFilter
     search_fields = ["name", "designation", "qualification", "research_int"]
     ordering_fields = [
         "name",

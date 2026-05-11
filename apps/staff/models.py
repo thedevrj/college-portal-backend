@@ -109,7 +109,7 @@ class Staff(SoftDeleteModel):
                 if not profile.is_portal_user:
                     profile.force_password_change = True
                     profile.employee_id = str(self.staff_no)
-                    profile.is_portal_user = True
+                    profile.is_portal_user = False
                     profile.save()
 
         if not self.slug:

@@ -105,42 +105,42 @@ class DepartmentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModel
 
 @admin.register(Program)
 class ProgramAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
-    list_display = ("name", "department", "level", "duration", "intake")
-    list_display_links = ("name", "department")
-    list_filter = (SoftDeleteListFilter, "level", "department")
+    list_display = ("name", "department", "centre", "level", "duration", "intake")
+    list_display_links = ("name", "department", "centre")
+    list_filter = (SoftDeleteListFilter, "level", "department", "centre")
     search_fields = ("name",)
     inlines = [CourseInline]
 
 
 @admin.register(Notice)
 class NoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "department", "category", "date_posted", "is_active")
-    list_display_links = ("title", "department")
-    list_filter = (SoftDeleteListFilter, "category", "department", "date_posted", "is_active")
+    list_display = ("title", "department", "centre", "category", "date_posted", "is_active")
+    list_display_links = ("title", "department", "centre")
+    list_filter = (SoftDeleteListFilter, "category", "department", "centre", "date_posted", "is_active")
     search_fields = ("title", "content")
 
 
 @admin.register(Committee)
 class CommitteeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("name", "department")
-    list_display_links = ("name", "department")
-    list_filter = (SoftDeleteListFilter, "department")
+    list_display = ("name", "department", "centre")
+    list_display_links = ("name", "department", "centre")
+    list_filter = (SoftDeleteListFilter, "department", "centre")
     search_fields = ("name",)
     inlines = [CommitteeMemberInline]
 
 
 @admin.register(MinutesOfTheMeeting)
 class MinutesAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("meeting_title", "date_of_meeting", "department")
-    list_display_links = ("meeting_title", "date_of_meeting", "department")
-    list_filter = (SoftDeleteListFilter, "department", "date_of_meeting")
+    list_display = ("meeting_title", "date_of_meeting", "department", "centre")
+    list_display_links = ("meeting_title", "date_of_meeting", "department", "centre")
+    list_filter = (SoftDeleteListFilter, "department", "centre", "date_of_meeting")
     search_fields = ("meeting_title", "date_of_meeting")
 
 
 @admin.register(CBCSCourse)
 class CBCSCourseAdmin(PortalSecurityMixin, ImportExportModelAdmin):
-    list_display = ("course_code", "course_title", "department", "semester", "credits")
-    list_filter = (SoftDeleteListFilter, "department", "semester")
+    list_display = ("course_code", "course_title", "department", "centre", "semester", "credits")
+    list_filter = (SoftDeleteListFilter, "department", "centre", "semester")
     search_fields = ("course_code", "course_title")
 
 
@@ -161,13 +161,13 @@ class DepartmentGalleryAdmin(PortalSecurityMixin, ImportExportModelAdmin):
 
 @admin.register(Timetable)
 class TimetableAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "department", "program", "uploaded_at")
-    list_filter = (SoftDeleteListFilter, "department", "program")
+    list_display = ("title", "department", "centre", "program", "uploaded_at")
+    list_filter = (SoftDeleteListFilter, "department", "centre", "program")
     search_fields = ("title",)
 
 
 @admin.register(StudyMaterial)
 class StudyMaterialAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "department", "program", "uploaded_at")
-    list_filter = (SoftDeleteListFilter, "department", "program")
+    list_display = ("title", "department", "centre", "program", "uploaded_at")
+    list_filter = (SoftDeleteListFilter, "department", "centre", "program")
     search_fields = ("title",)

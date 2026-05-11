@@ -4,20 +4,21 @@ from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
 from apps.accounts.models import SoftDeleteModel
 
+
 class Faculty(SoftDeleteModel):
 
     CAMPUS_CHOICES = [
         ("BBAU", "BBAU"),
         ("Satellite Campus Amethi", "Satellite Campus Amethi"),
     ]
-    
+
     user = models.OneToOneField(
         "auth.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="faculty_profile",
-        help_text="Link this faculty record to a user account for login access."
+        help_text="Link this faculty record to a user account for login access.",
     )
 
     staff_no = models.PositiveIntegerField(
@@ -125,10 +126,11 @@ class Faculty(SoftDeleteModel):
         if self.staff_no:
             from django.contrib.auth.models import User
             from apps.accounts.models import UserProfile
+
             username = f"faculty_{self.staff_no}"
-            
+
             is_new = self.pk is None
-            
+
             if not self.user:
                 # Check if user already exists with this username
                 existing_user = User.objects.filter(username=username).first()
@@ -138,22 +140,23 @@ class Faculty(SoftDeleteModel):
                     user = User.objects.create_user(
                         username=username,
                         email=self.insti_email or "",
-                        password=f"bbau@{self.staff_no}" # Default password
+                        password=f"bbau@{self.staff_no}",  # Default password
                     )
                     self.user = user
-            
+
             # Sync User fields
             if self.user:
                 self.user.email = self.insti_email or ""
                 self.user.first_name = self.name.split(" ")[0]
                 self.user.last_name = " ".join(self.name.split(" ")[1:])
                 self.user.save()
-                
+
                 # Ensure UserProfile exists
-                profile, _ = UserProfile.objects.get_or_create(user=self.user)
-                
-                # If this is a newly linked account or the profile was just activated for the portal
-                if not profile.is_portal_user:
+                profile, created = UserProfile.objects.get_or_create(user=self.user)
+
+                # Safety First: Only force password change if the user was just created
+                # or if they don't have a portal profile yet.
+                if created:
                     profile.force_password_change = True
                     profile.employee_id = str(self.staff_no)
                     profile.is_portal_user = True

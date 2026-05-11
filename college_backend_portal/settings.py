@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "apps.staff",
     "apps.research",
     "simple_history",
+    "django_cleanup.apps.CleanupConfig",
 ]
 
 # Portal Login URL (used by @login_required)
@@ -247,11 +248,6 @@ JAZZMIN_SETTINGS = {
     "search_model": ["auth.User"],
     # Top menu
     "topmenu_links": [
-        {
-            "name": "Portal Home",
-            "url": "/portal/",
-            "permissions": ["accounts.view_portalaccess"],
-        },
         {"name": "University Website", "url": "https://bbau.ac.in", "new_window": True},
     ],
     # User menu (top right)

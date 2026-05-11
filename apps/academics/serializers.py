@@ -177,6 +177,7 @@ class CBCSCourseSerializer(serializers.ModelSerializer):
 class BaseProgramSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source="department.name", read_only=True)
     school_name = serializers.CharField(source="department.school.name", read_only=True)
+    centre_name = serializers.CharField(source="centre.name", read_only=True)
 
     class Meta:
         model = Program
@@ -196,6 +197,8 @@ class ProgramListSerializer(BaseProgramSerializer):
             "department",
             "department_name",
             "school_name",
+            "centre",
+            "centre_name",
             "fees",
             "courses",
             "notification_or_document_file",
@@ -212,18 +215,32 @@ class ProgramDetailSerializer(BaseProgramSerializer):
 
 class NoticeListSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source="department.name", read_only=True)
+    centre_name = serializers.CharField(source="centre.name", read_only=True)
+    attachment = serializers.SerializerMethodField()
 
     class Meta:
         model = Notice
         fields = "__all__"
+
+    def get_attachment(self, obj):
+        if obj.attachment:
+            return obj.attachment.url
+        return None
 
 
 class NoticeDetailSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source="department.name", read_only=True)
+    centre_name = serializers.CharField(source="centre.name", read_only=True)
+    attachment = serializers.SerializerMethodField()
 
     class Meta:
         model = Notice
         fields = "__all__"
+
+    def get_attachment(self, obj):
+        if obj.attachment:
+            return obj.attachment.url
+        return None
 
 
 class CommitteeMemberSerializer(serializers.ModelSerializer):

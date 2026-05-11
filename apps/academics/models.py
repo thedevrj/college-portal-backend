@@ -216,6 +216,13 @@ class Program(SoftDeleteModel):
         null=True,
         blank=True,
     )
+    centre = models.ForeignKey(
+        "centres.Centre",
+        related_name="programs",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=255, verbose_name="Name of Program")
     level = models.CharField(
         max_length=50,
@@ -269,6 +276,10 @@ class Program(SoftDeleteModel):
             raise ValidationError(
                 {"other_level": "This field is required when level is 'Others'."}
             )
+        if not self.department and not self.centre:
+            raise ValidationError("A program must be associated with either a Department or a Centre.")
+        if self.department and self.centre:
+            raise ValidationError("A program cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
         return f"{self.name} - {self.department.name}"
@@ -328,6 +339,13 @@ class CBCSCourse(SoftDeleteModel):
         null=True,
         blank=True,
     )
+    centre = models.ForeignKey(
+        "centres.Centre",
+        related_name="cbcs_courses",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     program = models.ForeignKey(
         Program,
         related_name="cbcs_courses",
@@ -343,6 +361,13 @@ class CBCSCourse(SoftDeleteModel):
 
     class Meta:
         ordering = ["semester", "course_code"]
+
+    def clean(self):
+        super().clean()
+        if not self.department and not self.centre:
+            raise ValidationError("A CBCS Course must be associated with either a Department or a Centre.")
+        if self.department and self.centre:
+            raise ValidationError("A CBCS Course cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
         return f"CBCS: {self.course_code} - {self.course_title}"
@@ -392,7 +417,10 @@ class Notice(SoftDeleteModel):
         ("Others", "Others"),
     ]
     department = models.ForeignKey(
-        Department, related_name="notices", on_delete=models.CASCADE
+        Department, related_name="notices", on_delete=models.CASCADE, null=True, blank=True
+    )
+    centre = models.ForeignKey(
+        "centres.Centre", related_name="notices", on_delete=models.CASCADE, null=True, blank=True
     )
     title = models.CharField(max_length=255)
     category = models.CharField(max_length=50, choices=NOTICE_CATEGORY_CHOICES)
@@ -414,6 +442,10 @@ class Notice(SoftDeleteModel):
             raise ValidationError(
                 {"other_category": "This field is required when category is 'Others'."}
             )
+        if not self.department and not self.centre:
+            raise ValidationError("A Notice must be associated with either a Department or a Centre.")
+        if self.department and self.centre:
+            raise ValidationError("A Notice cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
         return f"[{self.category}] {self.title}"
@@ -422,6 +454,13 @@ class Notice(SoftDeleteModel):
 class Committee(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
+        related_name="committees",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    centre = models.ForeignKey(
+        "centres.Centre",
         related_name="committees",
         on_delete=models.CASCADE,
         null=True,
@@ -436,6 +475,13 @@ class Committee(SoftDeleteModel):
         help_text="Notification or document related to the committee",
     )
     history = HistoricalRecords()
+
+    def clean(self):
+        super().clean()
+        if not self.department and not self.centre:
+            raise ValidationError("A Committee must be associated with either a Department or a Centre.")
+        if self.department and self.centre:
+            raise ValidationError("A Committee cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
         return f"{self.name} ({self.department.name})"
@@ -493,6 +539,13 @@ class MinutesOfTheMeeting(SoftDeleteModel):
         null=True,
         blank=True,
     )
+    centre = models.ForeignKey(
+        "centres.Centre",
+        related_name="minutes",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     meeting_title = models.CharField(
         max_length=255, null=True, blank=True, help_text="Title of the meeting"
     )
@@ -506,6 +559,13 @@ class MinutesOfTheMeeting(SoftDeleteModel):
         help_text="Upload Minutes of the meeting",
     )
     history = HistoricalRecords()
+
+    def clean(self):
+        super().clean()
+        if not self.department and not self.centre:
+            raise ValidationError("Minutes of Meeting must be associated with either a Department or a Centre.")
+        if self.department and self.centre:
+            raise ValidationError("Minutes of Meeting cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
         return f"Minutes of {self.department.name} - {self.date_of_meeting}"
@@ -523,6 +583,13 @@ class Timetable(SoftDeleteModel):
         null=True,
         blank=True,
     )
+    centre = models.ForeignKey(
+        "centres.Centre",
+        related_name="timetables",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     program = models.ForeignKey(
         Program,
         related_name="timetables",
@@ -535,13 +602,23 @@ class Timetable(SoftDeleteModel):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
+    def clean(self):
+        super().clean()
+        if not self.department and not self.centre:
+            raise ValidationError("Timetable must be associated with either a Department or a Centre.")
+        if self.department and self.centre:
+            raise ValidationError("Timetable cannot be associated with both a Department and a Centre.")
+
     def __str__(self):
         return self.title
 
 
 class StudyMaterial(SoftDeleteModel):
     department = models.ForeignKey(
-        Department, related_name="study_materials", on_delete=models.CASCADE
+        Department, related_name="study_materials", on_delete=models.CASCADE, null=True, blank=True
+    )
+    centre = models.ForeignKey(
+        "centres.Centre", related_name="study_materials", on_delete=models.CASCADE, null=True, blank=True
     )
     program = models.ForeignKey(
         Program,
@@ -556,6 +633,13 @@ class StudyMaterial(SoftDeleteModel):
     attachment = models.FileField(upload_to="study_materials/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
+
+    def clean(self):
+        super().clean()
+        if not self.department and not self.centre:
+            raise ValidationError("Study Material must be associated with either a Department or a Centre.")
+        if self.department and self.centre:
+            raise ValidationError("Study Material cannot be associated with both a Department and a Centre.")
 
     def __str__(self):
         return self.title
