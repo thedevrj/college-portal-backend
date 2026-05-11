@@ -14,3 +14,4 @@ django-import-export==3.3.3
 django-jazzmin==2.6.0
 openpyxl==3.1.2
 django-simple-history==3.7.0
+django-cleanup==8.1.0

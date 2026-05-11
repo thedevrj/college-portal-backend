@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.text import slugify
 from simple_history.models import HistoricalRecords
 from apps.accounts.models import SoftDeleteModel
+from ckeditor.fields import RichTextField
 
 
 class Centre(SoftDeleteModel):
@@ -49,6 +50,12 @@ class Centre(SoftDeleteModel):
         ordering = ["name"]
 
     description = models.TextField(blank=True, null=True)
+    about = RichTextField(blank=True, null=True)
+    thrust_areas = RichTextField(
+        blank=True,
+        null=True,
+        help_text="Major research and academic focus areas of the centre",
+    )
     history = HistoricalRecords()
 
     def clean(self):
