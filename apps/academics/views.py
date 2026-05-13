@@ -1,6 +1,9 @@
 from rest_framework import viewsets, filters
 from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 from .models import (
     School,
     SchoolBoardCommittee,
@@ -46,25 +49,52 @@ class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
         return SchoolDetailSerializer
 
 
+class SchoolBoardCommitteeFilter(django_filters.FilterSet):
+    school_slug = django_filters.CharFilter(field_name="school__slug")
+    school__slug = django_filters.CharFilter(field_name="school__slug")
+
+    class Meta:
+        model = SchoolBoardCommittee
+        fields = []
+
+
 class SchoolBoardCommitteeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SchoolBoardCommittee.objects.all().prefetch_related("members")
     serializer_class = SchoolBoardCommitteeSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["school__slug", "school_slug"]
+    filterset_class = SchoolBoardCommitteeFilter
     pagination_class = None
+
+
+class SchoolBoardMOMFilter(django_filters.FilterSet):
+    school_slug = django_filters.CharFilter(field_name="school__slug")
+    school__slug = django_filters.CharFilter(field_name="school__slug")
+
+    class Meta:
+        model = SchoolBoardMOM
+        fields = ["date_of_meeting"]
 
 
 class SchoolBoardMOMViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SchoolBoardMOM.objects.all()
     serializer_class = SchoolBoardMOMSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["school__slug", "school_slug"]
+    filterset_class = SchoolBoardMOMFilter
+
+
+class DepartmentFilter(django_filters.FilterSet):
+    school_slug = django_filters.CharFilter(field_name="school__slug")
+    school__slug = django_filters.CharFilter(field_name="school__slug")
+
+    class Meta:
+        model = Department
+        fields = ["campus"]
 
 
 class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Department.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["school__slug", "school_slug", "campus"]
+    filterset_class = DepartmentFilter
     search_fields = ["name"]
     lookup_field = "slug"
     pagination_class = None
@@ -73,10 +103,6 @@ class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == "list":
             return DepartmentListSerializer
         return DepartmentDetailSerializer
-
-
-from rest_framework.decorators import action
-from rest_framework.response import Response
 
 
 class ProgramFilter(django_filters.FilterSet):

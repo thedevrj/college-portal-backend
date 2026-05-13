@@ -40,11 +40,20 @@ class ResearchBaseViewSet(viewsets.ModelViewSet):
             serializer.save()
 
 
+class ResearchAreaFilter(django_filters.FilterSet):
+    department_slug = django_filters.CharFilter(field_name="department__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
+
+    class Meta:
+        model = ResearchArea
+        fields = ["campus"]
+
+
 class ResearchAreaViewSet(ResearchBaseViewSet):
     queryset = ResearchArea.objects.all()
     serializer_class = ResearchAreaSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["department__slug", "department_slug", "department__id", "campus"]
+    filterset_class = ResearchAreaFilter
     search_fields = ["available_research_areas_or_Specialization", "description"]
     pagination_class = None
 
@@ -57,6 +66,23 @@ class ResearchFacilityViewSet(ResearchBaseViewSet):
     pagination_class = None
 
 
+class ConsultancyFilter(django_filters.FilterSet):
+    department_slug = django_filters.CharFilter(field_name="department__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
+    faculty_slug = django_filters.CharFilter(field_name="faculty__slug")
+    faculty__slug = django_filters.CharFilter(field_name="faculty__slug")
+
+    class Meta:
+        model = Consultancy
+        fields = {
+            "nature_of_consultancy": ["exact"],
+            "faculty__name": ["icontains"],
+            "campus": ["exact"],
+            "start_date": ["year", "exact", "gte", "lte"],
+            "end_date": ["year", "exact", "gte", "lte"],
+        }
+
+
 class ConsultancyViewSet(ResearchBaseViewSet):
     queryset = Consultancy.objects.select_related("faculty", "department")
     serializer_class = ConsultancySerializer
@@ -65,17 +91,7 @@ class ConsultancyViewSet(ResearchBaseViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = {
-        "nature_of_consultancy": ["exact"],
-        "department__slug": ["exact"],
-        "department_slug": ["exact"],
-        "faculty__slug": ["exact"],
-        "faculty_slug": ["exact"],
-        "faculty__name": ["icontains"],
-        "campus": ["exact"],
-        "start_date": ["year", "exact", "gte", "lte"],
-        "end_date": ["year", "exact", "gte", "lte"],
-    }
+    filterset_class = ConsultancyFilter
     search_fields = ["nature_of_consultancy"]
     ordering_fields = ["amount", "start_date", "end_date"]
     pagination_class = None
