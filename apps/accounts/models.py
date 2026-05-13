@@ -34,6 +34,9 @@ class PortalRole(models.TextChoices):
     DEPT_STAFF = "DEPT_STAFF", "Department Staff"
     RD_ADMIN = "RD_ADMIN", "R&D Cell Admin"
     FACULTY = "FACULTY", "Faculty Member"
+    REGISTRAR = "REGISTRAR", "Registrar Office"
+    FINANCE_SECTION = "FINANCE_SECTION", "Finance Section"
+    ACADEMIC_SECTION = "ACADEMIC_SECTION", "Academic Section"
 
 
 class EntityType(models.TextChoices):

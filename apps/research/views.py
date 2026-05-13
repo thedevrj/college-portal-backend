@@ -44,7 +44,7 @@ class ResearchAreaViewSet(ResearchBaseViewSet):
     queryset = ResearchArea.objects.all()
     serializer_class = ResearchAreaSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["department__slug", "department__id", "campus"]
+    filterset_fields = ["department__slug", "department_slug", "department__id", "campus"]
     search_fields = ["available_research_areas_or_Specialization", "description"]
     pagination_class = None
 
@@ -68,7 +68,9 @@ class ConsultancyViewSet(ResearchBaseViewSet):
     filterset_fields = {
         "nature_of_consultancy": ["exact"],
         "department__slug": ["exact"],
+        "department_slug": ["exact"],
         "faculty__slug": ["exact"],
+        "faculty_slug": ["exact"],
         "faculty__name": ["icontains"],
         "campus": ["exact"],
         "start_date": ["year", "exact", "gte", "lte"],
@@ -83,7 +85,10 @@ class ResearchProjectFilter(django_filters.FilterSet):
     project_date = django_filters.DateFromToRangeFilter(field_name="start_date")
     department_slug = django_filters.CharFilter(field_name="department__slug")
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
     pi_slug = django_filters.CharFilter(field_name="principal_investigator__slug")
+    pi__slug = django_filters.CharFilter(field_name="principal_investigator__slug")
     pi_name = django_filters.CharFilter(
         field_name="principal_investigator__name", lookup_expr="icontains"
     )
@@ -119,7 +124,10 @@ class ResearchScholarFilter(django_filters.FilterSet):
     registration_date = django_filters.DateFromToRangeFilter(field_name="date_of_registration")
     department_slug = django_filters.CharFilter(field_name="department__slug")
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
     supervisor_slug = django_filters.CharFilter(field_name="supervisor__slug")
+    supervisor__slug = django_filters.CharFilter(field_name="supervisor__slug")
     supervisor_name = django_filters.CharFilter(
         field_name="supervisor__name", lookup_expr="icontains"
     )
@@ -149,11 +157,14 @@ class PublicationFilter(django_filters.FilterSet):
         field_name="publication_date"
     )
     faculty_slug = django_filters.CharFilter(field_name="faculty__slug")
+    faculty__slug = django_filters.CharFilter(field_name="faculty__slug")
     faculty_name = django_filters.CharFilter(
         field_name="faculty__name", lookup_expr="icontains"
     )
     department_slug = django_filters.CharFilter(field_name="department__slug")
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
 
     class Meta:
         model = Publication
@@ -176,11 +187,14 @@ class PublicationViewSet(ResearchBaseViewSet):
 class PatentFilter(django_filters.FilterSet):
     filing_date = django_filters.DateFromToRangeFilter(field_name="date_of_filing")
     faculty_slug = django_filters.CharFilter(field_name="faculty__slug")
+    faculty__slug = django_filters.CharFilter(field_name="faculty__slug")
     faculty_name = django_filters.CharFilter(
         field_name="faculty__name", lookup_expr="icontains"
     )
     department_slug = django_filters.CharFilter(field_name="department__slug")
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
 
     class Meta:
         model = Patent

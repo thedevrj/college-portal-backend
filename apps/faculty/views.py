@@ -12,6 +12,9 @@ class FacultyFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
     school_slug = django_filters.CharFilter(field_name="school__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
+    school__slug = django_filters.CharFilter(field_name="school__slug")
 
     class Meta:
         model = Faculty

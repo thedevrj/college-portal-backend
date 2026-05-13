@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "apps.notices",
     "apps.staff",
     "apps.research",
+    "apps.authorities",
     "simple_history",
     "django_cleanup.apps.CleanupConfig",
 ]
@@ -263,12 +264,13 @@ JAZZMIN_SETTINGS = {
     # App ordering in sidebar
     "order_with_respect_to": [
         "accounts",
+        "centres",
         "academics",
+        "notices",
         "research",
         "faculty",
-        "centres",
-        "notices",
         "staff",
+        "authorities",
     ],
     # Custom icons (FontAwesome 5)
     "icons": {
@@ -291,6 +293,9 @@ JAZZMIN_SETTINGS = {
         "faculty.Faculty": "fas fa-chalkboard-teacher",
         "staff.Staff": "fas fa-id-badge",
         "centres.Centre": "fas fa-network-wired",
+        "authorities.Authority": "fas fa-gavel",
+        "authorities.AuthorityMember": "fas fa-users-cog",
+        "authorities.AuthorityMinutes": "fas fa-file-invoice",
     },
     "default_icon_parents": "fas fa-folder",
     "default_icon_children": "fas fa-circle",

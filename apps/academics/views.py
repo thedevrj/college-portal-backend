@@ -50,7 +50,7 @@ class SchoolBoardCommitteeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SchoolBoardCommittee.objects.all().prefetch_related("members")
     serializer_class = SchoolBoardCommitteeSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["school__slug"]
+    filterset_fields = ["school__slug", "school_slug"]
     pagination_class = None
 
 
@@ -58,13 +58,13 @@ class SchoolBoardMOMViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SchoolBoardMOM.objects.all()
     serializer_class = SchoolBoardMOMSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["school__slug"]
+    filterset_fields = ["school__slug", "school_slug"]
 
 
 class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Department.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["school__slug", "campus"]
+    filterset_fields = ["school__slug", "school_slug", "campus"]
     search_fields = ["name"]
     lookup_field = "slug"
     pagination_class = None
@@ -82,6 +82,8 @@ from rest_framework.response import Response
 class ProgramFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
 
     class Meta:
         model = Program
@@ -119,6 +121,8 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
 class CBCSCourseFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
 
     class Meta:
         model = CBCSCourse
@@ -136,6 +140,8 @@ class CBCSCourseViewSet(viewsets.ReadOnlyModelViewSet):
 class NoticeFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
 
     class Meta:
         model = Notice
@@ -157,6 +163,8 @@ class NoticeViewSet(viewsets.ReadOnlyModelViewSet):
 class CommitteeFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
 
     class Meta:
         model = Committee
@@ -174,6 +182,8 @@ class CommitteeViewSet(viewsets.ReadOnlyModelViewSet):
 class MinutesFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
 
     class Meta:
         model = MinutesOfTheMeeting
@@ -190,6 +200,8 @@ class MinutesViewSet(viewsets.ReadOnlyModelViewSet):
 class TimetableFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
 
     class Meta:
         model = Timetable
@@ -207,6 +219,8 @@ class TimetableViewSet(viewsets.ReadOnlyModelViewSet):
 class StudyMaterialFilter(django_filters.FilterSet):
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department_slug = django_filters.CharFilter(field_name="department__slug")
+    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department__slug = django_filters.CharFilter(field_name="department__slug")
 
     class Meta:
         model = StudyMaterial
