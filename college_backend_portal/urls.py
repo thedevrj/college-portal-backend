@@ -40,6 +40,7 @@ urlpatterns = [
     path("api/v1/", include("apps.notices.urls")),
     path("api/v1/", include("apps.research.urls")),
     path("api/v1/", include("apps.staff.urls")),
+    path("api/v1/", include("apps.authorities.urls")),
     # Authentication (JWT for public API)
     path("api/v1/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
