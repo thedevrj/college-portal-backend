@@ -10,7 +10,7 @@ from .models import (
     Publication,
     Patent,
     ResearchDevelopmentCellMember,
-    Consultancy
+    Consultancy,
 )
 from .serializers import (
     ResearchAreaSerializer,
@@ -31,6 +31,7 @@ class ResearchBaseViewSet(viewsets.ModelViewSet):
     - Public (anonymous) users only see PUBLISHED records.
     - Authenticated users see all records (for management).
     """
+
     permission_classes = [IsDepartmentAdmin]
 
     def perform_create(self, serializer):
@@ -133,11 +134,10 @@ class ResearchProjectViewSet(ResearchBaseViewSet):
         return ResearchProjectDetailSerializer
 
 
-
-
-
 class ResearchScholarFilter(django_filters.FilterSet):
-    registration_date = django_filters.DateFromToRangeFilter(field_name="date_of_registration")
+    registration_date = django_filters.DateFromToRangeFilter(
+        field_name="date_of_registration"
+    )
     department_slug = django_filters.CharFilter(field_name="department__slug")
     centre_slug = django_filters.CharFilter(field_name="centre__slug")
     department__slug = django_filters.CharFilter(field_name="department__slug")
@@ -214,7 +214,7 @@ class PatentFilter(django_filters.FilterSet):
 
     class Meta:
         model = Patent
-        fields = ["status", "campus"]
+        fields = ["status"]
 
 
 class PatentViewSet(ResearchBaseViewSet):

@@ -7,14 +7,16 @@ def dashboard_stats(request):
         return {}
 
     # Check if this is an admin/portal page
-    if request.path.startswith('/admin/') or request.path.startswith('/portal/'):
+    if request.path.startswith("/admin/") or request.path.startswith("/portal/"):
         try:
             profile = request.user.portal_profile
             if profile.is_portal_user:
                 return {
-                    'portal_stats': profile.get_dashboard_stats(),
-                    'user_name': request.user.first_name or request.user.username,
-                    'user_avatar': profile.profile_photo.url if profile.profile_photo else None
+                    "portal_stats": profile.get_dashboard_stats(),
+                    "user_name": request.user.get_full_name(),
+                    "user_avatar": (
+                        profile.profile_photo.url if profile.profile_photo else None
+                    ),
                 }
         except:
             pass

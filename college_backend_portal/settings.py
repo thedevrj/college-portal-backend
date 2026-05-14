@@ -107,7 +107,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "college_backend_portal.wsgi.application"
-
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -264,10 +264,18 @@ JAZZMIN_SETTINGS = {
     # App ordering in sidebar
     "order_with_respect_to": [
         "accounts",
-        "centres",
         "academics",
+        "centres",
         "notices",
         "research",
+        "research.Publication",  # Rearrange Research models here:
+        "research.ResearchProject",
+        "research.ResearchScholar",
+        "research.Patent",
+        "research.Consultancy",
+        "research.ResearchArea",
+        "research.ResearchFacility",
+        "research.ResearchDevelopmentCellMember",
         "faculty",
         "staff",
         "authorities",
