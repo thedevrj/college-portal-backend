@@ -159,7 +159,7 @@ class ResearchScholar(SoftDeleteModel):
     other_category = models.CharField(max_length=100, blank=True, null=True)
     date_of_birth = models.DateField(null=True)
     address = models.CharField(max_length=255, null=True, blank=True)
-    state = models.CharField(max_length=100, null=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
     supervisor = models.ForeignKey(
         "faculty.Faculty",
         related_name="supervised_scholars_new",
@@ -173,8 +173,12 @@ class ResearchScholar(SoftDeleteModel):
         blank=True,
         help_text="Select multiple time to add many co-supervisor(s)",
     )
-    research_topic = models.CharField(max_length=500, null=True, blank=True)
-    subject = models.CharField(max_length=255, null=True, blank=True)
+    research_topic = models.CharField(
+        max_length=500, null=True, blank=True, verbose_name="Research Topic /Title"
+    )
+    subject = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Specialization"
+    )
     date_of_registration = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pursuing")
     thesis_submission_date = models.DateField(null=True, blank=True)
@@ -341,13 +345,6 @@ class Patent(SoftDeleteModel):
         blank=True,
     )
     title = models.TextField()
-    campus = models.CharField(
-        max_length=50,
-        choices=[
-            ("BBAU", "BBAU"),
-            ("Satellite Campus Amethi", "Satellite Campus Amethi"),
-        ],
-    )
     patent_number = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Filed")
     date_of_filing = models.DateField(blank=True, null=True)

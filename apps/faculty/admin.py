@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from django import forms
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin
@@ -367,9 +369,19 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
         "campus",
         "is_active",
     )
-    list_filter = (SoftDeleteListFilter, "is_active", "campus", "department", "school", "designation")
+    list_filter = (
+        SoftDeleteListFilter,
+        "is_active",
+        "campus",
+        "department",
+        "school",
+        "designation",
+    )
     search_fields = ("name", "staff_no", "insti_email")
     prepopulated_fields = {"slug": ("name",)}
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
     actions = ["generate_portal_accounts"]
 
     @admin.action(description="Generate Portal Login Accounts for Selected Faculty")

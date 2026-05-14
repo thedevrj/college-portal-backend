@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from django import forms
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin
@@ -6,6 +8,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from .models import Authority, AuthorityMember, AuthorityMinutes
 
 # --- Resources for Import/Export ---
+
 
 class AuthorityMemberResource(resources.ModelResource):
     authority = fields.Field(
@@ -52,6 +55,7 @@ class AuthorityMinutesResource(resources.ModelResource):
 
 # --- Admin Classes ---
 
+
 class AuthorityMemberInline(admin.TabularInline):
     model = AuthorityMember
     extra = 1
@@ -75,6 +79,9 @@ class AuthorityMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     list_filter = ("authority", "designation")
     search_fields = ("name", "email", "phone_fax")
     ordering = ("authority", "order")
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(AuthorityMinutes)
@@ -83,3 +90,6 @@ class AuthorityMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     list_display = ("meeting_title", "authority", "date_of_meeting")
     list_filter = ("authority", "date_of_meeting")
     search_fields = ("meeting_title",)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }

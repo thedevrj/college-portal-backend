@@ -74,20 +74,20 @@ textarea:disabled:hover {
 
 /* === Fix Tabular Inline Scrolling === */
 /* Prevent the table from forcing a horizontal scroll */
-/* .tabular.inline-related .table-responsive {
+.tabular.inline-related .table-responsive {
     overflow-x: auto !important;
 }
 
 .tabular.inline-related table {
     width: 100% !important;
     table-layout: auto !important;
-} */
+}
 
 /* Allow text to wrap instead of pushing the table wider */
 /* .tabular.inline-related table th,
 .tabular.inline-related table td {
     white-space: normal !important;
-} */
+}
 
 /* Ensure form inputs scale down properly instead of holding a fixed rigid width */
 /* .tabular.inline-related table input[type="text"],

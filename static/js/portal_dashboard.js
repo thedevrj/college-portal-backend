@@ -1,11 +1,9 @@
 // Portal Dashboard Custom JavaScript
 // This file is used for general UI tweaks across the ERP portal.
 
-console.log("Portal Dashboard JS loaded.");
-
 /**
  * Sidebar User Panel Fix
- * Replaces the numeric Staff ID with the Faculty's Full Name 
+ * Replaces the numeric Staff ID with the Faculty's Full Name
  * and ensures the correct Profile Photo is displayed.
  */
 function updateSidebarIdentity() {

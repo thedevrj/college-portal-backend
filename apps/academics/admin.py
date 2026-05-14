@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from django import forms
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
 from import_export import resources, fields
@@ -90,6 +92,9 @@ class SchoolBoardMOMAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_filter = (SoftDeleteListFilter, "school", "date_of_meeting")
     search_fields = ("school__name",)
     ordering = ["-date_of_meeting"]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(Department)
@@ -118,6 +123,9 @@ class NoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display_links = ("title", "department", "centre")
     list_filter = (SoftDeleteListFilter, "category", "department", "centre", "date_posted", "is_active")
     search_fields = ("title", "content")
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(Committee)
@@ -135,6 +143,9 @@ class MinutesAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display_links = ("meeting_title", "date_of_meeting", "department", "centre")
     list_filter = (SoftDeleteListFilter, "department", "centre", "date_of_meeting")
     search_fields = ("meeting_title", "date_of_meeting")
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(CBCSCourse)

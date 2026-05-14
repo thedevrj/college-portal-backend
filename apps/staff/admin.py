@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from django import forms
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -164,3 +166,6 @@ class StaffAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
         "roles",
     )
     prepopulated_fields = {"slug": ("name",)}
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
