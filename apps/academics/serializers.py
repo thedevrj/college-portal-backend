@@ -192,6 +192,7 @@ class ProgramListSerializer(BaseProgramSerializer):
             "id",
             "name",
             "level",
+            "other_level",
             "duration",
             "intake",
             "department",
