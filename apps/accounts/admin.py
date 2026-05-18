@@ -120,6 +120,42 @@ class PortalAccessInline(admin.TabularInline):
         js = ("/static/js/portal_access_admin.js",)
 
 
+from django.db.models import Q
+
+class PortalRoleListFilter(admin.SimpleListFilter):
+    title = "Portal Role"
+    parameter_name = "portal_role"
+
+    def lookups(self, request, model_admin):
+        return PortalRole.choices
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(access_entries__role=self.value()).distinct()
+        return queryset
+
+
+class PortalUserListFilter(admin.SimpleListFilter):
+    title = "Portal User Status"
+    parameter_name = "is_portal_user"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("yes", "Yes"),
+            ("no", "No"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(portal_profile__is_portal_user=True)
+        elif self.value() == "no":
+            return queryset.filter(
+                Q(portal_profile__is_portal_user=False)
+                | Q(portal_profile__isnull=True)
+            )
+        return queryset
+
+
 admin.site.unregister(User)
 
 
@@ -133,6 +169,7 @@ class PortalUserAdmin(UserAdmin):
         "get_is_portal_user",
         "is_staff",
     )
+    list_filter = UserAdmin.list_filter + (PortalRoleListFilter, PortalUserListFilter)
 
     def get_is_portal_user(self, obj):
         try:

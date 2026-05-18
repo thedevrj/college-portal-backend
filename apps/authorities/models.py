@@ -45,6 +45,46 @@ class AuthorityMember(SoftDeleteModel):
     def __str__(self):
         return f"{self.name} - {self.authority.get_name_display()}"
 
+    @property
+    def parsed_phones(self):
+        if not self.phone_fax:
+            return []
+        parsed = []
+        # Split by comma
+        parts = self.phone_fax.split(",")
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            # Find parenthesis for labels like (O) or (Fax)
+            if "(" in part and ")" in part:
+                try:
+                    num, rest = part.split("(", 1)
+                    label = rest.split(")", 1)[0]
+                    parsed.append({
+                        "number": num.strip(),
+                        "label": f"({label.strip()})"
+                    })
+                except Exception:
+                    parsed.append({
+                        "number": part,
+                        "label": ""
+                    })
+            else:
+                # Check if there is space
+                subparts = part.split(None, 1)
+                if len(subparts) == 2:
+                    parsed.append({
+                        "number": subparts[0].strip(),
+                        "label": subparts[1].strip()
+                    })
+                else:
+                    parsed.append({
+                        "number": part,
+                        "label": ""
+                    })
+        return parsed
+
     class Meta:
         ordering = ["order", "id"]
         verbose_name_plural = "Authority Members"
