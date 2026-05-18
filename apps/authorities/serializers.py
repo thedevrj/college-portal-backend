@@ -1,29 +1,29 @@
 from rest_framework import serializers
-from .models import Authority, AuthorityMember, AuthorityMinutes
+from .models import (
+    BoardOfManagementMember,
+    BoardOfManagementMinutes,
+    AcademicCouncilMember,
+    AcademicCouncilMinutes,
+    PlanningBoardMember,
+    PlanningBoardMinutes,
+    FinanceCommitteeMember,
+    FinanceCommitteeMinutes,
+)
 
 
-class AuthorityMemberSerializer(serializers.ModelSerializer):
+# --- Board of Management (BoM) Serializers ---
+
+class BoardOfManagementMemberSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AuthorityMember
-        fields = [
-            "id",
-            "authority",
-            "provision",
-            "name",
-            "designation",
-            "email",
-            "phone_fax",
-            "date_of_nomination",
-            "date_of_expiry",
-            "order",
-        ]
+        model = BoardOfManagementMember
+        fields = "__all__"
 
 
-class AuthorityMinutesSerializer(serializers.ModelSerializer):
+class BoardOfManagementMinutesSerializer(serializers.ModelSerializer):
     file = serializers.SerializerMethodField()
 
     class Meta:
-        model = AuthorityMinutes
+        model = BoardOfManagementMinutes
         fields = "__all__"
 
     def get_file(self, obj):
@@ -32,10 +32,64 @@ class AuthorityMinutesSerializer(serializers.ModelSerializer):
         return None
 
 
-class AuthoritySerializer(serializers.ModelSerializer):
-    members = AuthorityMemberSerializer(many=True, read_only=True)
-    minutes = AuthorityMinutesSerializer(many=True, read_only=True)
+# --- Academic Council Serializers ---
+
+class AcademicCouncilMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcademicCouncilMember
+        fields = "__all__"
+
+
+class AcademicCouncilMinutesSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
 
     class Meta:
-        model = Authority
-        fields = ["id", "name", "members", "minutes"]
+        model = AcademicCouncilMinutes
+        fields = "__all__"
+
+    def get_file(self, obj):
+        if obj.file:
+            return obj.file.url
+        return None
+
+
+# --- Planning Board Serializers ---
+
+class PlanningBoardMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanningBoardMember
+        fields = "__all__"
+
+
+class PlanningBoardMinutesSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlanningBoardMinutes
+        fields = "__all__"
+
+    def get_file(self, obj):
+        if obj.file:
+            return obj.file.url
+        return None
+
+
+# --- Finance Committee Serializers ---
+
+class FinanceCommitteeMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FinanceCommitteeMember
+        fields = "__all__"
+
+
+class FinanceCommitteeMinutesSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FinanceCommitteeMinutes
+        fields = "__all__"
+
+    def get_file(self, obj):
+        if obj.file:
+            return obj.file.url
+        return None

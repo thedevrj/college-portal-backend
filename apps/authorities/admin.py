@@ -1,15 +1,23 @@
 from django.contrib import admin
-from django.db import models
-from django import forms
 from import_export import resources, fields
-from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
-from .models import Authority, AuthorityMember, AuthorityMinutes
+from .models import (
+    BoardOfManagementMember,
+    BoardOfManagementMinutes,
+    AcademicCouncilMember,
+    AcademicCouncilMinutes,
+    PlanningBoardMember,
+    PlanningBoardMinutes,
+    FinanceCommitteeMember,
+    FinanceCommitteeMinutes,
+)
 
 import re
 from datetime import datetime
 
+
+# --- Robust Date Parser ---
 
 def clean_and_parse_date(val):
     if val is None:
@@ -55,18 +63,20 @@ def clean_and_parse_date(val):
     return None
 
 
-class AuthorityMemberResource(resources.ModelResource):
-    authority = fields.Field(
-        column_name="authority",
-        attribute="authority",
-        widget=ForeignKeyWidget(Authority, "name"),
-    )
+def clean_row_none_strings(row):
+    for key in list(row.keys()):
+        val = row[key]
+        if val is not None and str(val).lower().strip() == "none":
+            row[key] = None
 
+
+# --- Resources for Import/Export ---
+
+class BoardOfManagementMemberResource(resources.ModelResource):
     class Meta:
-        model = AuthorityMember
+        model = BoardOfManagementMember
         fields = (
             "id",
-            "authority",
             "provision",
             "name",
             "designation",
@@ -79,139 +89,169 @@ class AuthorityMemberResource(resources.ModelResource):
         export_order = fields
 
     def before_import_row(self, row, **kwargs):
-        from .models import AuthorityType
-
-        # Normalize keys to lowercase to find the authority column flexibly
-        row_copy = {str(k).lower().strip(): v for k, v in row.items()}
-
-        # 1. Clean string "None" into real None
-        for key in list(row.keys()):
-            val = row[key]
-            if val is not None and str(val).lower().strip() == "none":
-                row[key] = None
-
-        # 2. Map human-readable Authority names to Database Choices
-        auth_key = next(
-            (
-                k
-                for k in ["authority", "authority name", "authority type"]
-                if k in row_copy
-            ),
-            None,
-        )
-        if auth_key and row_copy[auth_key]:
-            val = str(row_copy[auth_key]).strip().lower()
-            if "academic" in val:
-                row["authority"] = AuthorityType.ACADEMIC_COUNCIL.value
-            elif "management" in val or "bom" in val:
-                row["authority"] = AuthorityType.BOARD_OF_MANAGEMENT.value
-            elif "planning" in val:
-                row["authority"] = AuthorityType.PLANNING_BOARD.value
-            elif "finance" in val:
-                row["authority"] = AuthorityType.FINANCE_COMMITTEE.value
-
-        # 3. Clean up and parse date fields
+        clean_row_none_strings(row)
         for date_field in ["date_of_nomination", "date_of_expiry"]:
             if date_field in row:
                 row[date_field] = clean_and_parse_date(row[date_field])
-
         return super().before_import_row(row, **kwargs)
 
 
-class AuthorityMinutesResource(resources.ModelResource):
-    authority = fields.Field(
-        column_name="authority",
-        attribute="authority",
-        widget=ForeignKeyWidget(Authority, "name"),
-    )
-
+class BoardOfManagementMinutesResource(resources.ModelResource):
     class Meta:
-        model = AuthorityMinutes
+        model = BoardOfManagementMinutes
+        fields = ("id", "meeting_title", "date_of_meeting", "file")
+        export_order = fields
+
+    def before_import_row(self, row, **kwargs):
+        clean_row_none_strings(row)
+        if "date_of_meeting" in row:
+            row["date_of_meeting"] = clean_and_parse_date(row["date_of_meeting"])
+        return super().before_import_row(row, **kwargs)
+
+
+class AcademicCouncilMemberResource(resources.ModelResource):
+    class Meta:
+        model = AcademicCouncilMember
+        fields = ("id", "name", "designation", "institution", "contact", "email", "order")
+        export_order = fields
+
+    def before_import_row(self, row, **kwargs):
+        clean_row_none_strings(row)
+        return super().before_import_row(row, **kwargs)
+
+
+class AcademicCouncilMinutesResource(resources.ModelResource):
+    class Meta:
+        model = AcademicCouncilMinutes
+        fields = ("id", "meeting_title", "date_of_meeting", "file")
+        export_order = fields
+
+    def before_import_row(self, row, **kwargs):
+        clean_row_none_strings(row)
+        if "date_of_meeting" in row:
+            row["date_of_meeting"] = clean_and_parse_date(row["date_of_meeting"])
+        return super().before_import_row(row, **kwargs)
+
+
+class PlanningBoardMemberResource(resources.ModelResource):
+    class Meta:
+        model = PlanningBoardMember
         fields = (
             "id",
-            "authority",
-            "meeting_title",
-            "date_of_meeting",
-            "file",
+            "provision",
+            "name",
+            "date_of_appointment",
+            "date_of_expiry",
+            "in_the_capacity_of",
+            "order",
         )
         export_order = fields
 
     def before_import_row(self, row, **kwargs):
-        from .models import AuthorityType
-
-        # Normalize keys to lowercase to find the authority column flexibly
-        row_copy = {str(k).lower().strip(): v for k, v in row.items()}
-
-        # 1. Clean string "None" into real None
-        for key in list(row.keys()):
-            val = row[key]
-            if val is not None and str(val).lower().strip() == "none":
-                row[key] = None
-
-        # 2. Map human-readable Authority names to Database Choices
-        auth_key = next(
-            (
-                k
-                for k in ["authority", "authority name", "authority type"]
-                if k in row_copy
-            ),
-            None,
-        )
-        if auth_key and row_copy[auth_key]:
-            val = str(row_copy[auth_key]).strip().lower()
-            if "academic" in val:
-                row["authority"] = AuthorityType.ACADEMIC_COUNCIL.value
-            elif "management" in val or "bom" in val:
-                row["authority"] = AuthorityType.BOARD_OF_MANAGEMENT.value
-            elif "planning" in val:
-                row["authority"] = AuthorityType.PLANNING_BOARD.value
-            elif "finance" in val:
-                row["authority"] = AuthorityType.FINANCE_COMMITTEE.value
-
-        # 3. Clean up and parse date fields
-        if "date_of_meeting" in row:
-            row["date_of_meeting"] = clean_and_parse_date(row["date_of_meeting"])
-
+        clean_row_none_strings(row)
+        for date_field in ["date_of_appointment", "date_of_expiry"]:
+            if date_field in row:
+                row[date_field] = clean_and_parse_date(row[date_field])
         return super().before_import_row(row, **kwargs)
 
 
-# --- Admin Classes ---
+class PlanningBoardMinutesResource(resources.ModelResource):
+    class Meta:
+        model = PlanningBoardMinutes
+        fields = ("id", "meeting_title", "date_of_meeting", "file")
+        export_order = fields
+
+    def before_import_row(self, row, **kwargs):
+        clean_row_none_strings(row)
+        if "date_of_meeting" in row:
+            row["date_of_meeting"] = clean_and_parse_date(row["date_of_meeting"])
+        return super().before_import_row(row, **kwargs)
 
 
-class AuthorityMemberInline(admin.TabularInline):
-    model = AuthorityMember
-    extra = 1
+class FinanceCommitteeMemberResource(resources.ModelResource):
+    class Meta:
+        model = FinanceCommitteeMember
+        fields = ("id", "name", "designation", "contact", "email", "order")
+        export_order = fields
+
+    def before_import_row(self, row, **kwargs):
+        clean_row_none_strings(row)
+        return super().before_import_row(row, **kwargs)
 
 
-class AuthorityMinutesInline(admin.TabularInline):
-    model = AuthorityMinutes
-    extra = 1
+class FinanceCommitteeMinutesResource(resources.ModelResource):
+    class Meta:
+        model = FinanceCommitteeMinutes
+        fields = ("id", "meeting_title", "date_of_meeting", "file")
+        export_order = fields
+
+    def before_import_row(self, row, **kwargs):
+        clean_row_none_strings(row)
+        if "date_of_meeting" in row:
+            row["date_of_meeting"] = clean_and_parse_date(row["date_of_meeting"])
+        return super().before_import_row(row, **kwargs)
 
 
-@admin.register(Authority)
-class AuthorityAdmin(SimpleHistoryAdmin, ImportExportModelAdmin):
-    list_display = ("name", "get_name_display")
-    inlines = [AuthorityMemberInline, AuthorityMinutesInline]
+# --- Admin Registrations ---
+
+@admin.register(BoardOfManagementMember)
+class BoardOfManagementMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = BoardOfManagementMemberResource
+    list_display = ("name", "designation", "provision", "email", "order")
+    search_fields = ("name", "designation", "email")
+    list_filter = ("provision",)
 
 
-@admin.register(AuthorityMember)
-class AuthorityMemberAdmin(SimpleHistoryAdmin, ImportExportModelAdmin):
-    resource_class = AuthorityMemberResource
-    list_display = ("name", "authority", "designation", "order")
-    list_filter = ("authority", "designation")
-    search_fields = ("name", "email", "phone_fax")
-    ordering = ("authority", "order")
-    formfield_overrides = {
-        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
-    }
-
-
-@admin.register(AuthorityMinutes)
-class AuthorityMinutesAdmin(SimpleHistoryAdmin, ImportExportModelAdmin):
-    resource_class = AuthorityMinutesResource
-    list_display = ("meeting_title", "authority", "date_of_meeting")
-    list_filter = ("authority", "date_of_meeting")
+@admin.register(BoardOfManagementMinutes)
+class BoardOfManagementMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = BoardOfManagementMinutesResource
+    list_display = ("meeting_title", "date_of_meeting")
     search_fields = ("meeting_title",)
-    formfield_overrides = {
-        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
-    }
+    list_filter = ("date_of_meeting",)
+
+
+@admin.register(AcademicCouncilMember)
+class AcademicCouncilMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = AcademicCouncilMemberResource
+    list_display = ("name", "designation", "institution", "contact", "email", "order")
+    search_fields = ("name", "designation", "institution", "email")
+    list_filter = ("institution",)
+
+
+@admin.register(AcademicCouncilMinutes)
+class AcademicCouncilMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = AcademicCouncilMinutesResource
+    list_display = ("meeting_title", "date_of_meeting")
+    search_fields = ("meeting_title",)
+    list_filter = ("date_of_meeting",)
+
+
+@admin.register(PlanningBoardMember)
+class PlanningBoardMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = PlanningBoardMemberResource
+    list_display = ("name", "in_the_capacity_of", "provision", "date_of_appointment", "order")
+    search_fields = ("name", "in_the_capacity_of")
+    list_filter = ("provision",)
+
+
+@admin.register(PlanningBoardMinutes)
+class PlanningBoardMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = PlanningBoardMinutesResource
+    list_display = ("meeting_title", "date_of_meeting")
+    search_fields = ("meeting_title",)
+    list_filter = ("date_of_meeting",)
+
+
+@admin.register(FinanceCommitteeMember)
+class FinanceCommitteeMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = FinanceCommitteeMemberResource
+    list_display = ("name", "designation", "contact", "email", "order")
+    search_fields = ("name", "designation", "email")
+
+
+@admin.register(FinanceCommitteeMinutes)
+class FinanceCommitteeMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    resource_class = FinanceCommitteeMinutesResource
+    list_display = ("meeting_title", "date_of_meeting")
+    search_fields = ("meeting_title",)
+    list_filter = ("date_of_meeting",)

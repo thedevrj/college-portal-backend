@@ -1,31 +1,11 @@
-from re import VERBOSE
 from django.db import models
 from apps.accounts.models import SoftDeleteModel
 from simple_history.models import HistoricalRecords
 
 
-class AuthorityType(models.TextChoices):
-    ACADEMIC_COUNCIL = "ACADEMIC_COUNCIL", "Academic Council"
-    BOARD_OF_MANAGEMENT = "BOARD_OF_MANAGEMENT", "Board of Management"
-    PLANNING_BOARD = "PLANNING_BOARD", "Planning Board"
-    FINANCE_COMMITTEE = "FINANCE_COMMITTEE", "Finance Committee"
+# --- Board of Management (BoM) ---
 
-
-class Authority(SoftDeleteModel):
-    name = models.CharField(max_length=100, choices=AuthorityType.choices, unique=True)
-    history = HistoricalRecords()
-
-    def __str__(self):
-        return self.get_name_display()
-
-    class Meta:
-        verbose_name_plural = "Authorities"
-
-
-class AuthorityMember(SoftDeleteModel):
-    authority = models.ForeignKey(
-        Authority, on_delete=models.CASCADE, related_name="members"
-    )
+class BoardOfManagementMember(SoftDeleteModel):
     provision = models.CharField(
         max_length=255, blank=True, null=True, help_text="e.g., 11(1)(i)"
     )
@@ -43,20 +23,18 @@ class AuthorityMember(SoftDeleteModel):
     history = HistoricalRecords()
 
     def __str__(self):
-        return f"{self.name} - {self.authority.get_name_display()}"
+        return f"{self.name} - BoM"
 
     @property
     def parsed_phones(self):
         if not self.phone_fax:
             return []
         parsed = []
-        # Split by comma
         parts = self.phone_fax.split(",")
         for part in parts:
             part = part.strip()
             if not part:
                 continue
-            # Find parenthesis for labels like (O) or (Fax)
             if "(" in part and ")" in part:
                 try:
                     num, rest = part.split("(", 1)
@@ -71,7 +49,6 @@ class AuthorityMember(SoftDeleteModel):
                         "label": ""
                     })
             else:
-                # Check if there is space
                 subparts = part.split(None, 1)
                 if len(subparts) == 2:
                     parsed.append({
@@ -87,16 +64,13 @@ class AuthorityMember(SoftDeleteModel):
 
     class Meta:
         ordering = ["order", "id"]
-        verbose_name_plural = "Authority Members"
+        verbose_name_plural = "Board of Management Members"
 
 
-class AuthorityMinutes(SoftDeleteModel):
-    authority = models.ForeignKey(
-        Authority, on_delete=models.CASCADE, related_name="minutes"
-    )
+class BoardOfManagementMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
-    file = models.FileField(upload_to="authorities/minutes/")
+    file = models.FileField(upload_to="board_of_management/minutes/")
     history = HistoricalRecords()
 
     def __str__(self):
@@ -104,4 +78,114 @@ class AuthorityMinutes(SoftDeleteModel):
 
     class Meta:
         ordering = ["-date_of_meeting"]
-        verbose_name_plural = "Authority Minutes"
+        verbose_name_plural = "Board of Management Minutes"
+
+
+# --- Academic Council ---
+
+class AcademicCouncilMember(SoftDeleteModel):
+    name = models.CharField(max_length=255, verbose_name="Name of the Member")
+    designation = models.CharField(max_length=255, blank=True, null=True)
+    institution = models.CharField(
+        max_length=255, blank=True, null=True, help_text="University or organization details"
+    )
+    contact = models.CharField(
+        max_length=255, blank=True, null=True, help_text="Phone numbers"
+    )
+    email = models.EmailField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.name} - Academic Council"
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name_plural = "Academic Council Members"
+
+
+class AcademicCouncilMinutes(SoftDeleteModel):
+    meeting_title = models.CharField(max_length=255)
+    date_of_meeting = models.DateField()
+    file = models.FileField(upload_to="academic_council/minutes/")
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.meeting_title} ({self.date_of_meeting})"
+
+    class Meta:
+        ordering = ["-date_of_meeting"]
+        verbose_name_plural = "Academic Council Minutes"
+
+
+# --- Planning Board ---
+
+class PlanningBoardMember(SoftDeleteModel):
+    provision = models.CharField(
+        max_length=255, blank=True, null=True, help_text="e.g., 11(1)(i)"
+    )
+    name = models.CharField(max_length=255, verbose_name="Name of the Member")
+    date_of_appointment = models.DateField(
+        blank=True, null=True, verbose_name="Date of Appointment"
+    )
+    date_of_expiry = models.DateField(blank=True, null=True)
+    in_the_capacity_of = models.CharField(
+        max_length=255, blank=True, null=True, help_text="e.g., Chairman"
+    )
+    order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.name} - Planning Board"
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name_plural = "Planning Board Members"
+
+
+class PlanningBoardMinutes(SoftDeleteModel):
+    meeting_title = models.CharField(max_length=255)
+    date_of_meeting = models.DateField()
+    file = models.FileField(upload_to="planning_board/minutes/")
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.meeting_title} ({self.date_of_meeting})"
+
+    class Meta:
+        ordering = ["-date_of_meeting"]
+        verbose_name_plural = "Planning Board Minutes"
+
+
+# --- Finance Committee ---
+
+class FinanceCommitteeMember(SoftDeleteModel):
+    name = models.CharField(max_length=255, verbose_name="Name of the Member")
+    designation = models.CharField(max_length=255, blank=True, null=True)
+    contact = models.CharField(
+        max_length=255, blank=True, null=True, help_text="Phone numbers"
+    )
+    email = models.EmailField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.name} - Finance Committee"
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name_plural = "Finance Committee Members"
+
+
+class FinanceCommitteeMinutes(SoftDeleteModel):
+    meeting_title = models.CharField(max_length=255)
+    date_of_meeting = models.DateField()
+    file = models.FileField(upload_to="finance_committee/minutes/")
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.meeting_title} ({self.date_of_meeting})"
+
+    class Meta:
+        ordering = ["-date_of_meeting"]
+        verbose_name_plural = "Finance Committee Minutes"
