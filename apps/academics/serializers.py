@@ -261,9 +261,16 @@ class CommitteeSerializer(serializers.ModelSerializer):
 
 
 class MinutesSerializer(serializers.ModelSerializer):
+    minutes_of_meeting = serializers.SerializerMethodField()
+
     class Meta:
         model = MinutesOfTheMeeting
         fields = "__all__"
+
+    def get_minutes_of_meeting(self, obj):
+        if obj.minutes_of_meeting:
+            return obj.minutes_of_meeting.url
+        return None
 
 
 class TimetableSerializer(serializers.ModelSerializer):

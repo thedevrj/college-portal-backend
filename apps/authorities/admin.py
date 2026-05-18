@@ -33,6 +33,38 @@ class AuthorityMemberResource(resources.ModelResource):
         )
         export_order = fields
 
+    def before_import_row(self, row, **kwargs):
+        from .models import AuthorityType
+        
+        # Normalize keys to lowercase to find the authority column flexibly
+        row_copy = {str(k).lower().strip(): v for k, v in row.items()}
+        
+        # 1. Clean string "None" into real None
+        for key in list(row.keys()):
+            val = row[key]
+            if val is not None and str(val).lower().strip() == "none":
+                row[key] = None
+
+        # 2. Map human-readable Authority names to Database Choices
+        auth_key = next((k for k in ["authority", "authority name", "authority type"] if k in row_copy), None)
+        if auth_key and row_copy[auth_key]:
+            val = str(row_copy[auth_key]).strip().lower()
+            if "academic" in val:
+                row["authority"] = AuthorityType.ACADEMIC_COUNCIL.value
+            elif "management" in val or "bom" in val:
+                row["authority"] = AuthorityType.BOARD_OF_MANAGEMENT.value
+            elif "planning" in val:
+                row["authority"] = AuthorityType.PLANNING_BOARD.value
+            elif "finance" in val:
+                row["authority"] = AuthorityType.FINANCE_COMMITTEE.value
+        
+        # 3. Clean up date fields if they are empty strings
+        for date_field in ["date_of_nomination", "date_of_expiry"]:
+            if date_field in row and (row[date_field] == "" or row[date_field] is None):
+                row[date_field] = None
+
+        return super().before_import_row(row, **kwargs)
+
 
 class AuthorityMinutesResource(resources.ModelResource):
     authority = fields.Field(
@@ -52,6 +84,37 @@ class AuthorityMinutesResource(resources.ModelResource):
         )
         export_order = fields
 
+    def before_import_row(self, row, **kwargs):
+        from .models import AuthorityType
+        
+        # Normalize keys to lowercase to find the authority column flexibly
+        row_copy = {str(k).lower().strip(): v for k, v in row.items()}
+        
+        # 1. Clean string "None" into real None
+        for key in list(row.keys()):
+            val = row[key]
+            if val is not None and str(val).lower().strip() == "none":
+                row[key] = None
+
+        # 2. Map human-readable Authority names to Database Choices
+        auth_key = next((k for k in ["authority", "authority name", "authority type"] if k in row_copy), None)
+        if auth_key and row_copy[auth_key]:
+            val = str(row_copy[auth_key]).strip().lower()
+            if "academic" in val:
+                row["authority"] = AuthorityType.ACADEMIC_COUNCIL.value
+            elif "management" in val or "bom" in val:
+                row["authority"] = AuthorityType.BOARD_OF_MANAGEMENT.value
+            elif "planning" in val:
+                row["authority"] = AuthorityType.PLANNING_BOARD.value
+            elif "finance" in val:
+                row["authority"] = AuthorityType.FINANCE_COMMITTEE.value
+        
+        # 3. Clean up date fields if they are empty strings
+        if "date_of_meeting" in row and (row["date_of_meeting"] == "" or row["date_of_meeting"] is None):
+            row["date_of_meeting"] = None
+
+        return super().before_import_row(row, **kwargs)
+
 
 # --- Admin Classes ---
 
@@ -67,13 +130,13 @@ class AuthorityMinutesInline(admin.TabularInline):
 
 
 @admin.register(Authority)
-class AuthorityAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class AuthorityAdmin(SimpleHistoryAdmin, ImportExportModelAdmin):
     list_display = ("name", "get_name_display")
     inlines = [AuthorityMemberInline, AuthorityMinutesInline]
 
 
 @admin.register(AuthorityMember)
-class AuthorityMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class AuthorityMemberAdmin(SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = AuthorityMemberResource
     list_display = ("name", "authority", "designation", "order")
     list_filter = ("authority", "designation")
@@ -85,7 +148,7 @@ class AuthorityMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
 
 
 @admin.register(AuthorityMinutes)
-class AuthorityMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class AuthorityMinutesAdmin(SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = AuthorityMinutesResource
     list_display = ("meeting_title", "authority", "date_of_meeting")
     list_filter = ("authority", "date_of_meeting")
