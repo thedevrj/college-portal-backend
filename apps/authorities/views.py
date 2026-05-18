@@ -1,22 +1,83 @@
-from rest_framework import viewsets, permissions
-from .models import Authority, AuthorityMember, AuthorityMinutes
-from .serializers import AuthoritySerializer, AuthorityMemberSerializer, AuthorityMinutesSerializer
-from .permissions import IsAuthorityManager
+from rest_framework import viewsets
+from .models import (
+    BoardOfManagementMember,
+    BoardOfManagementMinutes,
+    AcademicCouncilMember,
+    AcademicCouncilMinutes,
+    PlanningBoardMember,
+    PlanningBoardMinutes,
+    FinanceCommitteeMember,
+    FinanceCommitteeMinutes,
+)
+from .serializers import (
+    BoardOfManagementMemberSerializer,
+    BoardOfManagementMinutesSerializer,
+    AcademicCouncilMemberSerializer,
+    AcademicCouncilMinutesSerializer,
+    PlanningBoardMemberSerializer,
+    PlanningBoardMinutesSerializer,
+    FinanceCommitteeMemberSerializer,
+    FinanceCommitteeMinutesSerializer,
+)
+from .permissions import (
+    IsBoardOfManagementManager,
+    IsAcademicCouncilManager,
+    IsPlanningBoardManager,
+    IsFinanceCommitteeManager,
+)
 
-class AuthorityViewSet(viewsets.ModelViewSet):
-    queryset = Authority.objects.all()
-    serializer_class = AuthoritySerializer
-    permission_classes = [IsAuthorityManager]
-    lookup_field = 'name' # Allow lookup by name (ACADEMIC_COUNCIL, etc.)
 
-class AuthorityMemberViewSet(viewsets.ModelViewSet):
-    queryset = AuthorityMember.objects.all()
-    serializer_class = AuthorityMemberSerializer
-    permission_classes = [IsAuthorityManager]
-    filterset_fields = ['authority__name']
+# --- Board of Management (BoM) ViewSets ---
 
-class AuthorityMinutesViewSet(viewsets.ModelViewSet):
-    queryset = AuthorityMinutes.objects.all()
-    serializer_class = AuthorityMinutesSerializer
-    permission_classes = [IsAuthorityManager]
-    filterset_fields = ['authority__name']
+class BoardOfManagementMemberViewSet(viewsets.ModelViewSet):
+    queryset = BoardOfManagementMember.objects.all()
+    serializer_class = BoardOfManagementMemberSerializer
+    permission_classes = [IsBoardOfManagementManager]
+
+
+class BoardOfManagementMinutesViewSet(viewsets.ModelViewSet):
+    queryset = BoardOfManagementMinutes.objects.all()
+    serializer_class = BoardOfManagementMinutesSerializer
+    permission_classes = [IsBoardOfManagementManager]
+
+
+# --- Academic Council ViewSets ---
+
+class AcademicCouncilMemberViewSet(viewsets.ModelViewSet):
+    queryset = AcademicCouncilMember.objects.all()
+    serializer_class = AcademicCouncilMemberSerializer
+    permission_classes = [IsAcademicCouncilManager]
+
+
+class AcademicCouncilMinutesViewSet(viewsets.ModelViewSet):
+    queryset = AcademicCouncilMinutes.objects.all()
+    serializer_class = AcademicCouncilMinutesSerializer
+    permission_classes = [IsAcademicCouncilManager]
+
+
+# --- Planning Board ViewSets ---
+
+class PlanningBoardMemberViewSet(viewsets.ModelViewSet):
+    queryset = PlanningBoardMember.objects.all()
+    serializer_class = PlanningBoardMemberSerializer
+    permission_classes = [IsPlanningBoardManager]
+
+
+class PlanningBoardMinutesViewSet(viewsets.ModelViewSet):
+    queryset = PlanningBoardMinutes.objects.all()
+    serializer_class = PlanningBoardMinutesSerializer
+    permission_classes = [IsPlanningBoardManager]
+
+
+# --- Finance Committee ViewSets ---
+
+class FinanceCommitteeMemberViewSet(viewsets.ModelViewSet):
+    queryset = FinanceCommitteeMember.objects.all()
+    serializer_class = FinanceCommitteeMemberSerializer
+    permission_classes = [IsFinanceCommitteeManager]
+
+
+class FinanceCommitteeMinutesViewSet(viewsets.ModelViewSet):
+    queryset = FinanceCommitteeMinutes.objects.all()
+    serializer_class = FinanceCommitteeMinutesSerializer
+    permission_classes = [IsFinanceCommitteeManager]
