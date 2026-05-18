@@ -19,6 +19,7 @@ from datetime import datetime
 
 # --- Robust Date Parser ---
 
+
 def clean_and_parse_date(val):
     if val is None:
         return None
@@ -72,6 +73,7 @@ def clean_row_none_strings(row):
 
 # --- Resources for Import/Export ---
 
+
 class BoardOfManagementMemberResource(resources.ModelResource):
     class Meta:
         model = BoardOfManagementMember
@@ -112,7 +114,15 @@ class BoardOfManagementMinutesResource(resources.ModelResource):
 class AcademicCouncilMemberResource(resources.ModelResource):
     class Meta:
         model = AcademicCouncilMember
-        fields = ("id", "name", "designation", "institution", "contact", "email", "order")
+        fields = (
+            "id",
+            "name",
+            "designation",
+            "institution",
+            "contact",
+            "email",
+            "order",
+        )
         export_order = fields
 
     def before_import_row(self, row, **kwargs):
@@ -140,6 +150,8 @@ class PlanningBoardMemberResource(resources.ModelResource):
             "id",
             "provision",
             "name",
+            "designation",
+            "institution",
             "date_of_appointment",
             "date_of_expiry",
             "in_the_capacity_of",
@@ -171,7 +183,15 @@ class PlanningBoardMinutesResource(resources.ModelResource):
 class FinanceCommitteeMemberResource(resources.ModelResource):
     class Meta:
         model = FinanceCommitteeMember
-        fields = ("id", "name", "designation", "contact", "email", "order")
+        fields = (
+            "id",
+            "name",
+            "designation",
+            "institution",
+            "contact",
+            "email",
+            "order",
+        )
         export_order = fields
 
     def before_import_row(self, row, **kwargs):
@@ -193,6 +213,7 @@ class FinanceCommitteeMinutesResource(resources.ModelResource):
 
 
 # --- Admin Registrations ---
+
 
 @admin.register(BoardOfManagementMember)
 class BoardOfManagementMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
@@ -229,7 +250,13 @@ class AcademicCouncilMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
 @admin.register(PlanningBoardMember)
 class PlanningBoardMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = PlanningBoardMemberResource
-    list_display = ("name", "in_the_capacity_of", "provision", "date_of_appointment", "order")
+    list_display = (
+        "name",
+        "in_the_capacity_of",
+        "provision",
+        "date_of_appointment",
+        "order",
+    )
     search_fields = ("name", "in_the_capacity_of")
     list_filter = ("provision",)
 

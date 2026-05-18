@@ -5,6 +5,7 @@ from simple_history.models import HistoricalRecords
 
 # --- Board of Management (BoM) ---
 
+
 class BoardOfManagementMember(SoftDeleteModel):
     provision = models.CharField(
         max_length=255, blank=True, null=True, help_text="e.g., 11(1)(i)"
@@ -39,27 +40,19 @@ class BoardOfManagementMember(SoftDeleteModel):
                 try:
                     num, rest = part.split("(", 1)
                     label = rest.split(")", 1)[0]
-                    parsed.append({
-                        "number": num.strip(),
-                        "label": f"({label.strip()})"
-                    })
+                    parsed.append(
+                        {"number": num.strip(), "label": f"({label.strip()})"}
+                    )
                 except Exception:
-                    parsed.append({
-                        "number": part,
-                        "label": ""
-                    })
+                    parsed.append({"number": part, "label": ""})
             else:
                 subparts = part.split(None, 1)
                 if len(subparts) == 2:
-                    parsed.append({
-                        "number": subparts[0].strip(),
-                        "label": subparts[1].strip()
-                    })
+                    parsed.append(
+                        {"number": subparts[0].strip(), "label": subparts[1].strip()}
+                    )
                 else:
-                    parsed.append({
-                        "number": part,
-                        "label": ""
-                    })
+                    parsed.append({"number": part, "label": ""})
         return parsed
 
     class Meta:
@@ -83,11 +76,15 @@ class BoardOfManagementMinutes(SoftDeleteModel):
 
 # --- Academic Council ---
 
+
 class AcademicCouncilMember(SoftDeleteModel):
     name = models.CharField(max_length=255, verbose_name="Name of the Member")
     designation = models.CharField(max_length=255, blank=True, null=True)
     institution = models.CharField(
-        max_length=255, blank=True, null=True, help_text="University or organization details"
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="University or organization details",
     )
     contact = models.CharField(
         max_length=255, blank=True, null=True, help_text="Phone numbers"
@@ -120,11 +117,19 @@ class AcademicCouncilMinutes(SoftDeleteModel):
 
 # --- Planning Board ---
 
+
 class PlanningBoardMember(SoftDeleteModel):
     provision = models.CharField(
         max_length=255, blank=True, null=True, help_text="e.g., 11(1)(i)"
     )
     name = models.CharField(max_length=255, verbose_name="Name of the Member")
+    designation = models.CharField(max_length=255, blank=True, null=True)
+    institution = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="University or organization details",
+    )
     date_of_appointment = models.DateField(
         blank=True, null=True, verbose_name="Date of Appointment"
     )
@@ -159,9 +164,16 @@ class PlanningBoardMinutes(SoftDeleteModel):
 
 # --- Finance Committee ---
 
+
 class FinanceCommitteeMember(SoftDeleteModel):
     name = models.CharField(max_length=255, verbose_name="Name of the Member")
     designation = models.CharField(max_length=255, blank=True, null=True)
+    institution = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="University or organization details",
+    )
     contact = models.CharField(
         max_length=255, blank=True, null=True, help_text="Phone numbers"
     )
