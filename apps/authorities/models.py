@@ -64,6 +64,10 @@ class BoardOfManagementMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
     file = models.FileField(upload_to="board_of_management/minutes/")
+    is_private = models.BooleanField(
+        default=False,
+        help_text="If checked, these minutes will only be visible to specific users.",
+    )
     history = HistoricalRecords()
 
     def __str__(self):
@@ -105,6 +109,10 @@ class AcademicCouncilMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
     file = models.FileField(upload_to="academic_council/minutes/")
+    is_private = models.BooleanField(
+        default=False,
+        help_text="If checked, these minutes will only be visible to specific users.",
+    )
     history = HistoricalRecords()
 
     def __str__(self):
@@ -152,6 +160,10 @@ class PlanningBoardMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
     file = models.FileField(upload_to="planning_board/minutes/")
+    is_private = models.BooleanField(
+        default=False,
+        help_text="If checked, these minutes will only be visible to specific users.",
+    )
     history = HistoricalRecords()
 
     def __str__(self):
@@ -193,6 +205,10 @@ class FinanceCommitteeMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
     file = models.FileField(upload_to="finance_committee/minutes/")
+    is_private = models.BooleanField(
+        default=False,
+        help_text="If checked, these minutes will only be visible to specific users.",
+    )
     history = HistoricalRecords()
 
     def __str__(self):

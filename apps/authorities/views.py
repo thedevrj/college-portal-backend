@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from .models import (
     BoardOfManagementMember,
     BoardOfManagementMinutes,
@@ -19,12 +19,6 @@ from .serializers import (
     FinanceCommitteeMemberSerializer,
     FinanceCommitteeMinutesSerializer,
 )
-from .permissions import (
-    IsBoardOfManagementManager,
-    IsAcademicCouncilManager,
-    IsPlanningBoardManager,
-    IsFinanceCommitteeManager,
-)
 
 
 # --- Board of Management (BoM) ViewSets ---
@@ -32,15 +26,21 @@ from .permissions import (
 class BoardOfManagementMemberViewSet(viewsets.ModelViewSet):
     queryset = BoardOfManagementMember.objects.all()
     serializer_class = BoardOfManagementMemberSerializer
-    permission_classes = [IsBoardOfManagementManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
 class BoardOfManagementMinutesViewSet(viewsets.ModelViewSet):
     queryset = BoardOfManagementMinutes.objects.all()
     serializer_class = BoardOfManagementMinutesSerializer
-    permission_classes = [IsBoardOfManagementManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            qs = qs.filter(is_private=False)
+        return qs
 
 
 # --- Academic Council ViewSets ---
@@ -48,15 +48,21 @@ class BoardOfManagementMinutesViewSet(viewsets.ModelViewSet):
 class AcademicCouncilMemberViewSet(viewsets.ModelViewSet):
     queryset = AcademicCouncilMember.objects.all()
     serializer_class = AcademicCouncilMemberSerializer
-    permission_classes = [IsAcademicCouncilManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
 class AcademicCouncilMinutesViewSet(viewsets.ModelViewSet):
     queryset = AcademicCouncilMinutes.objects.all()
     serializer_class = AcademicCouncilMinutesSerializer
-    permission_classes = [IsAcademicCouncilManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            qs = qs.filter(is_private=False)
+        return qs
 
 
 # --- Planning Board ViewSets ---
@@ -64,15 +70,21 @@ class AcademicCouncilMinutesViewSet(viewsets.ModelViewSet):
 class PlanningBoardMemberViewSet(viewsets.ModelViewSet):
     queryset = PlanningBoardMember.objects.all()
     serializer_class = PlanningBoardMemberSerializer
-    permission_classes = [IsPlanningBoardManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
 class PlanningBoardMinutesViewSet(viewsets.ModelViewSet):
     queryset = PlanningBoardMinutes.objects.all()
     serializer_class = PlanningBoardMinutesSerializer
-    permission_classes = [IsPlanningBoardManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            qs = qs.filter(is_private=False)
+        return qs
 
 
 # --- Finance Committee ViewSets ---
@@ -80,12 +92,18 @@ class PlanningBoardMinutesViewSet(viewsets.ModelViewSet):
 class FinanceCommitteeMemberViewSet(viewsets.ModelViewSet):
     queryset = FinanceCommitteeMember.objects.all()
     serializer_class = FinanceCommitteeMemberSerializer
-    permission_classes = [IsFinanceCommitteeManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
 class FinanceCommitteeMinutesViewSet(viewsets.ModelViewSet):
     queryset = FinanceCommitteeMinutes.objects.all()
     serializer_class = FinanceCommitteeMinutesSerializer
-    permission_classes = [IsFinanceCommitteeManager]
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            qs = qs.filter(is_private=False)
+        return qs

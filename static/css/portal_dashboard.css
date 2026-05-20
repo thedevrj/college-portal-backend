@@ -201,3 +201,34 @@ input[type=submit],
     margin: 0 !important;
     padding: 0 !important;
 }
+
+/* Fix for long text in horizontal filter widgets (User Permissions, etc.) */
+.selector {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+}
+
+.selector-available,
+.selector-chosen {
+    width: 500px !important;
+}
+
+.selector select {
+    width: 100% !important;
+    overflow-x: auto !important;
+}
+
+.selector ul.selector-chooser {
+    margin: 20px 100px !important;
+    padding: 0 !important;
+}
+
+.selector select option {
+    white-space: pre !important;
+    width: max-content !important;
+    min-width: 100% !important;
+    padding: 6px 8px !important;
+    text-overflow: clip !important;
+}

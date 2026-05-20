@@ -74,6 +74,8 @@ class PortalLoginView(View):
 
         access = user.access_entries.filter(is_active=True).first()
         if access is None:
+            if user.is_staff:
+                return redirect("/admin/")
             return render(
                 request,
                 self.template_name,
@@ -158,6 +160,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """
     Custom JWT login view that includes the 'force_password_change' flag.
     """
+
     serializer_class = CustomTokenObtainPairSerializer
 
 
@@ -165,15 +168,18 @@ class ChangePasswordView(APIView):
     """
     API endpoint to change password and clear the 'force_password_change' flag.
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
         if serializer.is_valid():
             user = request.user
-            user.set_password(serializer.validated_data['new_password'])
+            user.set_password(serializer.validated_data["new_password"])
             user.save()
-            
+
             # Clear the force change flag
             try:
                 profile = user.portal_profile
@@ -181,6 +187,8 @@ class ChangePasswordView(APIView):
                 profile.save()
             except Exception:
                 pass
-                
-            return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+
+            return Response(
+                {"message": "Password updated successfully"}, status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

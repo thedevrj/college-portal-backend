@@ -46,11 +46,23 @@ class PortalSecurityMixin:
             return qs
 
         # Enforce row-level security even for autocomplete requests to filter dropdowns
-        # (Removed previous bypass that allowed all faculty to be seen)
-
         try:
             profile = getattr(request.user, "portal_profile", None)
             if profile and profile.is_rd_admin():
+                return qs
+
+            # --- Bypass Row-Level Security for Global Models ---
+            global_models = [
+                "BoardOfManagementMember",
+                "BoardOfManagementMinutes",
+                "AcademicCouncilMember",
+                "AcademicCouncilMinutes",
+                "PlanningBoardMember",
+                "PlanningBoardMinutes",
+                "FinanceCommitteeMember",
+                "FinanceCommitteeMinutes",
+            ]
+            if self.model.__name__ in global_models:
                 return qs
 
             active_access = request.user.access_entries.filter(is_active=True)
@@ -65,7 +77,13 @@ class PortalSecurityMixin:
                 # 1. Role-based Logic (FACULTY)
                 if access.role == PortalRole.FACULTY:
                     # Faculty should NOT see structural entities in the admin
-                    structural_models = ["School", "Department", "Centre", "SchoolBoardCommittee", "SchoolBoardMOM"]
+                    structural_models = [
+                        "School",
+                        "Department",
+                        "Centre",
+                        "SchoolBoardCommittee",
+                        "SchoolBoardMOM",
+                    ]
                     if self.model.__name__ in structural_models:
                         role_qs = qs.none()
                     else:
@@ -73,14 +91,16 @@ class PortalSecurityMixin:
                         if hasattr(self.model, "faculty"):
                             role_qs = role_qs.filter(faculty__user=request.user)
                         elif hasattr(self.model, "principal_investigator"):
-                            role_qs = role_qs.filter(principal_investigator__user=request.user)
+                            role_qs = role_qs.filter(
+                                principal_investigator__user=request.user
+                            )
                         elif hasattr(self.model, "supervisor"):
                             role_qs = role_qs.filter(supervisor__user=request.user)
                         elif self.model.__name__ == "Faculty":
                             role_qs = role_qs.filter(user=request.user)
                         else:
                             role_qs = role_qs.none()
-                
+
                 # 2. Entity-based Logic (DEPARTMENT / SCHOOL / CENTRE)
                 elif access.entity_type == EntityType.DEPARTMENT:
                     role_qs = qs.all()
@@ -98,7 +118,10 @@ class PortalSecurityMixin:
                         role_qs = role_qs.filter(pk=access.object_id)
                     elif self.model.__name__ == "Department":
                         role_qs = role_qs.filter(school_id=access.object_id)
-                    elif self.model.__name__ in ["SchoolBoardCommittee", "SchoolBoardMOM"]:
+                    elif self.model.__name__ in [
+                        "SchoolBoardCommittee",
+                        "SchoolBoardMOM",
+                    ]:
                         role_qs = role_qs.filter(school_id=access.object_id)
                     elif hasattr(self.model, "department"):
                         role_qs = role_qs.filter(department__school_id=access.object_id)
@@ -106,7 +129,7 @@ class PortalSecurityMixin:
                         role_qs = role_qs.filter(school_id=access.object_id)
                     else:
                         role_qs = role_qs.none()
-                
+
                 elif access.entity_type == EntityType.CENTRE:
                     role_qs = qs.all()
                     if self.model.__name__ == "Centre":
@@ -115,9 +138,9 @@ class PortalSecurityMixin:
                         role_qs = role_qs.filter(centre_id=access.object_id)
                     else:
                         role_qs = role_qs.none()
-                
+
                 final_qs = final_qs | role_qs
-            
+
             return final_qs.distinct()
 
         except Exception:
@@ -151,7 +174,7 @@ class PortalSecurityMixin:
                     "Patent",
                     "Consultancy",
                     "ResearchArea",
-                    "ResearchDevelopmentCellMember"
+                    "ResearchDevelopmentCellMember",
                 ]
                 if self.model.__name__ in rd_admin_models:
                     return True
@@ -170,21 +193,40 @@ class PortalSecurityMixin:
         active_access = request.user.access_entries.filter(is_active=True)
         for access in active_access:
             # High-level management models (Programs, Notices, etc.)
-            management_models = ["Program", "Notice", "Timetable", "StudyMaterial", "Cbcscourse", "Committee", "MinutesOfTheMeeting", "DepartmentGallery", "Department"]
-            
+            management_models = [
+                "Program",
+                "Notice",
+                "Timetable",
+                "StudyMaterial",
+                "Cbcscourse",
+                "Committee",
+                "MinutesOfTheMeeting",
+                "DepartmentGallery",
+                "Department",
+            ]
+
             if self.model.__name__ in management_models:
                 if access.entity_type == EntityType.DEPARTMENT:
-                    dept_name = access.entity.name if hasattr(access.entity, "name") else None
+                    dept_name = (
+                        access.entity.name if hasattr(access.entity, "name") else None
+                    )
                     if self.model.__name__ == "Department":
-                        if dept_name and obj.name == dept_name: return True
+                        if dept_name and obj.name == dept_name:
+                            return True
                     elif hasattr(obj, "department") and obj.department:
-                        if dept_name and obj.department.name == dept_name: return True
-                
+                        if dept_name and obj.department.name == dept_name:
+                            return True
+
                 elif access.entity_type == EntityType.SCHOOL:
                     if self.model.__name__ == "Department":
-                        if hasattr(obj, "school_id") and obj.school_id == access.object_id: return True
+                        if (
+                            hasattr(obj, "school_id")
+                            and obj.school_id == access.object_id
+                        ):
+                            return True
                     elif hasattr(obj, "department") and obj.department:
-                        if obj.department.school_id == access.object_id: return True
+                        if obj.department.school_id == access.object_id:
+                            return True
 
         # 5. Fallback to standard Django permissions if no owner is set yet
         # (This handles old records or records being assigned)
@@ -196,15 +238,34 @@ class PortalSecurityMixin:
         if self.model.__name__ == "Department":
             return False
 
+        # --- Bypass Row-Level Security for Global Models ---
+        global_models = [
+            "BoardOfManagementMember",
+            "BoardOfManagementMinutes",
+            "AcademicCouncilMember",
+            "AcademicCouncilMinutes",
+            "PlanningBoardMember",
+            "PlanningBoardMinutes",
+            "FinanceCommitteeMember",
+            "FinanceCommitteeMinutes",
+        ]
+        if self.model.__name__ in global_models:
+            return super().has_delete_permission(request, obj)
+
         # Faculty should always be able to delete their OWN records
         if self._is_owner(request.user, obj):
             return True
 
         # Deny delete permission for standard Staff users.
         # Only HODs, Deans, and RD_Admins should be able to soft-delete other people's records.
+        # Delete the code below to give delete permission to all users.
         try:
-            active_roles = request.user.access_entries.filter(is_active=True).values_list('role', flat=True)
-            has_high_level_role = any(role in ["HOD", "DEAN", "RD_ADMIN"] for role in active_roles)
+            active_roles = request.user.access_entries.filter(
+                is_active=True
+            ).values_list("role", flat=True)
+            has_high_level_role = any(
+                role in ["HOD", "DEAN", "RD_ADMIN"] for role in active_roles
+            )
             if not has_high_level_role:
                 return False
         except Exception:
@@ -273,13 +334,13 @@ class PortalSecurityMixin:
         """Hide system-managed soft delete fields from forms."""
         exclude = super().get_exclude(request, obj) or []
         exclude = list(exclude)
-        
+
         if hasattr(self.model, "is_deleted"):
             if "is_deleted" not in exclude:
                 exclude.append("is_deleted")
             if "deleted_at" not in exclude:
                 exclude.append("deleted_at")
-                
+
         return tuple(exclude)
 
     def get_form(self, request, obj=None, **kwargs):
@@ -295,30 +356,49 @@ class PortalSecurityMixin:
 
             # --- Lock sensitive fields on the Faculty model for ALL non-superusers ---
             if self.model.__name__ == "Faculty":
-                for field in ["user", "is_active", "department", "staff_no", "insti_email"]:
+                for field in [
+                    "user",
+                    "is_active",
+                    "department",
+                    "staff_no",
+                    "insti_email",
+                ]:
                     if field in form.base_fields:
                         form.base_fields[field].disabled = True
 
             active_access_list = request.user.access_entries.filter(is_active=True)
             dept_access = active_access_list.filter(entity_type=EntityType.DEPARTMENT)
             school_access = active_access_list.filter(entity_type=EntityType.SCHOOL)
-            
+
             # --- Auto-fill and Lock for Faculty Role ---
             # (Only if they DON'T have a management role like HOD or Dean)
             if not dept_access.exists() and not school_access.exists():
-                faculty_access = active_access_list.filter(role=PortalRole.FACULTY).first()
+                faculty_access = active_access_list.filter(
+                    role=PortalRole.FACULTY
+                ).first()
                 if faculty_access:
                     FacultyModel = apps.get_model("faculty", "Faculty")
-                    faculty_profile = FacultyModel.objects.filter(user=request.user).first()
+                    faculty_profile = FacultyModel.objects.filter(
+                        user=request.user
+                    ).first()
                     if faculty_profile:
                         # Auto-fill ownership fields
-                        for field in ["faculty", "principal_investigator", "supervisor"]:
-                            if field in form.base_fields and self.model.__name__ != "Faculty":
+                        for field in [
+                            "faculty",
+                            "principal_investigator",
+                            "supervisor",
+                        ]:
+                            if (
+                                field in form.base_fields
+                                and self.model.__name__ != "Faculty"
+                            ):
                                 form.base_fields[field].initial = faculty_profile
                                 form.base_fields[field].disabled = True
-                        
+
                         if "department" in form.base_fields:
-                            form.base_fields["department"].initial = faculty_profile.department
+                            form.base_fields["department"].initial = (
+                                faculty_profile.department
+                            )
                             form.base_fields["department"].disabled = True
 
             # --- Auto-fill and Lock for Department Role (HODs/Coordinators) ---
@@ -349,8 +429,10 @@ class PortalSecurityMixin:
         """Filter foreign key dropdowns and hide deleted items."""
         # --- GLOBAL: Always hide soft-deleted items from dropdowns ---
         if hasattr(db_field.remote_field.model, "is_deleted"):
-            kwargs["queryset"] = db_field.remote_field.model.objects.filter(is_deleted=False)
-        
+            kwargs["queryset"] = db_field.remote_field.model.objects.filter(
+                is_deleted=False
+            )
+
         if not request.user.is_superuser:
             try:
                 active_access = request.user.access_entries.filter(is_active=True)
@@ -358,26 +440,62 @@ class PortalSecurityMixin:
                 combined_q = models.Q()
                 for access in active_access:
                     if access.entity_type == EntityType.DEPARTMENT:
-                        dept_name = access.entity.name if hasattr(access.entity, "name") else None
+                        dept_name = (
+                            access.entity.name
+                            if hasattr(access.entity, "name")
+                            else None
+                        )
                         if db_field.name == "department":
-                            combined_q |= models.Q(name=dept_name) if dept_name else models.Q(pk=access.object_id)
+                            combined_q |= (
+                                models.Q(name=dept_name)
+                                if dept_name
+                                else models.Q(pk=access.object_id)
+                            )
                         elif db_field.name == "program":
-                            combined_q |= models.Q(department__name=dept_name) if dept_name else models.Q(department=access.entity)
-                        elif db_field.name in ["faculty", "principal_investigator", "supervisor", "hod", "dean", "incharge"]:
-                            combined_q |= models.Q(department__name=dept_name) if dept_name else models.Q(department=access.entity)
-                    
+                            combined_q |= (
+                                models.Q(department__name=dept_name)
+                                if dept_name
+                                else models.Q(department=access.entity)
+                            )
+                        elif db_field.name in [
+                            "faculty",
+                            "principal_investigator",
+                            "supervisor",
+                            "hod",
+                            "dean",
+                            "incharge",
+                        ]:
+                            combined_q |= (
+                                models.Q(department__name=dept_name)
+                                if dept_name
+                                else models.Q(department=access.entity)
+                            )
+
                     elif access.entity_type == EntityType.SCHOOL:
                         if db_field.name == "school":
                             combined_q |= models.Q(pk=access.object_id)
                         elif db_field.name == "department":
                             combined_q |= models.Q(school_id=access.object_id)
                         elif db_field.name == "program":
-                            combined_q |= models.Q(department__school_id=access.object_id)
-                        elif db_field.name in ["faculty", "principal_investigator", "supervisor", "hod", "dean", "incharge"]:
-                            combined_q |= models.Q(department__school_id=access.object_id)
+                            combined_q |= models.Q(
+                                department__school_id=access.object_id
+                            )
+                        elif db_field.name in [
+                            "faculty",
+                            "principal_investigator",
+                            "supervisor",
+                            "hod",
+                            "dean",
+                            "incharge",
+                        ]:
+                            combined_q |= models.Q(
+                                department__school_id=access.object_id
+                            )
 
                 if combined_q.children:
-                    current_qs = kwargs.get("queryset", db_field.remote_field.model.objects.all())
+                    current_qs = kwargs.get(
+                        "queryset", db_field.remote_field.model.objects.all()
+                    )
                     kwargs["queryset"] = current_qs.filter(combined_q).distinct()
 
             except Exception:
