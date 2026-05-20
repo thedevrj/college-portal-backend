@@ -13,6 +13,7 @@ from .models import (
 
 # --- Board of Management (BoM) Serializers ---
 
+
 class BoardOfManagementMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = BoardOfManagementMember
@@ -24,7 +25,13 @@ class BoardOfManagementMinutesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BoardOfManagementMinutes
-        fields = "__all__"
+        fields = [
+            "id",
+            "meeting_title",
+            "date_of_meeting",
+            "file",
+            "is_private",
+        ]
 
     def get_file(self, obj):
         if obj.file:
@@ -33,6 +40,7 @@ class BoardOfManagementMinutesSerializer(serializers.ModelSerializer):
 
 
 # --- Academic Council Serializers ---
+
 
 class AcademicCouncilMemberSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,7 +53,13 @@ class AcademicCouncilMinutesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AcademicCouncilMinutes
-        fields = "__all__"
+        fields = [
+            "id",
+            "meeting_title",
+            "date_of_meeting",
+            "file",
+            "is_private",
+        ]
 
     def get_file(self, obj):
         if obj.file:
@@ -54,6 +68,7 @@ class AcademicCouncilMinutesSerializer(serializers.ModelSerializer):
 
 
 # --- Planning Board Serializers ---
+
 
 class PlanningBoardMemberSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,7 +81,13 @@ class PlanningBoardMinutesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PlanningBoardMinutes
-        fields = "__all__"
+        fields = [
+            "id",
+            "meeting_title",
+            "date_of_meeting",
+            "file",
+            "is_private",
+        ]
 
     def get_file(self, obj):
         if obj.file:
@@ -75,6 +96,7 @@ class PlanningBoardMinutesSerializer(serializers.ModelSerializer):
 
 
 # --- Finance Committee Serializers ---
+
 
 class FinanceCommitteeMemberSerializer(serializers.ModelSerializer):
     class Meta:
@@ -87,7 +109,13 @@ class FinanceCommitteeMinutesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FinanceCommitteeMinutes
-        fields = "__all__"
+        fields = [
+            "id",
+            "meeting_title",
+            "date_of_meeting",
+            "file",
+            "is_private",
+        ]
 
     def get_file(self, obj):
         if obj.file:

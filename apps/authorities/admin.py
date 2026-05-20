@@ -2,6 +2,8 @@ from django.contrib import admin
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
+from apps.accounts.mixins import PortalSecurityMixin
+from apps.accounts.filters import SoftDeleteListFilter
 from .models import (
     BoardOfManagementMember,
     BoardOfManagementMinutes,
@@ -216,39 +218,39 @@ class FinanceCommitteeMinutesResource(resources.ModelResource):
 
 
 @admin.register(BoardOfManagementMember)
-class BoardOfManagementMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class BoardOfManagementMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = BoardOfManagementMemberResource
     list_display = ("name", "designation", "provision", "email", "order")
     search_fields = ("name", "designation", "email")
-    list_filter = ("provision",)
+    list_filter = ("provision", SoftDeleteListFilter)
 
 
 @admin.register(BoardOfManagementMinutes)
-class BoardOfManagementMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class BoardOfManagementMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = BoardOfManagementMinutesResource
-    list_display = ("meeting_title", "date_of_meeting")
+    list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting",)
+    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
 
 
 @admin.register(AcademicCouncilMember)
-class AcademicCouncilMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class AcademicCouncilMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = AcademicCouncilMemberResource
     list_display = ("name", "designation", "institution", "contact", "email", "order")
     search_fields = ("name", "designation", "institution", "email")
-    list_filter = ("institution",)
+    list_filter = ("institution", SoftDeleteListFilter)
 
 
 @admin.register(AcademicCouncilMinutes)
-class AcademicCouncilMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class AcademicCouncilMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = AcademicCouncilMinutesResource
-    list_display = ("meeting_title", "date_of_meeting")
+    list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting",)
+    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
 
 
 @admin.register(PlanningBoardMember)
-class PlanningBoardMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class PlanningBoardMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = PlanningBoardMemberResource
     list_display = (
         "name",
@@ -258,27 +260,28 @@ class PlanningBoardMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
         "order",
     )
     search_fields = ("name", "in_the_capacity_of")
-    list_filter = ("provision",)
+    list_filter = ("provision", SoftDeleteListFilter)
 
 
 @admin.register(PlanningBoardMinutes)
-class PlanningBoardMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class PlanningBoardMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = PlanningBoardMinutesResource
-    list_display = ("meeting_title", "date_of_meeting")
+    list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting",)
+    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
 
 
 @admin.register(FinanceCommitteeMember)
-class FinanceCommitteeMemberAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class FinanceCommitteeMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = FinanceCommitteeMemberResource
     list_display = ("name", "designation", "contact", "email", "order")
     search_fields = ("name", "designation", "email")
+    list_filter = (SoftDeleteListFilter,)
 
 
 @admin.register(FinanceCommitteeMinutes)
-class FinanceCommitteeMinutesAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class FinanceCommitteeMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
     resource_class = FinanceCommitteeMinutesResource
-    list_display = ("meeting_title", "date_of_meeting")
+    list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting",)
+    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
