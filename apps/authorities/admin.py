@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from django import forms
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -223,6 +225,9 @@ class BoardOfManagementMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, 
     list_display = ("name", "designation", "provision", "email", "order")
     search_fields = ("name", "designation", "email")
     list_filter = ("provision", SoftDeleteListFilter)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(BoardOfManagementMinutes)
@@ -231,6 +236,9 @@ class BoardOfManagementMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin,
     list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
     list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(AcademicCouncilMember)
@@ -239,6 +247,9 @@ class AcademicCouncilMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, Si
     list_display = ("name", "designation", "institution", "contact", "email", "order")
     search_fields = ("name", "designation", "institution", "email")
     list_filter = ("institution", SoftDeleteListFilter)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(AcademicCouncilMinutes)
@@ -247,6 +258,9 @@ class AcademicCouncilMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, S
     list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
     list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(PlanningBoardMember)
@@ -261,6 +275,9 @@ class PlanningBoardMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, Simp
     )
     search_fields = ("name", "in_the_capacity_of")
     list_filter = ("provision", SoftDeleteListFilter)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(PlanningBoardMinutes)
@@ -269,6 +286,9 @@ class PlanningBoardMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, Sim
     list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
     list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(FinanceCommitteeMember)
@@ -277,6 +297,9 @@ class FinanceCommitteeMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, S
     list_display = ("name", "designation", "contact", "email", "order")
     search_fields = ("name", "designation", "email")
     list_filter = (SoftDeleteListFilter,)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(FinanceCommitteeMinutes)
@@ -285,3 +308,6 @@ class FinanceCommitteeMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, 
     list_display = ("meeting_title", "date_of_meeting", "is_private")
     search_fields = ("meeting_title",)
     list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }

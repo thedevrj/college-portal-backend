@@ -110,18 +110,32 @@ class DepartmentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModel
 
 @admin.register(Program)
 class ProgramAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
-    list_display = ("name", "department", "centre", "level", "duration", "intake")
+    list_display = ("id", "name", "department", "centre", "level", "duration", "intake")
     list_display_links = ("name", "department", "centre")
     list_filter = (SoftDeleteListFilter, "level", "department", "centre")
-    search_fields = ("name",)
+    search_fields = ("id", "name")
     inlines = [CourseInline]
 
 
 @admin.register(Notice)
 class NoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "department", "centre", "category", "date_posted", "is_active")
+    list_display = (
+        "title",
+        "department",
+        "centre",
+        "category",
+        "date_posted",
+        "is_active",
+    )
     list_display_links = ("title", "department", "centre")
-    list_filter = (SoftDeleteListFilter, "category", "department", "centre", "date_posted", "is_active")
+    list_filter = (
+        SoftDeleteListFilter,
+        "category",
+        "department",
+        "centre",
+        "date_posted",
+        "is_active",
+    )
     search_fields = ("title", "content")
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
@@ -150,16 +164,30 @@ class MinutesAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(CBCSCourse)
 class CBCSCourseAdmin(PortalSecurityMixin, ImportExportModelAdmin):
-    list_display = ("course_code", "course_title", "department", "centre", "semester", "credits")
+    list_display = (
+        "course_code",
+        "course_title",
+        "department",
+        "centre",
+        "semester",
+        "credits",
+    )
     list_filter = (SoftDeleteListFilter, "department", "centre", "semester")
     search_fields = ("course_code", "course_title")
 
 
 @admin.register(Course)
 class CourseAdmin(PortalSecurityMixin, ImportExportModelAdmin):
-    list_display = ("course_code", "course_title", "program", "semester", "credits")
+    list_display = (
+        "id",
+        "course_code",
+        "course_title",
+        "program",
+        "semester",
+        "credits",
+    )
     list_filter = (SoftDeleteListFilter, "program", "semester")
-    search_fields = ("course_code", "course_title")
+    search_fields = ("id", "course_code", "course_title")
 
 
 @admin.register(DepartmentGallery)

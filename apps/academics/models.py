@@ -309,7 +309,7 @@ class Course(SoftDeleteModel):
     semester = models.PositiveIntegerField(
         help_text="e.g., 1, 2, 3...", null=True, blank=True
     )
-    course_code = models.CharField(max_length=50, verbose_name="Course/ Paper Code")
+    course_code = models.CharField(max_length=100, verbose_name="Course/ Paper Code")
     course_title = models.CharField(max_length=255)
     credits = models.PositiveIntegerField()
     course_type = models.CharField(
