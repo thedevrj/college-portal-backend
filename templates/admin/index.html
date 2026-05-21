@@ -81,5 +81,10 @@
 </div>
 {% endif %}
 
+<!-- Container for Global ERP Dashboard (populated via AJAX for Superusers only) -->
+{% if request.user.is_superuser %}
+<div id="global-dashboard-widgets" class="row mb-4 mx-n2"></div>
+{% endif %}
+
 {{ block.super }}
 {% endblock %}

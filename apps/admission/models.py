@@ -44,6 +44,16 @@ class AdmissionUpdate(SoftDeleteModel):
         verbose_name="Subject / Headline",
         help_text="The main heading for this update or announcement.",
     )
+    departments = models.ManyToManyField(
+        "academics.Department",
+        blank=True,
+        help_text="Select specific departments if applicable.",
+    )
+    programs = models.ManyToManyField(
+        "academics.Program",
+        blank=True,
+        help_text="Select specific programs if applicable.",
+    )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
     other_category_name = models.CharField(
         max_length=100,
@@ -53,6 +63,58 @@ class AdmissionUpdate(SoftDeleteModel):
     )
     description = RichTextField(blank=True, null=True)
     attachment = models.FileField(upload_to="admission/updates/", blank=True, null=True)
+    date_posted = models.DateField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["-date_posted", "-id"]
+
+    def clean(self):
+        super().clean()
+        if self.category == "Others" and not self.other_category_name:
+            raise ValidationError(
+                {
+                    "other_category_name": "This field is required when category is 'Others'."
+                }
+            )
+
+    def __str__(self):
+        return f"[{self.category}] {self.title}"
+
+
+class AdmissionMeritList(SoftDeleteModel):
+    session = models.ForeignKey(
+        AdmissionSession,
+        on_delete=models.CASCADE,
+        related_name="merit_lists",
+    )
+    title = models.CharField(
+        max_length=255,
+        verbose_name="Merit List / Cutoff Title",
+        help_text="e.g., First Merit List for B.Tech",
+    )
+    departments = models.ManyToManyField(
+        "academics.Department",
+        blank=True,
+        help_text="Select specific departments if applicable.",
+    )
+    programs = models.ManyToManyField(
+        "academics.Program",
+        blank=True,
+        help_text="Select specific programs if applicable.",
+    )
+    category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
+    other_category_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Specify if 'Others' is selected.",
+    )
+    description = RichTextField(blank=True, null=True)
+    attachment = models.FileField(
+        upload_to="admission/merit_lists/", blank=True, null=True
+    )
     date_posted = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
@@ -84,7 +146,23 @@ class AdmissionBrochure(SoftDeleteModel):
         verbose_name="Document Name",
         help_text="e.g., UG Prospectus 2026",
     )
+    departments = models.ManyToManyField(
+        "academics.Department",
+        blank=True,
+        help_text="Select specific departments if applicable.",
+    )
+    programs = models.ManyToManyField(
+        "academics.Program",
+        blank=True,
+        help_text="Select specific programs if applicable.",
+    )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
+    other_category_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Specify if 'Others' is selected.",
+    )
     file = models.FileField(upload_to="admission/brochures/")
     upload_date = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -92,6 +170,15 @@ class AdmissionBrochure(SoftDeleteModel):
 
     class Meta:
         ordering = ["-upload_date", "-id"]
+
+    def clean(self):
+        super().clean()
+        if self.category == "Others" and not self.other_category_name:
+            raise ValidationError(
+                {
+                    "other_category_name": "This field is required when category is 'Others'."
+                }
+            )
 
     def __str__(self):
         return f"{self.title} ({self.category})"
@@ -105,6 +192,16 @@ class AdmissionSchedule(SoftDeleteModel):
     )
     event_name = models.CharField(
         max_length=255, help_text="e.g., Last Date to Apply, First Merit List"
+    )
+    departments = models.ManyToManyField(
+        "academics.Department",
+        blank=True,
+        help_text="Select specific departments if applicable.",
+    )
+    programs = models.ManyToManyField(
+        "academics.Program",
+        blank=True,
+        help_text="Select specific programs if applicable.",
     )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
     event_date = models.DateTimeField(

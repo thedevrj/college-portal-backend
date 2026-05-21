@@ -192,3 +192,72 @@ class ChangePasswordView(APIView):
                 {"message": "Password updated successfully"}, status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+from rest_framework.authentication import SessionAuthentication
+
+class AdminDashboardStatsView(APIView):
+    """
+    Global ERP Dashboard Stats API.
+    Returns high-level statistics across all major modules for the Admin Dashboard.
+    """
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_superuser:
+            return Response({"error": "Unauthorized"}, status=403)
+
+        def get_count(app_label, model_name, filter_kwargs=None):
+            try:
+                model = apps.get_model(app_label, model_name)
+                qs = model.objects.all()
+                if filter_kwargs:
+                    qs = qs.filter(**filter_kwargs)
+                return qs.count()
+            except LookupError:
+                return 0
+
+        # Academics
+        total_departments = get_count("academics", "Department")
+        total_programs = get_count("academics", "Program")
+
+        # People
+        total_faculty = get_count("faculty", "Faculty")
+        total_staff = get_count("staff", "Staff")
+
+        # Research
+        total_publications = get_count("research", "Publication")
+        total_projects = get_count("research", "ResearchProject")
+        total_patents = get_count("research", "Patent")
+        total_research_output = total_publications + total_projects + total_patents
+
+        # Admissions
+        active_merit_lists = get_count("admission", "AdmissionMeritList", {"is_active": True})
+        
+        active_session_name = "None"
+        try:
+            SessionModel = apps.get_model("admission", "AdmissionSession")
+            active_session = SessionModel.objects.filter(is_active=True).first()
+            if active_session:
+                active_session_name = active_session.session_name
+        except LookupError:
+            pass
+
+        return Response({
+            "academics": {
+                "departments": total_departments,
+                "programs": total_programs
+            },
+            "people": {
+                "faculty": total_faculty,
+                "staff": total_staff
+            },
+            "research": {
+                "total_output": total_research_output
+            },
+            "admission": {
+                "active_session": active_session_name,
+                "merit_lists": active_merit_lists
+            }
+        })

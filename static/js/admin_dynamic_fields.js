@@ -1,102 +1,108 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("Admin Dynamic Fields Tracker Initialized v4");
-
     function toggleDisable(dropdown, otherInput) {
         if (!dropdown || !otherInput) return;
-        if (dropdown.value === 'Others') {
+
+        // Target Jazzmin's .form-group, standard Django's .fieldBox, or the specific field wrapper
+        const fieldName = otherInput.id.replace('id_', '');
+        const wrapper = otherInput.closest('.form-group.field-' + fieldName) ||
+            otherInput.closest('.form-group') ||
+            otherInput.closest('.fieldBox') ||
+            otherInput.closest('.field-' + fieldName) ||
+            otherInput.closest('.form-row');
+
+        if (dropdown.value === 'Others' || dropdown.value === 'Other') {
             otherInput.readOnly = false;
             otherInput.disabled = false;
             otherInput.style.backgroundColor = '';
             otherInput.style.opacity = '1';
             otherInput.style.pointerEvents = 'auto';
+
+            if (wrapper) {
+                // Restore original CSS display (flex/block) instead of hardcoding 'block'
+                wrapper.style.display = '';
+            } else {
+                otherInput.style.display = '';
+            }
         } else {
             otherInput.readOnly = true;
             otherInput.value = '';
-            // Using disabled natively prevents any interactions/clicks
             otherInput.disabled = true;
             otherInput.style.backgroundColor = '#eee';
             otherInput.style.opacity = '0.5';
             otherInput.style.pointerEvents = 'none';
-        }
-    }
 
-    // 1. Static Field (Program Level)
-    const levelSelect = document.getElementById('id_level');
-    const otherLevelInput = document.getElementById('id_other_level');
-    if (levelSelect && otherLevelInput) {
-        toggleDisable(levelSelect, otherLevelInput);
-        levelSelect.addEventListener('change', function () {
-            toggleDisable(this, otherLevelInput);
-        });
-    }
-
-    // 2. Static Field (Notice Category)
-    const categorySelect = document.getElementById('id_category');
-    const otherCategoryInput = document.getElementById('id_other_category');
-    if (categorySelect && otherCategoryInput) {
-        toggleDisable(categorySelect, otherCategoryInput);
-        categorySelect.addEventListener('change', function () {
-            toggleDisable(this, otherCategoryInput);
-        });
-    }
-
-    // 3. Static Field (Centre Head Title)
-    const headTitleSelect = document.getElementById('id_head_title');
-    const headTitleOtherInput = document.getElementById('id_head_title_other');
-    if (headTitleSelect && headTitleOtherInput) {
-        toggleDisable(headTitleSelect, headTitleOtherInput);
-        headTitleSelect.addEventListener('change', function () {
-            toggleDisable(this, headTitleOtherInput);
-        });
-    }
-
-    // Event Delegation for dynamically changing selects
-    document.body.addEventListener('change', function(event) {
-        const target = event.target;
-        if (target && target.tagName === 'SELECT') {
-            if (target.id.endsWith('-course_type')) {
-                const otherInput = document.getElementById(target.id.replace('-course_type', '-other_course_type'));
-                toggleDisable(target, otherInput);
-            }
-            if (target.id.endsWith('-designation_in_committee')) {
-                const otherInput = document.getElementById(target.id.replace('-designation_in_committee', '-other_designation'));
-                toggleDisable(target, otherInput);
+            if (wrapper) {
+                wrapper.style.display = 'none';
+            } else {
+                otherInput.style.display = 'none';
             }
         }
-    });
+    }
 
-    // Initialize all existing inlines on page load
-    const allSelects = document.querySelectorAll('select');
-    allSelects.forEach(function(select) {
-        if (select.id.includes('__prefix__')) return; // ignore django empty form templates
-        
-        if (select.id.endsWith('-course_type')) {
-            const otherInput = document.getElementById(select.id.replace('-course_type', '-other_course_type'));
-            toggleDisable(select, otherInput);
+    function getOtherInput(selectId) {
+        if (!selectId) return null;
+        let prefix = "id_";
+        let fieldName = selectId.substring(3);
+
+        const lastDash = fieldName.lastIndexOf('-');
+        if (lastDash !== -1) {
+            prefix = "id_" + fieldName.substring(0, lastDash + 1);
+            fieldName = fieldName.substring(lastDash + 1);
         }
-        if (select.id.endsWith('-designation_in_committee')) {
-            const otherInput = document.getElementById(select.id.replace('-designation_in_committee', '-other_designation'));
-            toggleDisable(select, otherInput);
+
+        const candidates = [
+            prefix + "other_" + fieldName,
+            prefix + fieldName + "_other",
+            prefix + "other_" + fieldName + "_name",
+            prefix + "other_designation"
+        ];
+
+        for (let i = 0; i < candidates.length; i++) {
+            const el = document.getElementById(candidates[i]);
+            if (el) return el;
         }
-    });
-    
-    // Observer to initialize newly added inlines dynamically
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            mutation.addedNodes.forEach(function(node) {
-                if (node.nodeType === 1) { // ELEMENT_NODE
-                    const selects = node.querySelectorAll ? node.querySelectorAll('select') : [];
-                    selects.forEach(function(select) {
-                        if (select.id.includes('__prefix__')) return;
-                        if (select.id.endsWith('-course_type')) {
-                            const otherInput = document.getElementById(select.id.replace('-course_type', '-other_course_type'));
-                            toggleDisable(select, otherInput);
-                        }
-                        if (select.id.endsWith('-designation_in_committee')) {
-                            const otherInput = document.getElementById(select.id.replace('-designation_in_committee', '-other_designation'));
-                            toggleDisable(select, otherInput);
-                        }
+        return null;
+    }
+
+    function initializeSelect(select) {
+        if (!select || !select.id || select.id.includes('__prefix__')) return;
+        const otherInput = getOtherInput(select.id);
+        if (otherInput) {
+            toggleDisable(select, otherInput);
+
+            if (!select.dataset.dynamicBound) {
+                select.addEventListener('change', function () {
+                    toggleDisable(this, otherInput);
+                });
+                select.dataset.dynamicBound = 'true';
+
+                // Fallback for Select2 or other libraries that might not trigger native change
+                if (typeof window.jQuery !== 'undefined') {
+                    window.jQuery(select).on('change', function () {
+                        toggleDisable(select, otherInput);
                     });
+                } else if (typeof django !== 'undefined' && django.jQuery) {
+                    django.jQuery(select).on('change', function () {
+                        toggleDisable(select, otherInput);
+                    });
+                }
+            }
+        }
+    }
+
+    // Initialize all selects on page load
+    document.querySelectorAll('select').forEach(initializeSelect);
+
+    // Observer to initialize newly added inlines dynamically
+    const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            mutation.addedNodes.forEach(function (node) {
+                if (node.nodeType === 1) { // ELEMENT_NODE
+                    if (node.tagName === 'SELECT') {
+                        initializeSelect(node);
+                    }
+                    const selects = node.querySelectorAll ? node.querySelectorAll('select') : [];
+                    selects.forEach(initializeSelect);
                 }
             });
         });
