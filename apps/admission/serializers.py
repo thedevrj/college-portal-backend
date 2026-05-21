@@ -6,6 +6,7 @@ from .models import (
     AdmissionSchedule,
     AdmissionContact,
     AdmissionLink,
+    AdmissionMeritList,
 )
 
 
@@ -17,7 +18,15 @@ class AdmissionSessionSerializer(serializers.ModelSerializer):
 
 class AdmissionUpdateSerializer(serializers.ModelSerializer):
     session_details = AdmissionSessionSerializer(source="session", read_only=True)
-    category_display = serializers.CharField(source="get_category_display", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
+    departments_display = serializers.StringRelatedField(
+        source="departments", many=True, read_only=True
+    )
+    programs_display = serializers.StringRelatedField(
+        source="programs", many=True, read_only=True
+    )
 
     class Meta:
         model = AdmissionUpdate
@@ -28,6 +37,42 @@ class AdmissionUpdateSerializer(serializers.ModelSerializer):
             "title",
             "category",
             "category_display",
+            "departments",
+            "departments_display",
+            "programs",
+            "programs_display",
+            "other_category_name",
+            "description",
+            "attachment",
+            "date_posted",
+        ]
+
+
+class AdmissionMeritListSerializer(serializers.ModelSerializer):
+    session_details = AdmissionSessionSerializer(source="session", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
+    departments_display = serializers.StringRelatedField(
+        source="departments", many=True, read_only=True
+    )
+    programs_display = serializers.StringRelatedField(
+        source="programs", many=True, read_only=True
+    )
+
+    class Meta:
+        model = AdmissionMeritList
+        fields = [
+            "id",
+            "session",
+            "session_details",
+            "title",
+            "category",
+            "category_display",
+            "departments",
+            "departments_display",
+            "programs",
+            "programs_display",
             "other_category_name",
             "description",
             "attachment",
@@ -37,7 +82,15 @@ class AdmissionUpdateSerializer(serializers.ModelSerializer):
 
 class AdmissionBrochureSerializer(serializers.ModelSerializer):
     session_details = AdmissionSessionSerializer(source="session", read_only=True)
-    category_display = serializers.CharField(source="get_category_display", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
+    departments_display = serializers.StringRelatedField(
+        source="departments", many=True, read_only=True
+    )
+    programs_display = serializers.StringRelatedField(
+        source="programs", many=True, read_only=True
+    )
 
     class Meta:
         model = AdmissionBrochure
@@ -48,6 +101,10 @@ class AdmissionBrochureSerializer(serializers.ModelSerializer):
             "title",
             "category",
             "category_display",
+            "departments",
+            "departments_display",
+            "programs",
+            "programs_display",
             "file",
             "upload_date",
         ]
@@ -55,7 +112,15 @@ class AdmissionBrochureSerializer(serializers.ModelSerializer):
 
 class AdmissionScheduleSerializer(serializers.ModelSerializer):
     session_details = AdmissionSessionSerializer(source="session", read_only=True)
-    category_display = serializers.CharField(source="get_category_display", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
+    departments_display = serializers.StringRelatedField(
+        source="departments", many=True, read_only=True
+    )
+    programs_display = serializers.StringRelatedField(
+        source="programs", many=True, read_only=True
+    )
 
     class Meta:
         model = AdmissionSchedule
@@ -66,13 +131,19 @@ class AdmissionScheduleSerializer(serializers.ModelSerializer):
             "event_name",
             "category",
             "category_display",
+            "departments",
+            "departments_display",
+            "programs",
+            "programs_display",
             "event_date",
         ]
 
 
 class AdmissionContactSerializer(serializers.ModelSerializer):
     session_details = AdmissionSessionSerializer(source="session", read_only=True)
-    category_display = serializers.CharField(source="get_category_display", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
 
     class Meta:
         model = AdmissionContact
@@ -91,7 +162,9 @@ class AdmissionContactSerializer(serializers.ModelSerializer):
 
 class AdmissionLinkSerializer(serializers.ModelSerializer):
     session_details = AdmissionSessionSerializer(source="session", read_only=True)
-    category_display = serializers.CharField(source="get_category_display", read_only=True)
+    category_display = serializers.CharField(
+        source="get_category_display", read_only=True
+    )
 
     class Meta:
         model = AdmissionLink

@@ -9,6 +9,7 @@ from .models import (
     AdmissionSchedule,
     AdmissionContact,
     AdmissionLink,
+    AdmissionMeritList,
 )
 from .serializers import (
     AdmissionSessionSerializer,
@@ -17,6 +18,7 @@ from .serializers import (
     AdmissionScheduleSerializer,
     AdmissionContactSerializer,
     AdmissionLinkSerializer,
+    AdmissionMeritListSerializer,
 )
 
 
@@ -39,6 +41,20 @@ class AdmissionUpdateViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AdmissionUpdateSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = AdmissionUpdateFilter
+    search_fields = ["title", "description"]
+
+
+class AdmissionMeritListFilter(django_filters.FilterSet):
+    class Meta:
+        model = AdmissionMeritList
+        fields = ["session", "category"]
+
+
+class AdmissionMeritListViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AdmissionMeritList.objects.filter(is_active=True).select_related("session")
+    serializer_class = AdmissionMeritListSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = AdmissionMeritListFilter
     search_fields = ["title", "description"]
 
 

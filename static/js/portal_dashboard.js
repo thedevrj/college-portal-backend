@@ -48,3 +48,88 @@ if (document.readyState === "loading") {
 // Also run periodically to catch any dynamic loads or race conditions with Jazzmin
 setTimeout(updateSidebarIdentity, 500);
 setTimeout(updateSidebarIdentity, 2000);
+
+
+/**
+ * Global ERP Dashboard Widgets
+ * Fetches stats from the API and renders them in AdminLTE 3 small-boxes
+ */
+function renderGlobalDashboard() {
+    const container = document.getElementById("global-dashboard-widgets");
+    if (!container) return; // Not on the dashboard page
+
+    fetch('/portal/api/dashboard-stats/', { credentials: 'same-origin' })
+        .then(response => {
+            if (!response.ok) throw new Error('Unauthorized or missing API');
+            return response.json();
+        })
+        .then(data => {
+            container.innerHTML = `
+                <!-- Academics -->
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info" style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div class="inner" style="padding: 1.5rem;">
+                            <h3>${data.academics.departments} <sup style="font-size: 20px">Depts</sup></h3>
+                            <p>${data.academics.programs} Programs</p>
+                        </div>
+                        <div class="icon" style="top: 10px;">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <a href="/admin/academics/department/" class="small-box-footer" style="padding: 0.5rem;">More info <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+                
+                <!-- Faculty & Staff -->
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success" style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div class="inner" style="padding: 1.5rem;">
+                            <h3>${data.people.faculty + data.people.staff} <sup style="font-size: 20px">Total</sup></h3>
+                            <p>Faculty & Staff Profiles</p>
+                        </div>
+                        <div class="icon" style="top: 10px;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <a href="/admin/faculty/faculty/" class="small-box-footer" style="padding: 0.5rem;">More info <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+
+                <!-- Research Output -->
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-warning" style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div class="inner" style="padding: 1.5rem;">
+                            <h3>${data.research.total_output} <sup style="font-size: 20px">Outputs</sup></h3>
+                            <p>Publications & Projects</p>
+                        </div>
+                        <div class="icon" style="top: 10px;">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <a href="/admin/research/publication/" class="small-box-footer" style="padding: 0.5rem; color: #fff !important;">More info <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+
+                <!-- Admissions -->
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-danger" style="border-radius: 0.5rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div class="inner" style="padding: 1.5rem;">
+                            <h3>${data.admission.merit_lists} <sup style="font-size: 20px">Lists</sup></h3>
+                            <p>${data.admission.active_session}</p>
+                        </div>
+                        <div class="icon" style="top: 10px;">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <a href="/admin/admission/admissionmeritlist/" class="small-box-footer" style="padding: 0.5rem;">More info <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(err => {
+            console.error("Dashboard Stats Error:", err);
+        });
+}
+
+// Ensure the dashboard renders on load
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderGlobalDashboard);
+} else {
+    renderGlobalDashboard();
+}

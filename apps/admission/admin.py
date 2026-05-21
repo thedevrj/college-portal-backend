@@ -12,11 +12,14 @@ from .models import (
     AdmissionSchedule,
     AdmissionContact,
     AdmissionLink,
+    AdmissionMeritList,
 )
 
 
 @admin.register(AdmissionSession)
-class AdmissionSessionAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
+class AdmissionSessionAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
     list_display = ("id", "session_name", "start_date", "end_date", "is_active")
     list_filter = (SoftDeleteListFilter, "is_active")
     search_fields = ("id", "session_name")
@@ -26,7 +29,9 @@ class AdmissionSessionAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExpor
 
 
 @admin.register(AdmissionUpdate)
-class AdmissionUpdateAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
+class AdmissionUpdateAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
     list_display = (
         "id",
         "title",
@@ -38,33 +43,86 @@ class AdmissionUpdateAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExport
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "title", "description")
 
+    class Media:
+        js = ("admin/js/admission_dynamic_programs.js",)
+
 
 @admin.register(AdmissionBrochure)
-class AdmissionBrochureAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
+class AdmissionBrochureAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
     list_display = ("id", "title", "session", "category", "upload_date", "is_active")
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "title")
 
+    class Media:
+        js = ("admin/js/admission_dynamic_programs.js",)
+
 
 @admin.register(AdmissionSchedule)
-class AdmissionScheduleAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
-    list_display = ("id", "event_name", "session", "category", "event_date", "is_active")
+class AdmissionScheduleAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
+    list_display = (
+        "id",
+        "event_name",
+        "session",
+        "category",
+        "event_date",
+        "is_active",
+    )
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "event_name")
     formfield_overrides = {
-        models.DateTimeField: {"widget": forms.DateTimeInput(attrs={"type": "datetime-local"})},
+        models.DateTimeField: {
+            "widget": forms.DateTimeInput(attrs={"type": "datetime-local"})
+        },
     }
+
+    class Media:
+        js = ("admin/js/admission_dynamic_programs.js",)
+
+
+@admin.register(AdmissionMeritList)
+class AdmissionMeritListAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
+    list_display = (
+        "id",
+        "title",
+        "session",
+        "category",
+        "date_posted",
+        "is_active",
+    )
+    list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
+    search_fields = ("id", "title", "description")
+
+    class Media:
+        js = ("admin/js/admission_dynamic_programs.js",)
 
 
 @admin.register(AdmissionContact)
-class AdmissionContactAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
-    list_display = ("id", "name", "designation", "category", "session", "email", "phone_number")
+class AdmissionContactAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
+    list_display = (
+        "id",
+        "name",
+        "designation",
+        "category",
+        "session",
+        "email",
+        "phone_number",
+    )
     list_filter = (SoftDeleteListFilter, "session", "category")
     search_fields = ("id", "name", "email", "phone_number")
 
 
 @admin.register(AdmissionLink)
-class AdmissionLinkAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
+class AdmissionLinkAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
     list_display = ("id", "title", "session", "category", "url", "is_active")
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "title", "url")
