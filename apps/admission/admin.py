@@ -13,6 +13,8 @@ from .models import (
     AdmissionContact,
     AdmissionLink,
     AdmissionMeritList,
+    AdmissionCommitteeMember,
+    AdmissionCommitteeMinutes,
 )
 
 
@@ -126,3 +128,25 @@ class AdmissionLinkAdmin(
     list_display = ("id", "title", "session", "category", "url", "is_active")
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "title", "url")
+
+
+@admin.register(AdmissionCommitteeMember)
+class AdmissionCommitteeMemberAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
+    list_display = ("name", "designation", "email", "order")
+    list_filter = (SoftDeleteListFilter,)
+    search_fields = ("name", "designation", "email")
+    list_editable = ("order",)
+
+
+@admin.register(AdmissionCommitteeMinutes)
+class AdmissionCommitteeMinutesAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
+    list_display = ("meeting_title", "date_of_meeting", "is_private")
+    list_filter = (SoftDeleteListFilter, "is_private")
+    search_fields = ("meeting_title",)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
