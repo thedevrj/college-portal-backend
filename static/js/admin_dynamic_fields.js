@@ -2,12 +2,19 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleDisable(dropdown, otherInput) {
         if (!dropdown || !otherInput) return;
 
+        let rawFieldName = otherInput.id.replace('id_', '');
+        let baseFieldName = rawFieldName;
+        const lastDashIndex = rawFieldName.lastIndexOf('-');
+        if (lastDashIndex !== -1) {
+            baseFieldName = rawFieldName.substring(lastDashIndex + 1);
+        }
+
         // Target Jazzmin's .form-group, standard Django's .fieldBox, or the specific field wrapper
-        const fieldName = otherInput.id.replace('id_', '');
-        const wrapper = otherInput.closest('.form-group.field-' + fieldName) ||
+        const wrapper = otherInput.closest('.form-group.field-' + rawFieldName) ||
+            otherInput.closest('.form-group.field-' + baseFieldName) ||
+            otherInput.closest('.field-' + baseFieldName) ||
             otherInput.closest('.form-group') ||
             otherInput.closest('.fieldBox') ||
-            otherInput.closest('.field-' + fieldName) ||
             otherInput.closest('.form-row');
 
         if (dropdown.value === 'Others' || dropdown.value === 'Other') {
@@ -17,10 +24,10 @@ document.addEventListener('DOMContentLoaded', function () {
             otherInput.style.opacity = '1';
             otherInput.style.pointerEvents = 'auto';
 
-            if (wrapper) {
+            if (wrapper && wrapper.tagName !== 'TR' && wrapper.tagName !== 'TD') {
                 // Restore original CSS display (flex/block) instead of hardcoding 'block'
                 wrapper.style.display = '';
-            } else {
+            } else if (!wrapper || (wrapper.tagName !== 'TR' && wrapper.tagName !== 'TD')) {
                 otherInput.style.display = '';
             }
         } else {
@@ -31,9 +38,9 @@ document.addEventListener('DOMContentLoaded', function () {
             otherInput.style.opacity = '0.5';
             otherInput.style.pointerEvents = 'none';
 
-            if (wrapper) {
+            if (wrapper && wrapper.tagName !== 'TR' && wrapper.tagName !== 'TD') {
                 wrapper.style.display = 'none';
-            } else {
+            } else if (!wrapper || (wrapper.tagName !== 'TR' && wrapper.tagName !== 'TD')) {
                 otherInput.style.display = 'none';
             }
         }

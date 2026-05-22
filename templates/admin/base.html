@@ -4,7 +4,7 @@
 {% block extrahead %}
 {{ block.super }}
 {% if request.user.is_authenticated %}
-<script src="{% static 'js/admin_dynamic_fields.js' %}?v=7"></script>
+<script src="{% static 'js/admin_dynamic_fields.js' %}"></script>
 <script>
     // Inject user data for sidebar UI updates
     window.PORTAL_USER = {

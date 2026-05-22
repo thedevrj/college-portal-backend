@@ -15,4 +15,4 @@ class CentreAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     autocomplete_fields = ("head",)
 
     class Media:
-        js = ("/static/js/admin_dynamic_fields.js?v=6",)
+        js = ("/static/js/admin_dynamic_fields.js",)
