@@ -108,7 +108,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "college_backend_portal.wsgi.application"
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
