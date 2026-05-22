@@ -7,6 +7,8 @@ from .models import (
     AdmissionContact,
     AdmissionLink,
     AdmissionMeritList,
+    AdmissionCommitteeMember,
+    AdmissionCommitteeMinutes,
 )
 
 
@@ -177,3 +179,34 @@ class AdmissionLinkSerializer(serializers.ModelSerializer):
             "category_display",
             "url",
         ]
+
+
+class AdmissionCommitteeMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionCommitteeMember
+        fields = [
+            "id",
+            "name",
+            "designation",
+            "email",
+            "order",
+        ]
+
+
+class AdmissionCommitteeMinutesSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AdmissionCommitteeMinutes
+        fields = [
+            "id",
+            "meeting_title",
+            "date_of_meeting",
+            "file",
+            "is_private",
+        ]
+
+    def get_file(self, obj):
+        if obj.file:
+            return obj.file.url
+        return None

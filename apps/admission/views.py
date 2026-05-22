@@ -10,7 +10,10 @@ from .models import (
     AdmissionContact,
     AdmissionLink,
     AdmissionMeritList,
+    AdmissionCommitteeMember,
+    AdmissionCommitteeMinutes,
 )
+from rest_framework import permissions
 from .serializers import (
     AdmissionSessionSerializer,
     AdmissionUpdateSerializer,
@@ -19,6 +22,8 @@ from .serializers import (
     AdmissionContactSerializer,
     AdmissionLinkSerializer,
     AdmissionMeritListSerializer,
+    AdmissionCommitteeMemberSerializer,
+    AdmissionCommitteeMinutesSerializer,
 )
 
 
@@ -51,7 +56,9 @@ class AdmissionMeritListFilter(django_filters.FilterSet):
 
 
 class AdmissionMeritListViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AdmissionMeritList.objects.filter(is_active=True).select_related("session")
+    queryset = AdmissionMeritList.objects.filter(is_active=True).select_related(
+        "session"
+    )
     serializer_class = AdmissionMeritListSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = AdmissionMeritListFilter
@@ -65,7 +72,9 @@ class AdmissionBrochureFilter(django_filters.FilterSet):
 
 
 class AdmissionBrochureViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AdmissionBrochure.objects.filter(is_active=True).select_related("session")
+    queryset = AdmissionBrochure.objects.filter(is_active=True).select_related(
+        "session"
+    )
     serializer_class = AdmissionBrochureSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = AdmissionBrochureFilter
@@ -79,7 +88,9 @@ class AdmissionScheduleFilter(django_filters.FilterSet):
 
 
 class AdmissionScheduleViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AdmissionSchedule.objects.filter(is_active=True).select_related("session")
+    queryset = AdmissionSchedule.objects.filter(is_active=True).select_related(
+        "session"
+    )
     serializer_class = AdmissionScheduleSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = AdmissionScheduleFilter
@@ -114,3 +125,26 @@ class AdmissionLinkViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = AdmissionLinkFilter
     search_fields = ["title"]
     pagination_class = None
+
+
+# --- Admission Committee ViewSets ---
+
+
+class AdmissionCommitteeMemberViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AdmissionCommitteeMember.objects.all()
+    serializer_class = AdmissionCommitteeMemberSerializer
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
+    pagination_class = None
+
+
+class AdmissionCommitteeMinutesViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AdmissionCommitteeMinutes.objects.all()
+    serializer_class = AdmissionCommitteeMinutesSerializer
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            qs = qs.filter(is_private=False)
+        return qs

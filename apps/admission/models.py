@@ -270,3 +270,37 @@ class AdmissionLink(SoftDeleteModel):
 
     def __str__(self):
         return self.title
+
+# --- Admission Committee ---
+
+class AdmissionCommitteeMember(SoftDeleteModel):
+    name = models.CharField(max_length=255, verbose_name="Name of the Member")
+    designation = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.name} - Admission Committee"
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name_plural = "Admission Committee Members"
+
+
+class AdmissionCommitteeMinutes(SoftDeleteModel):
+    meeting_title = models.CharField(max_length=255)
+    date_of_meeting = models.DateField()
+    file = models.FileField(upload_to="admission/committee_minutes/")
+    is_private = models.BooleanField(
+        default=False,
+        help_text="If checked, these minutes will only be visible to authenticated, authorized personnel.",
+    )
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.meeting_title} ({self.date_of_meeting})"
+
+    class Meta:
+        ordering = ["-date_of_meeting"]
+        verbose_name_plural = "Admission Committee Minutes"
