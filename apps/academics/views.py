@@ -25,6 +25,7 @@ from .serializers import (
     SchoolBoardMOMSerializer,
     DepartmentListSerializer,
     DepartmentDetailSerializer,
+    BaseProgramSerializer,
     ProgramListSerializer,
     ProgramDetailSerializer,
     CourseSerializer,
@@ -123,8 +124,6 @@ class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["name"]
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return ProgramListSerializer
         return ProgramDetailSerializer
 
     @action(detail=True, methods=["get"])
