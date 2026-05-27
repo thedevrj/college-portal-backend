@@ -181,9 +181,10 @@ class PortalSecurityMixin:
         except:
             pass
 
-        # 3. SPECIAL CASE: Faculty Profiles
-        # HODs and Deans should NOT be able to edit other faculty members' profiles
-        if self.model.__name__ == "Faculty":
+        # 3. SPECIAL CASE: Faculty Profiles & Personal Data
+        # HODs, Deans, and other Faculty should NOT be able to edit other faculty members' personal data
+        personal_models = ["Faculty", "InvitedTalk", "CourseDesign", "Membership"]
+        if self.model.__name__ in personal_models:
             return self._is_owner(request.user, obj)
 
         if self._is_owner(request.user, obj):
@@ -361,7 +362,7 @@ class PortalSecurityMixin:
                     "is_active",
                     "department",
                     "staff_no",
-                    "insti_email",
+                    "designation",
                 ]:
                     if field in form.base_fields:
                         form.base_fields[field].disabled = True
@@ -369,6 +370,16 @@ class PortalSecurityMixin:
             active_access_list = request.user.access_entries.filter(is_active=True)
             dept_access = active_access_list.filter(entity_type=EntityType.DEPARTMENT)
             school_access = active_access_list.filter(entity_type=EntityType.SCHOOL)
+
+            # --- STRICT LOCK: Personal Models ---
+            # Force the faculty field to the current user for personal models, regardless of role (HOD/Dean)
+            personal_models = ["InvitedTalk", "CourseDesign", "Membership"]
+            if self.model.__name__ in personal_models:
+                FacultyModel = apps.get_model("faculty", "Faculty")
+                faculty_profile = FacultyModel.objects.filter(user=request.user).first()
+                if faculty_profile and "faculty" in form.base_fields:
+                    form.base_fields["faculty"].initial = faculty_profile
+                    form.base_fields["faculty"].disabled = True
 
             # --- Auto-fill and Lock for Faculty Role ---
             # (Only if they DON'T have a management role like HOD or Dean)

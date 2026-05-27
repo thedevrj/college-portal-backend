@@ -24,6 +24,9 @@ class PortalConfig:
             "publication",
             "patent",
             "consultancy",
+            "invitedtalk",
+            "coursedesign",
+            "membership",
         ],
         PortalRole.HOD: [
             "researchproject",

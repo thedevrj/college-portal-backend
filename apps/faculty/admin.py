@@ -5,7 +5,7 @@ from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin
 from apps.accounts.mixins import PortalSecurityMixin
-from .models import Faculty
+from .models import Faculty, InvitedTalk, CourseDesign, Membership
 from apps.academics.models import School, Department
 from apps.centres.models import Centre
 
@@ -358,6 +358,27 @@ from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
 
 
+class InvitedTalkInline(admin.TabularInline):
+    model = InvitedTalk
+    extra = 1
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
+
+
+class CourseDesignInline(admin.StackedInline):
+    model = CourseDesign
+    extra = 1
+
+
+class MembershipInline(admin.TabularInline):
+    model = Membership
+    extra = 1
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
+
+
 @admin.register(Faculty)
 class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_classes = [FacultyResource]
@@ -382,6 +403,7 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+    inlines = [InvitedTalkInline, CourseDesignInline, MembershipInline]
     actions = ["generate_portal_accounts"]
 
     @admin.action(description="Generate Portal Login Accounts for Selected Faculty")
@@ -468,3 +490,33 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
         except Exception:
             pass
         return super().has_add_permission(request)
+
+
+@admin.register(InvitedTalk)
+class InvitedTalkAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    list_display = ("title", "faculty", "event_name", "date", "role")
+    list_filter = (SoftDeleteListFilter, "role", "date")
+    search_fields = ("title", "event_name", "faculty__name", "venue")
+    autocomplete_fields = ["faculty"]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
+
+
+@admin.register(CourseDesign)
+class CourseDesignAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    list_display = ("course_name", "faculty", "course_level")
+    list_filter = (SoftDeleteListFilter, "course_level")
+    search_fields = ("course_name", "faculty__name")
+    autocomplete_fields = ["faculty"]
+
+
+@admin.register(Membership)
+class MembershipAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    list_display = ("name", "faculty", "start_date", "end_date")
+    list_filter = (SoftDeleteListFilter, "start_date", "end_date")
+    search_fields = ("name", "faculty__name")
+    autocomplete_fields = ["faculty"]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
