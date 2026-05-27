@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
+from django.core.exceptions import ValidationError
 from simple_history.models import HistoricalRecords
 from apps.accounts.models import SoftDeleteModel
 
@@ -190,3 +191,130 @@ class Faculty(SoftDeleteModel):
 
     def __str__(self):
         return f"{self.name} ({self.staff_no or 'No ID'})"
+
+
+class InvitedTalk(SoftDeleteModel):
+    faculty = models.ForeignKey(
+        Faculty,
+        on_delete=models.CASCADE,
+        related_name="invited_talks",
+        help_text="Faculty member who gave the talk",
+    )
+    title = models.CharField(max_length=500, help_text="Title of the talk")
+    event_name = models.CharField(
+        max_length=500, help_text="Name of the event", null=True, blank=True
+    )
+    role = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="e.g., Keynote Speaker, Session Chair, Guest Lecturer",
+    )
+    date = models.DateField(null=True, blank=True)
+    venue = models.CharField(
+        max_length=500, blank=True, null=True, help_text="Location of the event"
+    )
+    link = models.URLField(
+        blank=True, null=True, help_text="Link to the event or talk video/slides"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["-date", "title"]
+        verbose_name = "Invited Talk"
+        verbose_name_plural = "Invited Talks"
+
+    def __str__(self):
+        return f"{self.title[:50]} - {self.faculty.name}"
+
+
+class CourseDesign(SoftDeleteModel):
+    faculty = models.ForeignKey(
+        Faculty,
+        on_delete=models.CASCADE,
+        related_name="course_designs",
+        help_text="Faculty member who designed the course",
+    )
+    course_name = models.CharField(
+        max_length=500,
+        help_text="Name of the course designed",
+        verbose_name="Course Name",
+    )
+    course_level = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        choices=[
+            ("UG", "Undergraduate"),
+            ("PG", "Postgraduate"),
+            ("Integrated", "Integrated"),
+            ("PHD", "PhD"),
+            ("Others", "Others"),
+        ],
+    )
+    other_course_level = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Please specify the level if 'Others' is selected",
+    )
+    description = RichTextField(
+        blank=True, null=True, help_text="Additional details about the course"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
+
+    def clean(self):
+        super().clean()
+        if self.course_level == "Others" and not self.other_course_level:
+            raise ValidationError(
+                {
+                    "other_course_level": "This field is required when course_level is 'Others'."
+                }
+            )
+
+    class Meta:
+        ordering = ["course_name"]
+        verbose_name = "Course Design"
+        verbose_name_plural = "Course Designs"
+
+    def __str__(self):
+        return f"{self.course_name[:50]} - {self.faculty.name}"
+
+
+class Membership(SoftDeleteModel):
+    faculty = models.ForeignKey(
+        Faculty,
+        on_delete=models.CASCADE,
+        related_name="memberships",
+        help_text="Faculty member who is a member",
+    )
+    name = models.CharField(
+        max_length=500,
+        help_text="Name of the membership",
+        verbose_name="Membership Name",
+    )
+    order_no = models.CharField(
+        max_length=30,
+        null=True,
+        blank=True,
+        help_text="Order number (e.g. ABC123XYZ)",
+        verbose_name="Order Number",
+    )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Membership"
+        verbose_name_plural = "Member/Expert/Membership"
+
+    def __str__(self):
+        return f"{self.name[:50]} - {self.faculty.name}"

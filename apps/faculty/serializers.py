@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Faculty
+from .models import Faculty, InvitedTalk, CourseDesign, Membership
 from apps.academics.models import School, Department
 from apps.centres.models import Centre
 
@@ -20,6 +20,24 @@ class CentreNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Centre
         fields = ["id", "name", "slug"]
+
+
+class InvitedTalkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InvitedTalk
+        exclude = ["faculty", "created_at", "updated_at", "deleted_at", "is_deleted"]
+
+
+class CourseDesignSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseDesign
+        exclude = ["faculty", "created_at", "updated_at", "deleted_at", "is_deleted"]
+
+
+class MembershipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Membership
+        exclude = ["faculty", "created_at", "updated_at", "deleted_at", "is_deleted"]
 
 
 class BaseFacultySerializer(serializers.ModelSerializer):
@@ -68,6 +86,10 @@ class FacultyListSerializer(BaseFacultySerializer):
 
 
 class FacultyDetailSerializer(BaseFacultySerializer):
+    invited_talks = InvitedTalkSerializer(many=True, read_only=True)
+    course_designs = CourseDesignSerializer(many=True, read_only=True)
+    memberships = MembershipSerializer(many=True, read_only=True)
+
     class Meta:
         model = Faculty
         # Return all profile fields, excluding private/internal data
