@@ -35,6 +35,10 @@ class BoardOfManagementMinutesSerializer(serializers.ModelSerializer):
 
     def get_file(self, obj):
         if obj.file:
+            if obj.is_private:
+                request = self.context.get('request')
+                if request and not request.user.is_authenticated:
+                    return None
             return obj.file.url
         return None
 
@@ -63,6 +67,10 @@ class AcademicCouncilMinutesSerializer(serializers.ModelSerializer):
 
     def get_file(self, obj):
         if obj.file:
+            if obj.is_private:
+                request = self.context.get('request')
+                if request and not request.user.is_authenticated:
+                    return None
             return obj.file.url
         return None
 
@@ -91,6 +99,10 @@ class PlanningBoardMinutesSerializer(serializers.ModelSerializer):
 
     def get_file(self, obj):
         if obj.file:
+            if obj.is_private:
+                request = self.context.get('request')
+                if request and not request.user.is_authenticated:
+                    return None
             return obj.file.url
         return None
 
@@ -119,5 +131,9 @@ class FinanceCommitteeMinutesSerializer(serializers.ModelSerializer):
 
     def get_file(self, obj):
         if obj.file:
+            if obj.is_private:
+                request = self.context.get('request')
+                if request and not request.user.is_authenticated:
+                    return None
             return obj.file.url
         return None

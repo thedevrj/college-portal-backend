@@ -36,12 +36,6 @@ class BoardOfManagementMinutesViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        if not self.request.user.is_authenticated:
-            qs = qs.filter(is_private=False)
-        return qs
-
 
 # --- Academic Council ViewSets ---
 
@@ -57,12 +51,6 @@ class AcademicCouncilMinutesViewSet(viewsets.ModelViewSet):
     serializer_class = AcademicCouncilMinutesSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        if not self.request.user.is_authenticated:
-            qs = qs.filter(is_private=False)
-        return qs
 
 
 # --- Planning Board ViewSets ---
@@ -80,12 +68,6 @@ class PlanningBoardMinutesViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        if not self.request.user.is_authenticated:
-            qs = qs.filter(is_private=False)
-        return qs
-
 
 # --- Finance Committee ViewSets ---
 
@@ -101,9 +83,3 @@ class FinanceCommitteeMinutesViewSet(viewsets.ModelViewSet):
     serializer_class = FinanceCommitteeMinutesSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        if not self.request.user.is_authenticated:
-            qs = qs.filter(is_private=False)
-        return qs

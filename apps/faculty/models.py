@@ -260,6 +260,9 @@ class CourseDesign(SoftDeleteModel):
         null=True,
         help_text="Please specify the level if 'Others' is selected",
     )
+    nature_of_contribution = models.TextField(
+        blank=True, null=True, help_text="Nature of contribution eg: Alone, Team Member"
+    )
     description = RichTextField(
         blank=True, null=True, help_text="Additional details about the course"
     )
