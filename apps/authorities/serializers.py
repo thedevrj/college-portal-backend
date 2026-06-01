@@ -37,7 +37,9 @@ class BoardOfManagementMinutesSerializer(serializers.ModelSerializer):
         if obj.file:
             if obj.is_private:
                 request = self.context.get('request')
-                if request and not request.user.is_authenticated:
+                if not request or not request.user.is_authenticated:
+                    return None
+                if not request.user.has_perm('authorities.view_boardofmanagementminutes'):
                     return None
             return obj.file.url
         return None
@@ -69,8 +71,21 @@ class AcademicCouncilMinutesSerializer(serializers.ModelSerializer):
         if obj.file:
             if obj.is_private:
                 request = self.context.get('request')
-                if request and not request.user.is_authenticated:
+                if not request or not request.user.is_authenticated:
                     return None
+                
+                user = request.user
+                if user.has_perm('authorities.view_academiccouncilminutes'):
+                    return obj.file.url
+                
+                from apps.accounts.models import PortalRole
+                if user.access_entries.filter(role__in=[PortalRole.DEAN, PortalRole.HOD], is_active=True).exists():
+                    return obj.file.url
+                    
+                if hasattr(user, 'faculty_profile') and user.faculty_profile and getattr(user.faculty_profile, 'designation', '').lower() == 'professor':
+                    return obj.file.url
+                    
+                return None
             return obj.file.url
         return None
 
@@ -101,7 +116,9 @@ class PlanningBoardMinutesSerializer(serializers.ModelSerializer):
         if obj.file:
             if obj.is_private:
                 request = self.context.get('request')
-                if request and not request.user.is_authenticated:
+                if not request or not request.user.is_authenticated:
+                    return None
+                if not request.user.has_perm('authorities.view_planningboardminutes'):
                     return None
             return obj.file.url
         return None
@@ -133,7 +150,9 @@ class FinanceCommitteeMinutesSerializer(serializers.ModelSerializer):
         if obj.file:
             if obj.is_private:
                 request = self.context.get('request')
-                if request and not request.user.is_authenticated:
+                if not request or not request.user.is_authenticated:
+                    return None
+                if not request.user.has_perm('authorities.view_financecommitteeminutes'):
                     return None
             return obj.file.url
         return None
