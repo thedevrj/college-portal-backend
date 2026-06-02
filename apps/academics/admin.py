@@ -32,26 +32,31 @@ from .models import (
 class SchoolBoardCommitteeMemberInline(admin.TabularInline):
     model = SchoolBoardCommitteeMember
     extra = 1
+    exclude = ("is_deleted", "deleted_at")
 
 
 class DepartmentGalleryInline(admin.TabularInline):
     model = DepartmentGallery
     extra = 1
+    exclude = ("is_deleted", "deleted_at")
 
 
 class CBCSCourseInline(admin.TabularInline):
     model = CBCSCourse
     extra = 1
+    exclude = ("is_deleted", "deleted_at")
 
 
 class CourseInline(admin.TabularInline):
     model = Course
     extra = 1
+    exclude = ("is_deleted", "deleted_at")
 
 
 class CommitteeMemberInline(admin.TabularInline):
     model = CommitteeMember
     extra = 1
+    exclude = ("is_deleted", "deleted_at")
 
 
 # --- Admin Classes ---
