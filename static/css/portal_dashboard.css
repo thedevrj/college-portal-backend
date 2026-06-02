@@ -232,3 +232,56 @@ input[type=submit],
     padding: 6px 8px !important;
     text-overflow: clip !important;
 }
+
+/* Remove all inner horizontal scrollbars and let the main page handle horizontal scrolling */
+.inline-group,
+.tabular,
+.table-responsive,
+.card-body,
+.tab-content,
+.tab-pane,
+fieldset.module {
+    overflow-x: visible !important;
+}
+
+/* Force the card to expand to the width of the table, pushing the main window to scroll */
+.card {
+    min-width: max-content !important;
+    overflow-x: visible !important;
+}
+
+/* Force the table to expand fully */
+.tabular.inline-related table {
+    width: max-content !important;
+    min-width: 100% !important;
+}
+
+/* Style the "Add another" link as a left-aligned button */
+.tabular.inline-related .add-row, 
+.inline-group .add-row {
+    display: flex !important;
+    justify-content: flex-start !important;
+    padding: 12px 0 !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.tabular.inline-related .add-row a,
+.inline-group .add-row a {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    padding: 8px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2) !important;
+    transition: all 0.2s ease !important;
+    display: inline-block !important;
+}
+
+.tabular.inline-related .add-row a:hover,
+.inline-group .add-row a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3) !important;
+    color: white !important;
+}

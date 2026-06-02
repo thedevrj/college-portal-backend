@@ -122,6 +122,7 @@ class PortalAccessInline(admin.TabularInline):
 
 from django.db.models import Q
 
+
 class PortalRoleListFilter(admin.SimpleListFilter):
     title = "Portal Role"
     parameter_name = "portal_role"
@@ -150,8 +151,7 @@ class PortalUserListFilter(admin.SimpleListFilter):
             return queryset.filter(portal_profile__is_portal_user=True)
         elif self.value() == "no":
             return queryset.filter(
-                Q(portal_profile__is_portal_user=False)
-                | Q(portal_profile__isnull=True)
+                Q(portal_profile__is_portal_user=False) | Q(portal_profile__isnull=True)
             )
         return queryset
 
@@ -192,6 +192,11 @@ class PortalAccessAdmin(admin.ModelAdmin):
         js = ("/static/js/portal_access_admin.js",)
 
 
+from django.utils.html import format_html
+from django.urls import reverse, NoReverseMatch
+from .models import UserProfile, PortalAccess, PortalRole, EntityType, UserActivityLog
+
+
 @admin.register(LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
     # This controls what you see in the list
@@ -199,15 +204,81 @@ class LogEntryAdmin(admin.ModelAdmin):
         "action_time",
         "user",
         "content_type",
-        "object_repr",
-        "action_flag",
+        "object_link",
+        "action_description",
         "change_message",
     )
     list_filter = ("action_flag", "content_type", "user")
     search_fields = ("object_repr", "change_message", "object_id")
     date_hierarchy = "action_time"
+    readonly_fields = (
+        "action_time",
+        "user",
+        "content_type",
+        "object_id",
+        "object_repr",
+        "action_flag",
+        "change_message",
+    )
 
-    # Log editing is now enabled for Superusers
+    # def get_readonly_fields(self, request, obj=None):
+    #     if request.user.is_superuser:
+    #         # action_time is non-editable by default, so it must stay in readonly_fields to be visible
+    #         return ("action_time",)
+    #     return self.readonly_fields
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def action_description(self, obj):
+        if obj.action_flag == 1:
+            return format_html('<span style="color: green;">Addition</span>')
+        elif obj.action_flag == 2:
+            return format_html('<span style="color: orange;">Change</span>')
+        elif obj.action_flag == 3:
+            return format_html('<span style="color: red;">Deletion</span>')
+        return ""
+
+    action_description.short_description = "Action"
+
+    def object_link(self, obj):
+        if obj.action_flag == 3:  # Deletion
+            return obj.object_repr
+        try:
+            url = reverse(
+                f"admin:{obj.content_type.app_label}_{obj.content_type.model}_change",
+                args=[obj.object_id],
+            )
+            return format_html('<a href="{}">{}</a>', url, obj.object_repr)
+        except (NoReverseMatch, AttributeError):
+            return obj.object_repr
+
+    object_link.short_description = "Object"
+
+
+@admin.register(UserActivityLog)
+class UserActivityLogAdmin(admin.ModelAdmin):
+    list_display = ("timestamp", "user", "action", "ip_address")
+    list_filter = ("action", "timestamp", "user")
+    search_fields = ("user__username", "ip_address", "user_agent")
+    date_hierarchy = "timestamp"
+    readonly_fields = ("user", "action", "ip_address", "user_agent", "timestamp")
+
+    # def get_readonly_fields(self, request, obj=None):
+    #     if request.user.is_superuser:
+    #         # timestamp is auto_now_add, so it must stay readonly to be visible
+    #         return ("timestamp",)
+    #     return self.readonly_fields
+
     def has_add_permission(self, request):
         return False
 
@@ -215,4 +286,7 @@ class LogEntryAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return True
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser

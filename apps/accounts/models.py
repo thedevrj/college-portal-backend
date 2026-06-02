@@ -116,6 +116,33 @@ class PortalAccess(models.Model):
         return f"{self.user.username} - {self.get_role_display()} of {self.entity}"
 
 
+class UserActivityLog(models.Model):
+    class ActionType(models.TextChoices):
+        LOGIN = "LOGIN", "Login"
+        LOGOUT = "LOGOUT", "Logout"
+        LOGIN_FAILED = "LOGIN_FAILED", "Login Failed"
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs",
+    )
+    action = models.CharField(max_length=20, choices=ActionType.choices)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "User Activity Logs"
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        username = self.user.username if self.user else "Unknown User"
+        return f"{username} - {self.get_action_display()} at {self.timestamp}"
+
+
 # --- Signals ---
 
 

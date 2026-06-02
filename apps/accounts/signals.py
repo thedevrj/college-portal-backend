@@ -45,3 +45,60 @@ def auto_unlock_password_change(sender, instance, **kwargs):
                 profile.save(update_fields=["force_password_change"])
     except User.DoesNotExist:
         pass
+
+
+from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+@receiver(user_logged_in)
+def log_user_login(sender, request, user, **kwargs):
+    from apps.accounts.models import UserActivityLog
+    ip_address = get_client_ip(request) if request else None
+    user_agent = request.META.get('HTTP_USER_AGENT', '') if request else None
+    UserActivityLog.objects.create(
+        user=user,
+        action=UserActivityLog.ActionType.LOGIN,
+        ip_address=ip_address,
+        user_agent=user_agent
+    )
+
+@receiver(user_logged_out)
+def log_user_logout(sender, request, user, **kwargs):
+    from apps.accounts.models import UserActivityLog
+    ip_address = get_client_ip(request) if request else None
+    user_agent = request.META.get('HTTP_USER_AGENT', '') if request else None
+    UserActivityLog.objects.create(
+        user=user,
+        action=UserActivityLog.ActionType.LOGOUT,
+        ip_address=ip_address,
+        user_agent=user_agent
+    )
+
+@receiver(user_login_failed)
+def log_user_login_failed(sender, credentials, request, **kwargs):
+    from apps.accounts.models import UserActivityLog
+    ip_address = get_client_ip(request) if request else None
+    user_agent = request.META.get('HTTP_USER_AGENT', '') if request else None
+    
+    # Try to find the user by credentials
+    user = None
+    username = credentials.get('username')
+    if username:
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            pass
+
+    UserActivityLog.objects.create(
+        user=user,
+        action=UserActivityLog.ActionType.LOGIN_FAILED,
+        ip_address=ip_address,
+        user_agent=user_agent
+    )
