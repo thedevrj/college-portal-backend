@@ -233,19 +233,19 @@ input[type=submit],
     text-overflow: clip !important;
 }
 
-/* Remove all inner horizontal scrollbars and let the main page handle horizontal scrolling */
-.inline-group,
-.tabular,
-.table-responsive,
-.card-body,
-.tab-content,
-.tab-pane,
-fieldset.module {
+/* Remove inner horizontal scrollbars ONLY for cards with tabular inlines */
+.card:has(.tabular.inline-related) .inline-group,
+.card:has(.tabular.inline-related) .tabular,
+.card:has(.tabular.inline-related) .table-responsive,
+.card:has(.tabular.inline-related) .card-body,
+.card:has(.tabular.inline-related) .tab-content,
+.card:has(.tabular.inline-related) .tab-pane,
+.card:has(.tabular.inline-related) fieldset.module {
     overflow-x: visible !important;
 }
 
 /* Force the card to expand to the width of the table, pushing the main window to scroll */
-.card {
+.card:has(.tabular.inline-related) {
     min-width: max-content !important;
     overflow-x: visible !important;
 }

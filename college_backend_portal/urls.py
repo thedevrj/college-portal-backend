@@ -27,7 +27,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    # Redirect admin logout to portal logout (Fixes Django 5.0 GET logout issue)
     path(
         "admin/logout/",
         RedirectView.as_view(pattern_name="portal_logout", permanent=False),
