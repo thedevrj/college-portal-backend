@@ -36,8 +36,6 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 
-# Application definition
-
 INSTALLED_APPS = [
     "jazzmin",
     "django.contrib.admin",
@@ -272,12 +270,14 @@ JAZZMIN_SETTINGS = {
         "notices",
         "admission",
         "admission.AdmissionSession",
-        "admission.AdmissionBrochure",
-        "admission.AdmissionMeritList",
-        "admission.AdmissionUpdate",
-        "admission.AdmissionSchedule",
-        "admission.AdmissionLink",
-        "admission.AdmissionContact",
+        "admission.AdmissionNotice",
+        "admission.AdmissionStream",
+        "admission.CounsellingPhase",
+        "admission.MeritList",
+        "admission.AdmissionProspectus",
+        "admission.RegistrationPortal",
+        "admission.AdmissionCommitteeMember",
+        "admission.AdmissionCommitteeMinutes",
         "research",
         "research.Publication",  # Rearrange Research models here:
         "research.ResearchProject",

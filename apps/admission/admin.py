@@ -7,12 +7,12 @@ from apps.accounts.filters import SoftDeleteListFilter
 from apps.accounts.mixins import PortalSecurityMixin
 from .models import (
     AdmissionSession,
-    AdmissionUpdate,
-    AdmissionBrochure,
-    AdmissionSchedule,
-    AdmissionContact,
-    AdmissionLink,
-    AdmissionMeritList,
+    AdmissionStream,
+    AdmissionProspectus,
+    AdmissionNotice,
+    RegistrationPortal,
+    CounsellingPhase,
+    MeritList,
     AdmissionCommitteeMember,
     AdmissionCommitteeMinutes,
 )
@@ -30,104 +30,65 @@ class AdmissionSessionAdmin(
     }
 
 
-@admin.register(AdmissionUpdate)
-class AdmissionUpdateAdmin(
+@admin.register(AdmissionStream)
+class AdmissionStreamAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = (
-        "id",
-        "title",
-        "session",
-        "category",
-        "date_posted",
-        "is_active",
-    )
-    list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
-    search_fields = ("id", "title", "description")
-
-    class Media:
-        js = ("admin/js/admission_dynamic_programs.js",)
+    list_display = ("id", "name", "session", "order", "is_active")
+    list_filter = (SoftDeleteListFilter, "session", "is_active")
+    search_fields = ("id", "name")
+    list_editable = ("order", "is_active")
 
 
-@admin.register(AdmissionBrochure)
-class AdmissionBrochureAdmin(
+@admin.register(AdmissionProspectus)
+class AdmissionProspectusAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = ("id", "title", "session", "category", "upload_date", "is_active")
+    list_display = ("id", "title", "session", "category", "upload_date")
+    list_filter = (SoftDeleteListFilter, "session", "category")
+    search_fields = ("id", "title")
+
+
+@admin.register(AdmissionNotice)
+class AdmissionNoticeAdmin(
+    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
+):
+    list_display = ("id", "title", "session", "category", "date_posted", "is_active")
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "title")
 
-    class Media:
-        js = ("admin/js/admission_dynamic_programs.js",)
 
-
-@admin.register(AdmissionSchedule)
-class AdmissionScheduleAdmin(
+@admin.register(RegistrationPortal)
+class RegistrationPortalAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = (
-        "id",
-        "event_name",
-        "session",
-        "category",
-        "event_date",
-        "is_active",
-    )
+    list_display = ("id", "portal_name", "session", "category", "registration_start", "registration_end", "is_active")
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
-    search_fields = ("id", "event_name")
+    search_fields = ("id", "portal_name")
     formfield_overrides = {
-        models.DateTimeField: {
-            "widget": forms.DateTimeInput(attrs={"type": "datetime-local"})
+        models.DateField: {
+            "widget": forms.DateInput(attrs={"type": "date"})
         },
     }
 
-    class Media:
-        js = ("admin/js/admission_dynamic_programs.js",)
 
-
-@admin.register(AdmissionMeritList)
-class AdmissionMeritListAdmin(
+@admin.register(CounsellingPhase)
+class CounsellingPhaseAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = (
-        "id",
-        "title",
-        "session",
-        "category",
-        "date_posted",
-        "is_active",
-    )
-    list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
-    search_fields = ("id", "title", "description")
-
-    class Media:
-        js = ("admin/js/admission_dynamic_programs.js",)
+    list_display = ("id", "phase_name", "stream", "order", "is_active")
+    list_filter = (SoftDeleteListFilter, "stream", "is_active")
+    search_fields = ("id", "phase_name")
+    list_editable = ("order", "is_active")
 
 
-@admin.register(AdmissionContact)
-class AdmissionContactAdmin(
+@admin.register(MeritList)
+class MeritListAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = (
-        "id",
-        "name",
-        "designation",
-        "category",
-        "session",
-        "email",
-        "phone_number",
-    )
-    list_filter = (SoftDeleteListFilter, "session", "category")
-    search_fields = ("id", "name", "email", "phone_number")
-
-
-@admin.register(AdmissionLink)
-class AdmissionLinkAdmin(
-    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
-):
-    list_display = ("id", "title", "session", "category", "url", "is_active")
-    list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
-    search_fields = ("id", "title", "url")
+    list_display = ("id", "department", "phase", "upload_date")
+    list_filter = (SoftDeleteListFilter, "phase__stream", "phase", "department")
+    search_fields = ("id", "department__name")
 
 
 @admin.register(AdmissionCommitteeMember)

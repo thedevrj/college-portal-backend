@@ -4,7 +4,6 @@ from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
 from apps.accounts.models import SoftDeleteModel
 
-
 ADMISSION_CATEGORY_CHOICES = [
     ("UG", "Undergraduate (UG)"),
     ("PG", "Postgraduate (PG)"),
@@ -33,245 +32,132 @@ class AdmissionSession(SoftDeleteModel):
         return f"{self.session_name} {'(Active)' if self.is_active else '(Archived)'}"
 
 
-class AdmissionUpdate(SoftDeleteModel):
+class AdmissionStream(SoftDeleteModel):
     session = models.ForeignKey(
-        AdmissionSession,
-        on_delete=models.CASCADE,
-        related_name="updates",
+        AdmissionSession, on_delete=models.CASCADE, related_name="streams"
     )
-    title = models.CharField(
-        max_length=255,
-        verbose_name="Subject / Headline",
-        help_text="The main heading for this update or announcement.",
-    )
-    departments = models.ManyToManyField(
-        "academics.Department",
-        blank=True,
-        help_text="Select specific departments if applicable.",
-    )
-    programs = models.ManyToManyField(
-        "academics.Program",
-        blank=True,
-        help_text="Select specific programs if applicable.",
+    name = models.CharField(
+        max_length=255, help_text="e.g., B.Tech via JEE, PG via CUET"
     )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
-    other_category_name = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Specify if 'Others' is selected.",
+    order = models.PositiveIntegerField(
+        default=0, help_text="Order in which tabs are displayed"
     )
-    description = RichTextField(blank=True, null=True)
-    attachment = models.FileField(upload_to="admission/updates/", blank=True, null=True)
-    date_posted = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ["-date_posted", "-id"]
-
-    def clean(self):
-        super().clean()
-        if self.category == "Others" and not self.other_category_name:
-            raise ValidationError(
-                {
-                    "other_category_name": "This field is required when category is 'Others'."
-                }
-            )
+        ordering = ["order", "id"]
+        verbose_name_plural = "Admission Programs"
 
     def __str__(self):
-        return f"[{self.category}] {self.title}"
+        return f"{self.name} ({self.session.session_name})"
 
 
-class AdmissionMeritList(SoftDeleteModel):
+class AdmissionProspectus(SoftDeleteModel):
     session = models.ForeignKey(
-        AdmissionSession,
-        on_delete=models.CASCADE,
-        related_name="merit_lists",
-    )
-    title = models.CharField(
-        max_length=255,
-        verbose_name="Merit List / Cutoff Title",
-        help_text="e.g., First Merit List for B.Tech",
-    )
-    departments = models.ManyToManyField(
-        "academics.Department",
-        blank=True,
-        help_text="Select specific departments if applicable.",
-    )
-    programs = models.ManyToManyField(
-        "academics.Program",
-        blank=True,
-        help_text="Select specific programs if applicable.",
+        AdmissionSession, on_delete=models.CASCADE, related_name="prospectuses"
     )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
-    other_category_name = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Specify if 'Others' is selected.",
-    )
-    description = RichTextField(blank=True, null=True)
-    attachment = models.FileField(
-        upload_to="admission/merit_lists/", blank=True, null=True
-    )
-    date_posted = models.DateField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
-    history = HistoricalRecords()
-
-    class Meta:
-        ordering = ["-date_posted", "-id"]
-
-    def clean(self):
-        super().clean()
-        if self.category == "Others" and not self.other_category_name:
-            raise ValidationError(
-                {
-                    "other_category_name": "This field is required when category is 'Others'."
-                }
-            )
-
-    def __str__(self):
-        return f"[{self.category}] {self.title}"
-
-
-class AdmissionBrochure(SoftDeleteModel):
-    session = models.ForeignKey(
-        AdmissionSession,
-        on_delete=models.CASCADE,
-        related_name="brochures",
-    )
     title = models.CharField(
-        max_length=255,
-        verbose_name="Document Name",
-        help_text="e.g., UG Prospectus 2026",
+        max_length=255, help_text="e.g., CUET PG Information Bulletin"
     )
-    departments = models.ManyToManyField(
-        "academics.Department",
-        blank=True,
-        help_text="Select specific departments if applicable.",
-    )
-    programs = models.ManyToManyField(
-        "academics.Program",
-        blank=True,
-        help_text="Select specific programs if applicable.",
-    )
-    category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
-    other_category_name = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Specify if 'Others' is selected.",
-    )
-    file = models.FileField(upload_to="admission/brochures/")
+    file = models.FileField(upload_to="admission/prospectuses/")
     upload_date = models.DateField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
 
     class Meta:
         ordering = ["-upload_date", "-id"]
-
-    def clean(self):
-        super().clean()
-        if self.category == "Others" and not self.other_category_name:
-            raise ValidationError(
-                {
-                    "other_category_name": "This field is required when category is 'Others'."
-                }
-            )
+        verbose_name_plural = "Admission Prospectus"
 
     def __str__(self):
-        return f"{self.title} ({self.category})"
+        return f"{self.title} - {self.get_category_display()} ({self.session.session_name})"
 
 
-class AdmissionSchedule(SoftDeleteModel):
+class AdmissionNotice(SoftDeleteModel):
     session = models.ForeignKey(
-        AdmissionSession,
-        on_delete=models.CASCADE,
-        related_name="schedules",
-    )
-    event_name = models.CharField(
-        max_length=255, help_text="e.g., Last Date to Apply, First Merit List"
-    )
-    departments = models.ManyToManyField(
-        "academics.Department",
-        blank=True,
-        help_text="Select specific departments if applicable.",
-    )
-    programs = models.ManyToManyField(
-        "academics.Program",
-        blank=True,
-        help_text="Select specific programs if applicable.",
+        AdmissionSession, on_delete=models.CASCADE, related_name="notices"
     )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
-    event_date = models.DateTimeField(
-        help_text="Date and time of the event (or deadline)"
-    )
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to="admission/notices/", blank=True, null=True)
+    date_posted = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ["event_date", "id"]
+        ordering = ["-date_posted", "-id"]
 
     def __str__(self):
-        return f"{self.event_name} - {self.event_date.strftime('%Y-%m-%d')}"
+        return f"{self.title} - {self.get_category_display()} ({self.session.session_name})"
 
 
-class AdmissionContact(SoftDeleteModel):
+class RegistrationPortal(SoftDeleteModel):
     session = models.ForeignKey(
         AdmissionSession,
         on_delete=models.CASCADE,
-        related_name="contacts",
-        null=True,
-        blank=True,
-        help_text="Leave blank if this contact is not session-specific.",
-    )
-    name = models.CharField(max_length=255)
-    designation = models.CharField(max_length=255, blank=True, null=True)
-    category = models.CharField(
-        max_length=50, choices=ADMISSION_CATEGORY_CHOICES, null=True, blank=True
-    )
-    email = models.EmailField(blank=True, null=True)
-    phone_number = models.CharField(max_length=50, blank=True, null=True)
-    history = HistoricalRecords()
-
-    class Meta:
-        ordering = ["name"]
-
-    def clean(self):
-        super().clean()
-        if not self.email and not self.phone_number:
-            raise ValidationError(
-                "At least one contact method (email or phone number) must be provided."
-            )
-
-    def __str__(self):
-        return f"{self.name} - {self.designation or 'Contact'}"
-
-
-class AdmissionLink(SoftDeleteModel):
-    session = models.ForeignKey(
-        AdmissionSession,
-        on_delete=models.CASCADE,
-        related_name="links",
-    )
-    title = models.CharField(
-        max_length=255,
-        verbose_name="Link Display Text",
-        help_text="e.g., Apply Now, CUET Portal",
+        related_name="registration_portals",
     )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
+    portal_name = models.CharField(
+        max_length=255, help_text="e.g., Samarth CUET-PG Portal"
+    )
     url = models.URLField(max_length=500)
+    registration_start = models.DateField(null=True, blank=True)
+    registration_end = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ["title"]
+        ordering = ["-id"]
 
     def __str__(self):
-        return self.title
+        return f"{self.portal_name} - {self.get_category_display()}"
+
+
+class CounsellingPhase(SoftDeleteModel):
+    stream = models.ForeignKey(
+        AdmissionStream, on_delete=models.CASCADE, related_name="counselling_phases"
+    )
+    phase_name = models.CharField(
+        max_length=100, help_text="e.g., Phase 1, Phase 2, Spot Counselling"
+    )
+    order = models.PositiveIntegerField(
+        default=0, help_text="Chronological order of the phase"
+    )
+    is_active = models.BooleanField(default=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name_plural = "Admission Cutoff Rounds"
+
+    def __str__(self):
+        return f"{self.phase_name} ({self.stream.name})"
+
+
+class MeritList(SoftDeleteModel):
+    phase = models.ForeignKey(
+        CounsellingPhase, on_delete=models.CASCADE, related_name="merit_lists"
+    )
+    department = models.ForeignKey(
+        "academics.Department",
+        on_delete=models.CASCADE,
+        related_name="admission_results",
+    )
+    pdf_file = models.FileField(upload_to="admission/merit_lists/")
+    upload_date = models.DateField(auto_now_add=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["department__name", "-upload_date"]
+
+    def __str__(self):
+        return f"{self.department.name} ({self.phase.phase_name})"
+
 
 # --- Admission Committee ---
+
 
 class AdmissionCommitteeMember(SoftDeleteModel):
     name = models.CharField(max_length=255, verbose_name="Name of the Member")
