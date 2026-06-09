@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
+from django.utils import timezone
 from apps.accounts.models import SoftDeleteModel
 
 ADMISSION_CATEGORY_CHOICES = [
@@ -81,7 +82,7 @@ class AdmissionNotice(SoftDeleteModel):
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to="admission/notices/", blank=True, null=True)
-    date_posted = models.DateField(auto_now_add=True)
+    date_posted = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
 

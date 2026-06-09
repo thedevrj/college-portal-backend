@@ -56,19 +56,28 @@ class AdmissionNoticeAdmin(
     list_display = ("id", "title", "session", "category", "date_posted", "is_active")
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "title")
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
 
 @admin.register(RegistrationPortal)
 class RegistrationPortalAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = ("id", "portal_name", "session", "category", "registration_start", "registration_end", "is_active")
+    list_display = (
+        "id",
+        "portal_name",
+        "session",
+        "category",
+        "registration_start",
+        "registration_end",
+        "is_active",
+    )
     list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
     search_fields = ("id", "portal_name")
     formfield_overrides = {
-        models.DateField: {
-            "widget": forms.DateInput(attrs={"type": "date"})
-        },
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
 
@@ -83,9 +92,7 @@ class CounsellingPhaseAdmin(
 
 
 @admin.register(MeritList)
-class MeritListAdmin(
-    PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
-):
+class MeritListAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     list_display = ("id", "department", "phase", "upload_date")
     list_filter = (SoftDeleteListFilter, "phase__stream", "phase", "department")
     search_fields = ("id", "department__name")
