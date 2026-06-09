@@ -81,7 +81,9 @@ class CounsellingPhaseViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MeritListViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = MeritList.objects.select_related("phase", "phase__stream", "department")
+    queryset = MeritList.objects.select_related(
+        "phase", "phase__stream", "phase__stream__session", "department"
+    )
     serializer_class = MeritListSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = [
