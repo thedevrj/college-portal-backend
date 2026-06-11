@@ -13,8 +13,9 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     gcc \
     python3-dev \
-    musl-dev \
     libpq-dev \
+    netcat-openbsd \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements

@@ -1,0 +1,20 @@
+name: Deploy to STAGING
+
+on:
+  push:
+    branches:
+      - stag
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64, django, backend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Django STAGING
+        run: |
+          rsync -av --delete  --exclude='.env*' --exclude='media/' --exclude='staticfiles/' --exclude='.git' ./ /srv/apps/django/stag/
+          cd /srv/apps/django/stag
+          chmod +x deploy-stag.sh
+          ./deploy-stag.sh

@@ -1,0 +1,16 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+{% if request.user.is_authenticated %}
+<script src="{% static 'js/admin_dynamic_fields.js' %}"></script>
+<script>
+    // Inject user data for sidebar UI updates
+    window.PORTAL_USER = {
+        displayName: "{{ request.user.get_full_name|escapejs }}",
+        avatarUrl: "{% if request.user.portal_profile.profile_photo %}{{ request.user.portal_profile.profile_photo.url }}{% elif request.user.faculty_profile.photo %}{{ request.user.faculty_profile.photo.url }}{% endif %}"
+    };
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile — BBAU ERP Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-light: #f8fafc;
+      --card-bg: #ffffff;
+      --accent-maroon: #991b1b;
+      --accent-hover: #7f1d1d;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --radius: 16px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--accent-maroon);
+    }
+
+    .profile-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .profile-banner {
+      height: 160px;
+      background: linear-gradient(135deg, var(--accent-maroon), #7f1d1d);
+      position: relative;
+    }
+
+    .profile-content {
+      padding: 0 40px 40px;
+      position: relative;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      margin-top: 8px;
+      margin-bottom: 40px;
+      padding-left: 10px;
+    }
+
+    .profile-photo {
+      width: 160px;
+      height: 160px;
+      background: #f1f5f9;
+      border-radius: 24px;
+      border: 6px solid var(--card-bg);
+      object-fit: inherit;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-identity h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .profile-identity p {
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    .badge-admin {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #fef2f2;
+      color: #991b1b;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid #fee2e2;
+      margin-top: 8px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      margin-top: 24px;
+    }
+
+    .info-section h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--bg-light);
+      padding-bottom: 8px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .info-item i {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-maroon);
+      font-size: 14px;
+    }
+
+    .info-item div span {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .info-item div strong {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .roles-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .role-tag {
+      padding: 6px 12px;
+      background: var(--bg-light);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .role-tag i {
+      color: var(--accent-maroon);
+      font-size: 12px;
+    }
+
+    .actions {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 16px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent-maroon);
+      color: white;
+      box-shadow: 0 4px 12px rgba(153, 27, 27, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-light);
+    }
+
+    @media (max-width: 640px) {
+      .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: -60px;
+      }
+
+      .profile-photo {
+        width: 140px;
+        height: 140px;
+      }
+
+      .profile-content {
+        padding: 0 24px 32px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header-nav">
+      <a href="/admin/" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+      <img src="{% static 'img/bbau_logo.png' %}" alt="BBAU" style="height: 40px;" />
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-banner"></div>
+      <div class="profile-content">
+        <div class="profile-header">
+          {% if user.faculty_profile.photo %}
+          <img src="{{ request.scheme }}://{{ request.get_host }}{{ user.faculty_profile.photo.url }}"
+            alt="{{ user.faculty_profile.name }}" class="profile-photo" />
+          {% else %}
+          <div class="profile-photo" style="display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-user-tie fa-4x" style="color: #cbd5e1;"></i>
+          </div>
+          {% endif %}
+          <div class="profile-identity">
+            <h1>{{ user.faculty_profile.name|default:user.get_full_name }}</h1>
+            <p>{{ user.faculty_profile.designation|default:"Faculty Member" }}</p>
+            {% if user.is_superuser %}
+            <span class="badge-admin">System Administrator</span>
+            {% endif %}
+
+            {% for access in user.access_entries.all %}
+            {% if access.role != "FACULTY" and access.is_active %}
+            <span class="badge-admin">{{ access.get_role_display }}</span>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-section">
+            <h3>Academic Information</h3>
+            <div class="info-item">
+              <i class="fas fa-university"></i>
+              <div>
+                <span>Department</span>
+                <strong>{{ user.faculty_profile.department.name|default:"Not Assigned" }}</strong>
+              </div>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-school"></i>
+              <div>
+                <span>School</span>
+                <strong>{{ user.faculty_profile.school.name|default:"Not Assigned" }}</strong>
+              </div>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-id-badge"></i>
+              <div>
+                <span>Staff Number</span>
+                <strong>{{ user.faculty_profile.staff_no|default:"N/A" }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <h3>Contact Details</h3>
+            <div class="info-item">
+              <i class="fas fa-envelope"></i>
+              <div>
+                <span>Institutional Email</span>
+                <strong>{{ user.email|default:"N/A" }}</strong>
+              </div>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-phone"></i>
+              <div>
+                <span>Phone / Contact</span>
+                <strong>{{ user.portal_profile.phone|default:user.faculty_profile.phone1|default:"N/A" }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <h3>Portal Access & Roles</h3>
+            <div class="roles-list">
+              {% for access in user.access_entries.all %}
+              {% if access.is_active %}
+              <div class="role-tag">
+                <i class="fas fa-check-circle"></i>
+                {{ access.get_role_display }} ({{ access.entity }})
+              </div>
+              {% endif %}
+              {% empty %}
+              <p style="font-size: 13px; color: var(--text-secondary);">No administrative roles assigned.</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a href="/admin/faculty/faculty/{{ user.faculty_profile.id }}/change/" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Edit Full Profile
+          </a>
+          <a href="/admin/password_change/" class="btn btn-secondary">
+            <i class="fas fa-key"></i> Change Password
+          </a>
+          <a href="{% url 'portal_logout' %}" class="btn btn-secondary" style="color: #991b1b; border-color: #fee2e2;">
+            <i class="fas fa-sign-out-alt"></i> Sign Out
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
