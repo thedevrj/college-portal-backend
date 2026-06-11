@@ -12,8 +12,8 @@ echo "🔍 Checking container status..."
 
 if docker ps | grep -q "django-dev"; then
     echo "✅ Django DEV deployed successfully!"
-    echo "🌐 Admin: http://172.35.0.45:8001/admin/"
-    echo "📡 API: http://172.35.0.45:8001/api/"
+    echo "🌐 Admin: http://192.168.0.8:8001/admin/"
+    echo "📡 API: http://192.168.0.8:8001/api/"
    echo ""
     echo "📄 Container logs (last 10 lines):"
     docker logs django-dev --tail 10

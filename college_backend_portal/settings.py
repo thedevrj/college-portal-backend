@@ -79,12 +79,7 @@ MIDDLEWARE = [
     "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
 ]
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:9001",
-    "http://192.168.0.1:9001",
-    "http://192.168.0.8:9001",
-]
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
 CORS_ALLOW_CREDENTIALS = True
 
