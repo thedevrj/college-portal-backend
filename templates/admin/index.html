@@ -1,0 +1,90 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+{% if portal_stats %}
+<div class="row mb-4 mx-n2">
+    <!-- Scholars -->
+    <div class="col-xl-3 col-md-6 mb-4 px-2">
+        <div class="portal-stat-card theme-emerald">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-user-graduate fa-lg"></i>
+                </div>
+                <div>
+                    <div class="stat-title">Scholars</div>
+                    <div class="stat-number">{{ portal_stats.scholars }}</div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="stat-badge" style="background: #d1fae5; color: #065f46;">
+                    {{ portal_stats.scholars_active }} Active
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publications -->
+    <div class="col-xl-3 col-md-6 mb-4 px-2">
+        <div class="portal-stat-card theme-amber">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-book-open fa-lg"></i>
+                </div>
+                <div>
+                    <div class="stat-title">Publications</div>
+                    <div class="stat-number">{{ portal_stats.publications }}</div>
+                </div>
+            </div>
+            <div class="mt-3 text-muted small font-weight-bold">
+                Total Research Outputs
+            </div>
+        </div>
+    </div>
+    <!-- Total Projects -->
+    <div class="col-xl-3 col-md-6 mb-4 px-2">
+        <div class="portal-stat-card theme-indigo">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-project-diagram fa-lg"></i>
+                </div>
+                <div>
+                    <div class="stat-title">Total Projects</div>
+                    <div class="stat-number">{{ portal_stats.projects }}</div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="stat-badge" style="background: #e0e7ff; color: #4338ca;">
+                    {{ portal_stats.projects_ongoing }} Ongoing
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div class="col-xl-3 col-md-6 mb-4 px-2">
+        <div class="portal-stat-card theme-violet">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-shield-alt fa-lg"></i>
+                </div>
+                <div>
+                    <div class="stat-title">Portal Access</div>
+                    <div class="stat-number" style="font-size: 24px; color: #6366f1;">Active</div>
+                </div>
+            </div>
+            <div class="mt-3 text-muted small font-weight-bold">
+                Verified: {{ user.get_full_name }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Container for Global ERP Dashboard (populated via AJAX for Superusers only) -->
+{% if request.user.is_superuser %}
+<div id="global-dashboard-widgets" class="row mb-4 mx-n2"></div>
+{% endif %}
+
+{{ block.super }}
+{% endblock %}
