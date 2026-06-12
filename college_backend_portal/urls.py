@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
 from django.views.generic import RedirectView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -26,7 +27,13 @@ from rest_framework_simplejwt.views import (
 from django.conf import settings
 from django.conf.urls.static import static
 
+
+def health(request):
+    return HttpResponse("OK")
+
+
 urlpatterns = [
+    path("health/", health),
     path(
         "admin/logout/",
         RedirectView.as_view(pattern_name="portal_logout", permanent=False),
