@@ -60,6 +60,13 @@ class Faculty(SoftDeleteModel):
 
     bio = RichTextField(blank=True, null=True)
 
+    orcid_id = models.CharField(
+        max_length=19,
+        null=True,
+        unique=True,
+        help_text="ORCID ID (e.g., 0000-0003-0902-4386)",
+    )
+
     qualification = RichTextField(blank=True, null=True)
     teaching_exp = models.CharField(
         max_length=100, blank=True, null=True, help_text="e.g., 10 Years 6 Months"
