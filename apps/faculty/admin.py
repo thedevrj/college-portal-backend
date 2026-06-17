@@ -77,6 +77,7 @@ class FacultyResource(resources.ModelResource):
             "research_gate_url",
             "linkedin_url",
             "website_url",
+            "orcid_id",
             "date_of_joining",
             "date_of_superannuation",
             "is_active",
@@ -398,16 +399,56 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
         "school",
         "designation",
     )
-    search_fields = ("name", "staff_no", "insti_email")
+    search_fields = ("name", "staff_no", "insti_email", "orcid_id")
     prepopulated_fields = {"slug": ("name",)}
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
     inlines = [InvitedTalkInline, CourseDesignInline, MembershipInline]
-    actions = ["generate_portal_accounts"]
+    actions = ["generate_portal_accounts", "sync_orcid_profiles"]
+
+    @admin.action(description="Sync Selected Faculty Profiles with ORCID")
+    def sync_orcid_profiles(self, request, queryset):
+
+        from apps.faculty.orcid_sync import sync_faculty_orcid
+
+        success_count = 0
+        skipped_count = 0
+        error_count = 0
+
+        for faculty in queryset:
+            if not faculty.orcid_id:
+                skipped_count += 1
+                continue
+
+            result = sync_faculty_orcid(faculty)
+            if result["success"]:
+                success_count += 1
+            else:
+                error_count += 1
+
+        msg = f"ORCID Sync Completed. Successfully synced: {success_count} profile(s)."
+        if skipped_count:
+            msg += f" Skipped {skipped_count} (no ORCID ID set)."
+        if error_count:
+            msg += f" Failed to sync {error_count} profile(s)."
+
+        self.message_user(
+            request,
+            msg,
+            level="SUCCESS" if error_count == 0 else "WARNING",
+        )
 
     @admin.action(description="Generate Portal Login Accounts for Selected Faculty")
     def generate_portal_accounts(self, request, queryset):
+        if not request.user.is_superuser:
+            self.message_user(
+                request,
+                "Permission Denied: Only administrators can generate accounts.",
+                level="ERROR",
+            )
+            return
+
         from django.contrib.auth.models import User
         from apps.accounts.models import UserProfile, PortalAccess, PortalRole
 
@@ -490,6 +531,13 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
         except Exception:
             pass
         return super().has_add_permission(request)
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if "generate_portal_accounts" in actions:
+                del actions["generate_portal_accounts"]
+        return actions
 
 
 @admin.register(InvitedTalk)
