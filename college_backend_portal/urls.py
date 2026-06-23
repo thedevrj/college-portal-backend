@@ -46,6 +46,7 @@ urlpatterns = [
     path("api/v1/", include("apps.notices.urls")),
     path("api/v1/", include("apps.research.urls")),
     path("api/v1/", include("apps.staff.urls")),
+    path("api/v1/", include("apps.mou.urls")),
     path("api/v1/", include("apps.authorities.urls")),
     path("api/v1/admission/", include("apps.admission.urls")),
     # Authentication (JWT for public API)
