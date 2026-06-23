@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "apps.research",
     "apps.authorities",
     "apps.admission",
+    "apps.mou",
     "simple_history",
     "django_cleanup.apps.CleanupConfig",
 ]
@@ -290,6 +291,7 @@ JAZZMIN_SETTINGS = {
         "faculty.Membership",
         "staff",
         "authorities",
+        "mou",
     ],
     # Custom icons (FontAwesome 5)
     "icons": {
@@ -321,6 +323,7 @@ JAZZMIN_SETTINGS = {
         "admission.AdmissionSchedule": "fas fa-clock",
         "admission.AdmissionContact": "fas fa-address-book",
         "admission.AdmissionLink": "fas fa-link",
+        "mou.MOU": "fas fa-handshake",
     },
     "default_icon_parents": "fas fa-folder",
     "default_icon_children": "fas fa-circle",

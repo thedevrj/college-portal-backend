@@ -111,8 +111,32 @@ class ResearchProject(SoftDeleteModel):
     description = RichTextField(blank=True, null=True)
     history = HistoricalRecords()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "principal_investigator", "department"],
+                condition=models.Q(is_deleted=False),
+                name="unique_project_title_pi_dept",
+            )
+        ]
+
     def __str__(self):
         return self.title
+
+    def clean(self):
+        super().clean()
+        qs = ResearchProject.objects.filter(
+            title__iexact=self.title,
+            principal_investigator=self.principal_investigator,
+            department=self.department,
+            is_deleted=False,
+        )
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                "A project with the same Title, Principal Investigator, and Department already exists."
+            )
 
 
 class ResearchScholar(SoftDeleteModel):
@@ -186,11 +210,21 @@ class ResearchScholar(SoftDeleteModel):
     award_date = models.DateField(null=True, blank=True)
     history = HistoricalRecords()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["scholar_name", "department", "supervisor", "date_of_birth"],
+                condition=models.Q(is_deleted=False),
+                name="unique_scholar_dept_supervisor_dob",
+            )
+        ]
+
     def __str__(self):
         return self.scholar_name
 
     def clean(self):
         super().clean()
+        # --- Conditional field validations ---
         if self.category == "Other" and not self.other_category:
             raise ValidationError(
                 {"other_category": "This field is required when category is 'Other'."}
@@ -199,6 +233,57 @@ class ResearchScholar(SoftDeleteModel):
             raise ValidationError(
                 {"other_gender": "This field is required when gender is 'Other'."}
             )
+
+        # --- Duplicate entry check ---
+        #  This manual check covers cases where supervisor or date_of_birth is NULL.)
+        qs = ResearchScholar.objects.filter(
+            scholar_name__iexact=self.scholar_name,
+            department=self.department,
+            supervisor=self.supervisor,
+            date_of_birth=self.date_of_birth,
+            is_deleted=False,
+        )
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                "A scholar record with the same Name, Department and Supervisor "
+                "already exists. Please verify before adding a new entry."
+            )
+
+
+class PublicationAuthor(models.Model):
+    AUTHOR_ROLE_CHOICES = [
+        ("Main Author", "Main Author"),
+        ("Co-Author", "Co-Author"),
+    ]
+    publication = models.ForeignKey("Publication", on_delete=models.CASCADE)
+    faculty = models.ForeignKey("faculty.Faculty", on_delete=models.CASCADE)
+    author_order = models.PositiveIntegerField(default=1)
+    author_role = models.CharField(
+        max_length=50, choices=AUTHOR_ROLE_CHOICES, default="Main Author"
+    )
+
+    class Meta:
+        ordering = ["author_order"]
+        unique_together = [["publication", "faculty"]]
+
+
+class PatentAuthor(models.Model):
+    AUTHOR_ROLE_CHOICES = [
+        ("Main Inventor", "Main Inventor"),
+        ("Co-Inventor", "Co-Inventor"),
+    ]
+    patent = models.ForeignKey("Patent", on_delete=models.CASCADE)
+    faculty = models.ForeignKey("faculty.Faculty", on_delete=models.CASCADE)
+    author_order = models.PositiveIntegerField(default=1)
+    author_role = models.CharField(
+        max_length=50, choices=AUTHOR_ROLE_CHOICES, default="Main Inventor"
+    )
+
+    class Meta:
+        ordering = ["author_order"]
+        unique_together = [["patent", "faculty"]]
 
 
 class Publication(SoftDeleteModel):
@@ -216,19 +301,16 @@ class Publication(SoftDeleteModel):
         ("Scimago", "Scimago"),
         ("Others", "Others"),
     ]
-    faculty = models.ForeignKey(
+    internal_authors = models.ManyToManyField(
         "faculty.Faculty",
-        related_name="publications",
-        on_delete=models.CASCADE,
+        through="PublicationAuthor",
+        related_name="internal_publications",
         blank=True,
-        null=True,
     )
-    department = models.ForeignKey(
-        "academics.Department",
-        related_name="publications",
-        on_delete=models.CASCADE,
+    full_author_list = models.TextField(
         blank=True,
         null=True,
+        help_text="Enter the list of all the author separated by commas ",
     )
     title = models.TextField(null=True, blank=True)
     campus = models.CharField(
@@ -266,6 +348,13 @@ class Publication(SoftDeleteModel):
 
     class Meta:
         ordering = ["-publication_date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["doi_url"],
+                condition=models.Q(is_deleted=False, doi_url__isnull=False),
+                name="unique_pub_doi_url",
+            ),
+        ]
 
     def clean(self):
         super().clean()
@@ -279,6 +368,28 @@ class Publication(SoftDeleteModel):
             raise ValidationError(
                 {"others_indexing": "This field is required when indexing is 'Others'."}
             )
+
+        if self.title:
+            qs_title = Publication.objects.filter(
+                title__iexact=self.title,
+                is_deleted=False,
+            )
+            if self.pk:
+                qs_title = qs_title.exclude(pk=self.pk)
+            # Cannot do a simple title match because titles might naturally overlap?
+            # We will rely on DOI primarily. If we want title duplicate check, we warn instead of block.
+
+        if self.doi_url:
+            qs_doi = Publication.objects.filter(
+                doi_url__iexact=self.doi_url,
+                is_deleted=False,
+            )
+            if self.pk:
+                qs_doi = qs_doi.exclude(pk=self.pk)
+            if qs_doi.exists():
+                raise ValidationError(
+                    {"doi_url": "A publication with this DOI URL already exists."}
+                )
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.publication_date})"
@@ -317,6 +428,29 @@ class Consultancy(SoftDeleteModel):
 
     class Meta:
         verbose_name_plural = "Consultancies"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["faculty", "nature_of_consultancy", "start_date", "department"],
+                condition=models.Q(is_deleted=False),
+                name="unique_consultancy_faculty_nature_date_dept",
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+        qs = Consultancy.objects.filter(
+            faculty=self.faculty,
+            nature_of_consultancy__iexact=self.nature_of_consultancy,
+            start_date=self.start_date,
+            department=self.department,
+            is_deleted=False,
+        )
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                "A consultancy record with the same Faculty, Nature of Consultancy, Start Date, and Department already exists."
+            )
 
     def __str__(self):
         faculty_name = self.faculty.name if self.faculty else "No Faculty"
@@ -330,19 +464,16 @@ class Patent(SoftDeleteModel):
         ("Published", "Published"),
         ("Granted", "Granted"),
     ]
-    faculty = models.ForeignKey(
+    internal_inventors = models.ManyToManyField(
         "faculty.Faculty",
-        related_name="patents",
-        on_delete=models.CASCADE,
-        null=True,
+        through="PatentAuthor",
+        related_name="internal_patents",
         blank=True,
     )
-    department = models.ForeignKey(
-        "academics.Department",
-        related_name="patents",
-        on_delete=models.CASCADE,
-        null=True,
+    full_inventor_list = models.TextField(
         blank=True,
+        null=True,
+        help_text="Exact string of all inventors (e.g. 'J. Doe, M. Smith')",
     )
     title = models.TextField()
     patent_number = models.CharField(max_length=100, blank=True, null=True)
@@ -350,6 +481,40 @@ class Patent(SoftDeleteModel):
     date_of_filing = models.DateField(blank=True, null=True)
     description = RichTextField(blank=True, null=True)
     history = HistoricalRecords()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["patent_number"],
+                condition=models.Q(is_deleted=False, patent_number__isnull=False),
+                name="unique_patent_number",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.title:
+            qs_title = Patent.objects.filter(
+                title__iexact=self.title,
+                is_deleted=False,
+            )
+            if self.pk:
+                qs_title = qs_title.exclude(pk=self.pk)
+            # Similar to publication, a strict block on exact title might cause issues if different groups file identically titled but distinct patents, though unlikely. We'll rely on patent_number primarily for strict blocking.
+
+        if self.patent_number:
+            qs_number = Patent.objects.filter(
+                patent_number__iexact=self.patent_number,
+                is_deleted=False,
+            )
+            if self.pk:
+                qs_number = qs_number.exclude(pk=self.pk)
+            if qs_number.exists():
+                raise ValidationError(
+                    {
+                        "patent_number": "A patent with this Patent Number already exists."
+                    }
+                )
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.date_of_filing})"
