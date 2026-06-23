@@ -174,7 +174,7 @@ def sync_faculty_orcid(faculty):
                     if work_type == "patent":
                         # Check if patent already exists
                         patent_exists = Patent.objects.filter(
-                            faculty=faculty, title__iexact=title_val
+                            internal_inventors=faculty, title__iexact=title_val
                         ).exists()
                         if not patent_exists:
                             patent_number = None
@@ -187,14 +187,19 @@ def sync_faculty_orcid(faculty):
                                     patent_number = ext_id.get("external-id-value")
                                     break
 
-                            Patent.objects.create(
-                                faculty=faculty,
-                                department=faculty.department,
+                            patent = Patent.objects.create(
                                 title=title_val,
                                 patent_number=patent_number,
                                 status="Granted",
                                 date_of_filing=pub_date,
                                 description=f"Imported from ORCID (Type: patent)",
+                            )
+                            PatentAuthor = apps.get_model("research", "PatentAuthor")
+                            PatentAuthor.objects.create(
+                                patent=patent,
+                                faculty=faculty,
+                                author_order=1,
+                                author_role="Main Inventor"
                             )
                             patents_added += 1
                     else:
@@ -220,11 +225,11 @@ def sync_faculty_orcid(faculty):
                         pub_exists = False
                         if doi_val:
                             pub_exists = Publication.objects.filter(
-                                faculty=faculty, doi_url__icontains=doi_val
+                                internal_authors=faculty, doi_url__icontains=doi_val
                             ).exists()
                         if not pub_exists:
                             pub_exists = Publication.objects.filter(
-                                faculty=faculty, title__iexact=title_val
+                                internal_authors=faculty, title__iexact=title_val
                             ).exists()
 
                         if not pub_exists:
@@ -233,9 +238,7 @@ def sync_faculty_orcid(faculty):
                                 journal_title.get("value") if journal_title else None
                             )
 
-                            Publication.objects.create(
-                                faculty=faculty,
-                                department=faculty.department,
+                            pub = Publication.objects.create(
                                 title=title_val,
                                 campus=faculty.campus or "BBAU",
                                 publication_type=pub_type,
@@ -247,6 +250,13 @@ def sync_faculty_orcid(faculty):
                                 ),
                                 indexing="Others",
                                 others_indexing="Imported from ORCID",
+                            )
+                            PublicationAuthor = apps.get_model("research", "PublicationAuthor")
+                            PublicationAuthor.objects.create(
+                                publication=pub,
+                                faculty=faculty,
+                                author_order=1,
+                                author_role="Main Author"
                             )
                             publications_added += 1
             else:
