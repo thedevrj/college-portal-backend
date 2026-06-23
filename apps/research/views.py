@@ -1,4 +1,6 @@
-from rest_framework import viewsets, filters, permissions
+from rest_framework import viewsets, filters, permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from apps.academics.permissions import IsDepartmentAdmin
@@ -11,6 +13,8 @@ from .models import (
     Patent,
     ResearchDevelopmentCellMember,
     Consultancy,
+    PublicationAuthor,
+    PatentAuthor,
 )
 from .serializers import (
     ResearchAreaSerializer,
@@ -36,7 +40,16 @@ class ResearchBaseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if hasattr(self.request.user, "managed_department"):
-            serializer.save(department=self.request.user.managed_department)
+            model_class = self.get_serializer().Meta.model
+
+            # Look at the database model before saving!
+            # It's a ResearchProject or Scholar add the department
+            if hasattr(model_class, "department") and hasattr(
+                model_class._meta.get_field("department"), "remote_field"
+            ):
+                serializer.save(department=self.request.user.managed_department)
+            else:  # It's a Publication or Patent skip adding the department
+                serializer.save()
         else:
             serializer.save()
 
@@ -125,7 +138,13 @@ class ResearchProjectViewSet(ResearchBaseViewSet):
         filters.OrderingFilter,
     ]
     filterset_class = ResearchProjectFilter
-    search_fields = ["title", "description", "funding_agency"]
+    search_fields = [
+        "title",
+        "description",
+        "funding_agency",
+        "principal_investigator__name",
+        "co_investigators__name",
+    ]
     ordering_fields = ["amount_sanctioned", "start_date"]
 
     def get_serializer_class(self):
@@ -161,7 +180,15 @@ class ResearchScholarViewSet(ResearchBaseViewSet):
         filters.OrderingFilter,
     ]
     filterset_class = ResearchScholarFilter
-    search_fields = ["scholar_name", "enrollment_no", "research_topic", "state"]
+    search_fields = [
+        "scholar_name",
+        "research_topic",
+        "enrollment_no",
+        "research_topic",
+        "state",
+        "supervisor__name",
+        "co_supervisor__name",
+    ]
     ordering_fields = ["date_of_registration", "scholar_name"]
 
     def get_serializer_class(self):
@@ -172,15 +199,21 @@ class PublicationFilter(django_filters.FilterSet):
     publication_date_range = django_filters.DateFromToRangeFilter(
         field_name="publication_date"
     )
-    faculty_slug = django_filters.CharFilter(field_name="faculty__slug")
-    faculty__slug = django_filters.CharFilter(field_name="faculty__slug")
+    faculty_slug = django_filters.CharFilter(field_name="internal_authors__slug")
+    faculty__slug = django_filters.CharFilter(field_name="internal_authors__slug")
     faculty_name = django_filters.CharFilter(
-        field_name="faculty__name", lookup_expr="icontains"
+        field_name="internal_authors__name", lookup_expr="icontains"
     )
-    department_slug = django_filters.CharFilter(field_name="department__slug")
-    centre_slug = django_filters.CharFilter(field_name="centre__slug")
-    department__slug = django_filters.CharFilter(field_name="department__slug")
-    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department_slug = django_filters.CharFilter(
+        field_name="internal_authors__department__slug"
+    )
+    centre_slug = django_filters.CharFilter(field_name="internal_authors__centre__slug")
+    department__slug = django_filters.CharFilter(
+        field_name="internal_authors__department__slug"
+    )
+    centre__slug = django_filters.CharFilter(
+        field_name="internal_authors__centre__slug"
+    )
 
     class Meta:
         model = Publication
@@ -188,7 +221,7 @@ class PublicationFilter(django_filters.FilterSet):
 
 
 class PublicationViewSet(ResearchBaseViewSet):
-    queryset = Publication.objects.select_related("faculty", "department")
+    queryset = Publication.objects.prefetch_related("internal_authors")
     serializer_class = PublicationSerializer
     filter_backends = [
         DjangoFilterBackend,
@@ -196,21 +229,83 @@ class PublicationViewSet(ResearchBaseViewSet):
         filters.OrderingFilter,
     ]
     filterset_class = PublicationFilter
-    search_fields = ["title", "name_of_journal_or_conference_or_publisher"]
+    search_fields = [
+        "title",
+        "name_of_journal_or_conference_or_publisher",
+        "internal_authors__name",
+    ]
     ordering_fields = ["publication_date"]
+
+    @action(
+        detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated]
+    )
+    def claim(self, request, pk=None):
+        publication = self.get_object()
+
+        if (
+            not hasattr(request.user, "faculty_profile")
+            or not request.user.faculty_profile
+        ):
+            return Response(
+                {"error": "Only authenticated faculty members can claim publications."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        faculty = request.user.faculty_profile
+
+        if PublicationAuthor.objects.filter(
+            publication=publication, faculty=faculty
+        ).exists():
+            return Response(
+                {"error": "You have already claimed this publication."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        author_order = request.data.get("author_order", 1)
+        author_role = request.data.get("author_role", "Co-Author")
+
+        if PublicationAuthor.objects.filter(
+            publication=publication, author_order=author_order
+        ).exists():
+            return Response(
+                {
+                    "error": f"Position {author_order} is already claimed by another author."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        PublicationAuthor.objects.create(
+            publication=publication,
+            faculty=faculty,
+            author_order=author_order,
+            author_role=author_role,
+        )
+
+        return Response(
+            {"message": "Successfully claimed publication."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class PatentFilter(django_filters.FilterSet):
     filing_date = django_filters.DateFromToRangeFilter(field_name="date_of_filing")
-    faculty_slug = django_filters.CharFilter(field_name="faculty__slug")
-    faculty__slug = django_filters.CharFilter(field_name="faculty__slug")
+    faculty_slug = django_filters.CharFilter(field_name="internal_inventors__slug")
+    faculty__slug = django_filters.CharFilter(field_name="internal_inventors__slug")
     faculty_name = django_filters.CharFilter(
-        field_name="faculty__name", lookup_expr="icontains"
+        field_name="internal_inventors__name", lookup_expr="icontains"
     )
-    department_slug = django_filters.CharFilter(field_name="department__slug")
-    centre_slug = django_filters.CharFilter(field_name="centre__slug")
-    department__slug = django_filters.CharFilter(field_name="department__slug")
-    centre__slug = django_filters.CharFilter(field_name="centre__slug")
+    department_slug = django_filters.CharFilter(
+        field_name="internal_inventors__department__slug"
+    )
+    centre_slug = django_filters.CharFilter(
+        field_name="internal_inventors__centre__slug"
+    )
+    department__slug = django_filters.CharFilter(
+        field_name="internal_inventors__department__slug"
+    )
+    centre__slug = django_filters.CharFilter(
+        field_name="internal_inventors__centre__slug"
+    )
 
     class Meta:
         model = Patent
@@ -218,7 +313,7 @@ class PatentFilter(django_filters.FilterSet):
 
 
 class PatentViewSet(ResearchBaseViewSet):
-    queryset = Patent.objects.select_related("faculty", "department")
+    queryset = Patent.objects.prefetch_related("internal_inventors")
     serializer_class = PatentSerializer
     filter_backends = [
         DjangoFilterBackend,
@@ -226,8 +321,55 @@ class PatentViewSet(ResearchBaseViewSet):
         filters.OrderingFilter,
     ]
     filterset_class = PatentFilter
-    search_fields = ["title", "patent_number"]
+    search_fields = ["title", "patent_number", "internal_inventors__name"]
     ordering_fields = ["date_of_filing"]
+
+    @action(
+        detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated]
+    )
+    def claim(self, request, pk=None):
+        patent = self.get_object()
+
+        if (
+            not hasattr(request.user, "faculty_profile")
+            or not request.user.faculty_profile
+        ):
+            return Response(
+                {"error": "Only authenticated faculty members can claim patents."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        faculty = request.user.faculty_profile
+
+        if PatentAuthor.objects.filter(patent=patent, faculty=faculty).exists():
+            return Response(
+                {"error": "You have already claimed this patent."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        author_order = request.data.get("author_order", 1)
+        author_role = request.data.get("author_role", "Co-Inventor")
+
+        if PatentAuthor.objects.filter(
+            patent=patent, author_order=author_order
+        ).exists():
+            return Response(
+                {
+                    "error": f"Position {author_order} is already claimed by another inventor."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        PatentAuthor.objects.create(
+            patent=patent,
+            faculty=faculty,
+            author_order=author_order,
+            author_role=author_role,
+        )
+
+        return Response(
+            {"message": "Successfully claimed patent."}, status=status.HTTP_201_CREATED
+        )
 
 
 class ResearchDevelopmentCellMemberViewSet(viewsets.ModelViewSet):

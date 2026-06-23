@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.db import models
 from django import forms
+from django.forms.models import BaseInlineFormSet
+from django.core.exceptions import ValidationError
 from simple_history.admin import SimpleHistoryAdmin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
@@ -137,37 +139,64 @@ class ResearchScholarAdmin(
     }
 
 
+class RequiredInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        if not any(
+            cleaned_data and not cleaned_data.get("DELETE", False)
+            for cleaned_data in self.cleaned_data
+        ):
+            raise ValidationError(
+                "You must add at least one author. Orphan records are not allowed."
+            )
+
+
+class PublicationAuthorInline(admin.TabularInline):
+    model = Publication.internal_authors.through
+    formset = RequiredInlineFormSet
+    autocomplete_fields = ["faculty"]
+    extra = 1
+
+
 @admin.register(Publication)
 class PublicationAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = PublicationResource
-    list_display = ("title", "faculty", "publication_date", "campus")
-    list_display_links = ("title", "faculty")
+    list_display = ("title", "publication_date", "campus")
+    list_display_links = ("title",)
     list_filter = (
         SoftDeleteListFilter,
         "campus",
         "publication_type",
         "publication_date",
-        "department",
     )
     search_fields = (
         "title",
-        "faculty__name",
+        "internal_authors__name",
         "name_of_journal_or_conference_or_publisher",
     )
-    autocomplete_fields = ("faculty",)
+    inlines = [PublicationAuthorInline]
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
 
+class PatentAuthorInline(admin.TabularInline):
+    model = Patent.internal_inventors.through
+    formset = RequiredInlineFormSet
+    autocomplete_fields = ["faculty"]
+    extra = 1
+
+
 @admin.register(Patent)
 class PatentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     resource_class = PatentResource
-    list_display = ("title", "faculty", "date_of_filing", "status")
-    list_display_links = ("title", "faculty")
-    list_filter = (SoftDeleteListFilter, "status", "date_of_filing", "department")
-    search_fields = ("title", "faculty__name", "patent_number")
-    autocomplete_fields = ("faculty",)
+    list_display = ("title", "date_of_filing", "status")
+    list_display_links = ("title",)
+    list_filter = (SoftDeleteListFilter, "status", "date_of_filing")
+    search_fields = ("title", "internal_inventors__name", "patent_number")
+    inlines = [PatentAuthorInline]
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
