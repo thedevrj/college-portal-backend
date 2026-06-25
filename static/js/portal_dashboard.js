@@ -133,3 +133,48 @@ if (document.readyState === "loading") {
 } else {
     renderGlobalDashboard();
 }
+
+/**
+ * Auto-detect and set Import format based on file extension
+ */
+function setupImportFormatDetection() {
+    var fileInput = document.getElementById('id_import_file');
+    var formatSelect = document.getElementById('id_input_format');
+    
+    if (fileInput && formatSelect) {
+        // Hide the format select field's container row so user doesn't see it
+        var formatRow = formatSelect.closest('.form-row') || formatSelect.parentElement;
+        if (formatRow) {
+            formatRow.style.display = 'none';
+        }
+        
+        // Auto-select format based on file extension when user picks a file
+        fileInput.addEventListener('change', function(e) {
+            var fileName = e.target.value;
+            if (!fileName) return;
+            var ext = fileName.split('.').pop().toLowerCase();
+            
+            // Map extension to the format select option text
+            for (var i = 0; i < formatSelect.options.length; i++) {
+                var optionText = formatSelect.options[i].text.toLowerCase().trim();
+                // Strict match to prevent 'xls' matching 'xlsx'
+                if (optionText === ext || optionText.startsWith(ext + " ") || optionText === ext.toUpperCase()) {
+                    formatSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        });
+        
+        // Trigger change if file already selected (e.g. on form reload with errors)
+        if (fileInput.value) {
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    }
+}
+
+// Execute on load
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupImportFormatDetection);
+} else {
+    setupImportFormatDetection();
+}

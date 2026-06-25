@@ -40,6 +40,26 @@ class School(SoftDeleteModel):
     class Meta:
         ordering = ["name"]
 
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_email
+        import re
+        
+        if self.contact_phone:
+            val = str(self.contact_phone).strip()
+            if not re.match(r"^\d{10}$", val):
+                raise ValidationError({"contact_phone": "Phone number must be exactly 10 digits."})
+            self.contact_phone = val
+            
+        if self.contact_email:
+            val = str(self.contact_email).strip().lower()
+            try:
+                validate_email(val)
+            except ValidationError:
+                raise ValidationError({"contact_email": "Please enter a valid email address."})
+            self.contact_email = val
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
@@ -192,6 +212,26 @@ class Department(SoftDeleteModel):
 
     class Meta:
         ordering = ["name"]
+
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_email
+        import re
+        
+        if self.contact_phone:
+            val = str(self.contact_phone).strip()
+            if not re.match(r"^\d{10}$", val):
+                raise ValidationError({"contact_phone": "Phone number must be exactly 10 digits."})
+            self.contact_phone = val
+            
+        if self.contact_email:
+            val = str(self.contact_email).strip().lower()
+            try:
+                validate_email(val)
+            except ValidationError:
+                raise ValidationError({"contact_email": "Please enter a valid email address."})
+            self.contact_email = val
 
     def save(self, *args, **kwargs):
         if not self.slug:

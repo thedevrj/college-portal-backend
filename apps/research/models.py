@@ -2,6 +2,8 @@ from django.db import models
 from apps.accounts.models import SoftDeleteModel
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator, validate_email
+import re
 from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
 
@@ -182,6 +184,18 @@ class ResearchScholar(SoftDeleteModel):
     )
     other_category = models.CharField(max_length=100, blank=True, null=True)
     date_of_birth = models.DateField(null=True)
+    contact_no = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{10}$',
+                message="Phone number must be exactly 10 digits."
+            )
+        ]
+    )
+    email = models.EmailField(blank=True, null=True)
     address = models.CharField(max_length=255, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     supervisor = models.ForeignKey(
@@ -233,6 +247,20 @@ class ResearchScholar(SoftDeleteModel):
             raise ValidationError(
                 {"other_gender": "This field is required when gender is 'Other'."}
             )
+
+        if self.contact_no:
+            if not re.match(r'^\d{10}$', str(self.contact_no).strip()):
+                raise ValidationError(
+                    {"contact_no": "Phone number must be exactly 10 digits."}
+                )
+
+        if self.email:
+            try:
+                validate_email(self.email)
+            except ValidationError:
+                raise ValidationError(
+                    {"email": "Please enter a valid email address."}
+                )
 
         # --- Duplicate entry check ---
         #  This manual check covers cases where supervisor or date_of_birth is NULL.)
