@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.db import models
 from django import forms
 from import_export import resources
+from import_export.widgets import ManyToManyWidget
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
@@ -74,6 +75,8 @@ class StaffResource(resources.ModelResource):
     def import_obj(self, obj, row, dry_run, **kwargs):
         for field in self.get_import_fields():
             if field.column_name in row:
+                if isinstance(field.widget, ManyToManyWidget):
+                    continue
                 val = row[field.column_name]
                 if val is not None and str(val).strip() != "":
                     self.import_field(field, obj, row, **kwargs)

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.db import models
 from django import forms
 from import_export import resources, fields
-from import_export.widgets import ForeignKeyWidget
+from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from import_export.admin import ImportExportModelAdmin
 from apps.accounts.mixins import PortalSecurityMixin
 from .models import Faculty, InvitedTalk, CourseDesign, Membership
@@ -130,8 +130,9 @@ class FacultyResource(resources.ModelResource):
         If a cell in Excel is empty, keep the existing value in the database.
         """
         for field in self.get_import_fields():
-            # If the field is in the row and has a value
             if field.column_name in row:
+                if isinstance(field.widget, ManyToManyWidget):
+                    continue
                 val = row[field.column_name]
                 # Check if the value is meaningful (not None and not empty string)
                 if val is not None and str(val).strip() != "":
