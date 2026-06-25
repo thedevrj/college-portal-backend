@@ -63,6 +63,7 @@ class Faculty(SoftDeleteModel):
     orcid_id = models.CharField(
         max_length=19,
         null=True,
+        blank=True,
         unique=True,
         help_text="ORCID ID (e.g., 0000-0003-0902-4386)",
     )
@@ -128,27 +129,34 @@ class Faculty(SoftDeleteModel):
                     )
             except LookupError:
                 pass
-                
+
         import re
         from django.core.validators import validate_email
-        for phone_field in ['phone1', 'phone2']:
+
+        for phone_field in ["phone1", "phone2"]:
             val = getattr(self, phone_field)
             if val:
                 val = str(val).strip()
                 if not re.match(r"^\d{10}$", val):
-                    raise ValidationError({phone_field: "Phone number must be exactly 10 digits."})
+                    raise ValidationError(
+                        {phone_field: "Phone number must be exactly 10 digits."}
+                    )
                 setattr(self, phone_field, val)
-                
-        for email_field in ['insti_email', 'other_email']:
+
+        for email_field in ["insti_email", "other_email"]:
             val = getattr(self, email_field)
             if val:
                 val = str(val).strip().lower()
                 try:
                     validate_email(val)
                 except ValidationError:
-                    raise ValidationError({email_field: "Please enter a valid email address."})
-                if email_field == 'insti_email' and not val.endswith("@bbau.ac.in"):
-                    raise ValidationError({email_field: "Institutional email must end with @bbau.ac.in"})
+                    raise ValidationError(
+                        {email_field: "Please enter a valid email address."}
+                    )
+                if email_field == "insti_email" and not val.endswith("@bbau.ac.in"):
+                    raise ValidationError(
+                        {email_field: "Institutional email must end with @bbau.ac.in"}
+                    )
                 setattr(self, email_field, val)
 
     def save(self, *args, **kwargs):

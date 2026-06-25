@@ -202,6 +202,8 @@ class ResearchScholarResource(BaseResearchResource):
 
 
 class PublicationResource(BaseResearchResource):
+    internal_authors = fields.Field(column_name="internal_authors", attribute="internal_authors", widget=FuzzyManyToManyWidget(Faculty, field="name"))
+    
     class Meta:
         model = Publication
         exclude = ('id', 'is_deleted', 'deleted_at')
@@ -235,6 +237,8 @@ class PublicationResource(BaseResearchResource):
 
 
 class PatentResource(BaseResearchResource):
+    internal_inventors = fields.Field(column_name="internal_inventors", attribute="internal_inventors", widget=FuzzyManyToManyWidget(Faculty, field="name"))
+    
     class Meta:
         model = Patent
         exclude = ('id', 'is_deleted', 'deleted_at')
