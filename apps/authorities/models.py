@@ -23,6 +23,18 @@ class BoardOfManagementMember(SoftDeleteModel):
     order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
     history = HistoricalRecords()
 
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_email
+        if self.email:
+            val = str(self.email).strip().lower()
+            try:
+                validate_email(val)
+            except ValidationError:
+                raise ValidationError({"email": "Please enter a valid email address."})
+            self.email = val
+
     def __str__(self):
         return f"{self.name} - BoM"
 
@@ -96,6 +108,18 @@ class AcademicCouncilMember(SoftDeleteModel):
     email = models.EmailField(blank=True, null=True)
     order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
     history = HistoricalRecords()
+
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_email
+        if self.email:
+            val = str(self.email).strip().lower()
+            try:
+                validate_email(val)
+            except ValidationError:
+                raise ValidationError({"email": "Please enter a valid email address."})
+            self.email = val
 
     def __str__(self):
         return f"{self.name} - Academic Council"
@@ -192,6 +216,18 @@ class FinanceCommitteeMember(SoftDeleteModel):
     email = models.EmailField(blank=True, null=True)
     order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
     history = HistoricalRecords()
+
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_email
+        if self.email:
+            val = str(self.email).strip().lower()
+            try:
+                validate_email(val)
+            except ValidationError:
+                raise ValidationError({"email": "Please enter a valid email address."})
+            self.email = val
 
     def __str__(self):
         return f"{self.name} - Finance Committee"
