@@ -48,6 +48,7 @@ urlpatterns = [
     path("api/v1/", include("apps.staff.urls")),
     path("api/v1/", include("apps.mou.urls")),
     path("api/v1/", include("apps.authorities.urls")),
+    path("api/v1/", include("apps.foundation_course.urls")),
     path("api/v1/admission/", include("apps.admission.urls")),
     # Authentication
     path("api/v1/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
