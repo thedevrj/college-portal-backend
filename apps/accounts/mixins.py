@@ -51,7 +51,7 @@ class PortalSecurityMixin:
             if profile and profile.is_rd_admin():
                 return qs
 
-            # --- Bypass Row-Level Security for Global Models ---
+            # --- Bypass ---
             global_models = [
                 "BoardOfManagementMember",
                 "BoardOfManagementMinutes",
@@ -61,6 +61,8 @@ class PortalSecurityMixin:
                 "PlanningBoardMinutes",
                 "FinanceCommitteeMember",
                 "FinanceCommitteeMinutes",
+                "MOU",
+                "GlobalNotice",
             ]
             if self.model.__name__ in global_models:
                 return qs
@@ -263,6 +265,8 @@ class PortalSecurityMixin:
             "PlanningBoardMinutes",
             "FinanceCommitteeMember",
             "FinanceCommitteeMinutes",
+            "MOU",
+            "GlobalNotice",
         ]
         if self.model.__name__ in global_models:
             return super().has_delete_permission(request, obj)
