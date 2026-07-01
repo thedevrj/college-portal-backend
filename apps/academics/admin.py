@@ -19,6 +19,7 @@ from .models import (
     Course,
     CBCSCourse,
     DepartmentGallery,
+    DepartmentGalleryEvent,
     Notice,
     Committee,
     CommitteeMember,
@@ -38,7 +39,7 @@ class SchoolBoardCommitteeMemberInline(admin.TabularInline):
 class DepartmentGalleryInline(admin.TabularInline):
     model = DepartmentGallery
     extra = 1
-    exclude = ("is_deleted", "deleted_at")
+    exclude = ("is_deleted", "deleted_at", "department")
 
 
 class CBCSCourseInline(admin.TabularInline):
@@ -110,7 +111,7 @@ class DepartmentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModel
     search_fields = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("hod",)
-    inlines = [DepartmentGalleryInline, CBCSCourseInline]
+    inlines = [CBCSCourseInline]
 
 
 @admin.register(Program)
@@ -195,12 +196,23 @@ class CourseAdmin(PortalSecurityMixin, ImportExportModelAdmin):
     search_fields = ("id", "course_code", "course_title")
 
 
-@admin.register(DepartmentGallery)
-class DepartmentGalleryAdmin(PortalSecurityMixin, ImportExportModelAdmin):
-    list_display = ("caption", "department", "uploaded_at")
-    list_display_links = ("caption", "department")
-    list_filter = (SoftDeleteListFilter, "department")
-    search_fields = ("caption",)
+@admin.register(DepartmentGalleryEvent)
+class DepartmentGalleryEventAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    list_display = ("title", "department", "date_of_event")
+    list_filter = (SoftDeleteListFilter, "department", "date_of_event")
+    search_fields = ("title",)
+    inlines = [DepartmentGalleryInline]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, DepartmentGallery):
+                instance.department = form.instance.department
+            instance.save()
+        formset.save_m2m()
 
 
 @admin.register(Timetable)

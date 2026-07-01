@@ -66,8 +66,9 @@ class Command(BaseCommand):
             
             # Sync Basic Info to User object
             user.email = faculty.insti_email or faculty.other_email or user.email
-            # Use faculty name as first_name
-            user.first_name = faculty.name[:150] 
+            # Split faculty name correctly to avoid duplication
+            user.first_name = faculty.name.split(" ")[0][:150]
+            user.last_name = " ".join(faculty.name.split(" ")[1:])[:150]
             
             if reset_passwords:
                 user.set_password(UNIVERSAL_PASSWORD)

@@ -49,7 +49,7 @@ urlpatterns = [
     path("api/v1/", include("apps.mou.urls")),
     path("api/v1/", include("apps.authorities.urls")),
     path("api/v1/admission/", include("apps.admission.urls")),
-    # Authentication (JWT for public API)
+    # Authentication
     path("api/v1/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # ERP Portal Login

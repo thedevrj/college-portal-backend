@@ -45,19 +45,23 @@ class School(SoftDeleteModel):
         from django.core.exceptions import ValidationError
         from django.core.validators import validate_email
         import re
-        
+
         if self.contact_phone:
             val = str(self.contact_phone).strip()
             if not re.match(r"^\d{10}$", val):
-                raise ValidationError({"contact_phone": "Phone number must be exactly 10 digits."})
+                raise ValidationError(
+                    {"contact_phone": "Phone number must be exactly 10 digits."}
+                )
             self.contact_phone = val
-            
+
         if self.contact_email:
             val = str(self.contact_email).strip().lower()
             try:
                 validate_email(val)
             except ValidationError:
-                raise ValidationError({"contact_email": "Please enter a valid email address."})
+                raise ValidationError(
+                    {"contact_email": "Please enter a valid email address."}
+                )
             self.contact_email = val
 
     def save(self, *args, **kwargs):
@@ -218,19 +222,23 @@ class Department(SoftDeleteModel):
         from django.core.exceptions import ValidationError
         from django.core.validators import validate_email
         import re
-        
+
         if self.contact_phone:
             val = str(self.contact_phone).strip()
             if not re.match(r"^\d{10}$", val):
-                raise ValidationError({"contact_phone": "Phone number must be exactly 10 digits."})
+                raise ValidationError(
+                    {"contact_phone": "Phone number must be exactly 10 digits."}
+                )
             self.contact_phone = val
-            
+
         if self.contact_email:
             val = str(self.contact_email).strip().lower()
             try:
                 validate_email(val)
             except ValidationError:
-                raise ValidationError({"contact_email": "Please enter a valid email address."})
+                raise ValidationError(
+                    {"contact_email": "Please enter a valid email address."}
+                )
             self.contact_email = val
 
     def save(self, *args, **kwargs):
@@ -430,16 +438,48 @@ def department_gallery_upload_path(instance, filename):
     # Creates a path like: departments/computer-science/gallery/image.png
     dept_slug = (
         instance.department.slug
-        if instance.department.slug
-        else f"dept_{instance.department_id}"
+        if instance.department and instance.department.slug
+        else f"dept_{instance.department_id}" if instance.department else "unknown"
     )
+    if getattr(instance, "event", None):
+        event_slug = slugify(instance.event.title)
+        return f"departments/{dept_slug}/gallery/events/{event_slug}/{filename}"
     return f"departments/{dept_slug}/gallery/{filename}"
+
+
+class DepartmentGalleryEvent(SoftDeleteModel):
+    department = models.ForeignKey(
+        Department,
+        related_name="gallery_events",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    title = models.CharField(max_length=255)
+    date_of_event = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["-date_of_event", "-created_at"]
+        verbose_name_plural = "Department Event Gallery"
+
+    def __str__(self):
+        dept_name = self.department.name if self.department else "Unknown"
+        return f"{self.title} ({dept_name})"
 
 
 class DepartmentGallery(SoftDeleteModel):
     department = models.ForeignKey(
         Department,
         related_name="gallery_images",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    event = models.ForeignKey(
+        DepartmentGalleryEvent,
+        related_name="images",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -457,7 +497,9 @@ class DepartmentGallery(SoftDeleteModel):
         ordering = ["-uploaded_at"]
 
     def __str__(self):
-        return f"Gallery image for {self.department.name}"
+        if self.event:
+            return f"Gallery image for event: {self.event.title}"
+        return f"Gallery image for {self.department.name if self.department else 'Unknown'}"
 
 
 class Notice(SoftDeleteModel):

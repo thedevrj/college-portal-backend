@@ -5,9 +5,29 @@ from simple_history.models import HistoricalRecords
 
 
 class MOU(SoftDeleteModel):
-    partner_name = models.CharField(
+    Nature_choice = [
+        ("Central University", "Central University"),
+        ("State University", "State University"),
+        ("Centre", "Centre"),
+        ("Institution/Deemed University", "Institution/Deemed University"),
+        ("Research Organisation", "Research Organisation"),
+        ("Govt Department", "Govt Department"),
+        ("Others", "Others"),
+    ]
+    organization_name = models.CharField(
         max_length=255, verbose_name="Partner/Organization Name"
     )
+    Nature_of_organization = models.CharField(
+        max_length=50, choices=Nature_choice, null=True, blank=True
+    )
+    other_nature_of_organization = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Other Nature of Organization",
+        help_text="Please specify if 'Others' is selected",
+    )
+
     date_of_signing = models.DateField(
         verbose_name="Date of Signing", null=True, blank=True
     )
@@ -28,7 +48,7 @@ class MOU(SoftDeleteModel):
         ordering = ["-date_of_signing"]
         constraints = [
             models.UniqueConstraint(
-                fields=["partner_name", "date_of_signing"],
+                fields=["organization_name", "date_of_signing"],
                 condition=models.Q(is_deleted=False),
                 name="unique_mou_partner_date",
             )
@@ -36,6 +56,12 @@ class MOU(SoftDeleteModel):
 
     def clean(self):
         super().clean()
+        
+        if self.Nature_of_organization == "Others" and not self.other_nature_of_organization:
+            raise ValidationError(
+                {"other_nature_of_organization": "This field is required when Nature of Organization is 'Others'."}
+            )
+
         if self.description:
             word_count = len(self.description.split())
             if word_count > 250:
@@ -54,7 +80,7 @@ class MOU(SoftDeleteModel):
 
         # Duplicate check logic
         qs = MOU.objects.filter(
-            partner_name__iexact=self.partner_name,
+            organization_name__iexact=self.organization_name,
             date_of_signing=self.date_of_signing,
             is_deleted=False,
         )
@@ -66,4 +92,4 @@ class MOU(SoftDeleteModel):
             )
 
     def __str__(self):
-        return self.partner_name
+        return self.organization_name
