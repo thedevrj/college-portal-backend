@@ -106,6 +106,11 @@ class PortalSecurityMixin:
                     role_qs = qs.all()
                     if self.model.__name__ == "Department":
                         role_qs = role_qs.filter(pk=access.object_id)
+                    elif self.model.__name__ == "Course":
+                        # List view filter for HODs: Courses linked to a program in their department
+                        role_qs = role_qs.filter(
+                            program__department_id=access.object_id
+                        )
                     elif hasattr(self.model, "department"):
                         # Use _id for direct FK filtering to avoid extra joins/leaks
                         role_qs = role_qs.filter(department_id=access.object_id)
@@ -203,6 +208,7 @@ class PortalSecurityMixin:
                 "Committee",
                 "MinutesOfTheMeeting",
                 "DepartmentGallery",
+                "DepartmentGalleryEvent",
                 "Department",
             ]
 
@@ -213,6 +219,14 @@ class PortalSecurityMixin:
                     )
                     if self.model.__name__ == "Department":
                         if dept_name and obj.name == dept_name:
+                            return True
+                    elif (
+                        self.model.__name__ == "Course"
+                        and obj.program
+                        and obj.program.department
+                    ):
+                        # Edit permission check for HODs: Verify the course belongs to their department
+                        if dept_name and obj.program.department.name == dept_name:
                             return True
                     elif hasattr(obj, "department") and obj.department:
                         if dept_name and obj.department.name == dept_name:

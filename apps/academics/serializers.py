@@ -9,6 +9,7 @@ from .models import (
     Course,
     CBCSCourse,
     DepartmentGallery,
+    DepartmentGalleryEvent,
     Notice,
     Committee,
     CommitteeMember,
@@ -110,6 +111,14 @@ class DepartmentGallerySerializer(serializers.ModelSerializer):
         return None
 
 
+class DepartmentGalleryEventSerializer(serializers.ModelSerializer):
+    images = DepartmentGallerySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = DepartmentGalleryEvent
+        fields = "__all__"
+
+
 class BaseDepartmentSerializer(serializers.ModelSerializer):
     school_name = serializers.CharField(source="school.name", read_only=True)
     school_slug = serializers.CharField(source="school.slug", read_only=True)
@@ -148,6 +157,7 @@ class DepartmentListSerializer(BaseDepartmentSerializer):
 class DepartmentDetailSerializer(BaseDepartmentSerializer):
     hod = serializers.SerializerMethodField()
     gallery_images = DepartmentGallerySerializer(many=True, read_only=True)
+    gallery_events = DepartmentGalleryEventSerializer(many=True, read_only=True)
 
     class Meta:
         model = Department
