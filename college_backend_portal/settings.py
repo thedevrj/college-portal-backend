@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.authorities",
     "apps.admission",
     "apps.mou",
+    "apps.foundation_course",
     "simple_history",
     "django_cleanup.apps.CleanupConfig",
 ]
