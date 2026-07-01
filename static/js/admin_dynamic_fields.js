@@ -61,7 +61,8 @@ document.addEventListener('DOMContentLoaded', function () {
             prefix + "other_" + fieldName,
             prefix + fieldName + "_other",
             prefix + "other_" + fieldName + "_name",
-            prefix + "other_designation"
+            prefix + "other_designation",
+            prefix + "other_" + fieldName.toLowerCase()
         ];
 
         for (let i = 0; i < candidates.length; i++) {
