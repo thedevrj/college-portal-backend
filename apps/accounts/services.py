@@ -46,6 +46,7 @@ class PortalConfig:
             "committeemember",
             "course",
             "departmentgallery",
+            "departmentgalleryevent",
             "department",
         ],
         PortalRole.DEPT_STAFF: [
@@ -65,6 +66,7 @@ class PortalConfig:
             "minutesofthemeeting",
             "course",
             "departmentgallery",
+            "departmentgalleryevent",
             "department",
         ],
         PortalRole.RD_ADMIN: [

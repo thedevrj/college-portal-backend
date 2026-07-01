@@ -8,12 +8,12 @@ class MOUSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate(self, attrs):
-        partner_name = attrs.get("partner_name")
+        organization_name = attrs.get("organization_name")
         date_of_signing = attrs.get("date_of_signing")
 
-        if partner_name and date_of_signing:
+        if organization_name and date_of_signing:
             qs = MOU.objects.filter(
-                partner_name__iexact=partner_name,
+                organization_name__iexact=organization_name,
                 date_of_signing=date_of_signing,
                 is_deleted=False,
             )
