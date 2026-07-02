@@ -4,8 +4,31 @@ from django.db import models
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
 from import_export.admin import ImportExportModelAdmin
+from import_export import resources
 from apps.accounts.mixins import PortalSecurityMixin
 from .models import FoundationCourse, FoundationCourseMaterial
+
+
+class FoundationCourseResource(resources.ModelResource):
+    class Meta:
+        model = FoundationCourse
+        fields = (
+            "level",
+            "semester",
+            "course_code",
+            "course_title",
+            "credits",
+            "syllabus_file",
+        )
+        export_order = (
+            "level",
+            "semester",
+            "course_code",
+            "course_title",
+            "credits",
+            "syllabus_file",
+        )
+        import_id_fields = ("course_code",)
 
 
 class FoundationCourseMaterialInline(admin.TabularInline):
@@ -18,6 +41,7 @@ class FoundationCourseMaterialInline(admin.TabularInline):
 class FoundationCourseAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
+    resource_class = FoundationCourseResource
     list_display = ("course_code", "course_title", "level", "semester", "credits")
     list_display_links = ("course_code", "course_title")
     list_filter = (SoftDeleteListFilter, "level", "semester")
