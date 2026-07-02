@@ -63,6 +63,7 @@ class PortalSecurityMixin:
                 "FinanceCommitteeMinutes",
                 "MOU",
                 "FoundationCourse",
+                "FoundationCourseMaterial",
                 "GlobalNotice",
             ]
             if self.model.__name__ in global_models:
@@ -269,6 +270,7 @@ class PortalSecurityMixin:
             "MOU",
             "GlobalNotice",
             "FoundationCourse",
+            "FoundationCourseMaterial",
         ]
         if self.model.__name__ in global_models:
             return super().has_delete_permission(request, obj)
