@@ -20,6 +20,6 @@ class MOUViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter,
     ]
     filterset_class = MOUFilter
-    search_fields = ["organization_name", "description"]
+    search_fields = ["organization_name", "Nature_of_organization"]
     ordering_fields = ["date_of_signing"]
     ordering = ["-date_of_signing"]
