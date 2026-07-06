@@ -602,6 +602,9 @@ class Committee(SoftDeleteModel):
         )
         return f"{self.name} ({owner})"
 
+    class Meta:
+        verbose_name_plural = "Departmental Committees"
+
 
 class CommitteeMember(SoftDeleteModel):
     DESIGNATION_CHOICES = [
@@ -620,9 +623,6 @@ class CommitteeMember(SoftDeleteModel):
     name_of_member = models.CharField(
         max_length=255, null=True, blank=True, verbose_name="Name of Committee Member"
     )
-    # faculty = models.ForeignKey(
-    #     "faculty.Faculty", on_delete=models.CASCADE, null=True, blank=True
-    # )
     designation_in_committee = models.CharField(
         max_length=100, choices=DESIGNATION_CHOICES
     )
@@ -645,6 +645,9 @@ class CommitteeMember(SoftDeleteModel):
 
     def __str__(self):
         return f"{self.name_of_member} - {self.designation_in_committee}"
+
+    class Meta:
+        verbose_name_plural = "Departmental Committee Members"
 
 
 class MinutesOfTheMeeting(SoftDeleteModel):

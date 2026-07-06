@@ -4,8 +4,44 @@ from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_email
 import re
+import unicodedata
 from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
+
+
+def clean_title_string(title: str) -> str:
+    if not title:
+        return ""
+    text = unicodedata.normalize("NFKC", str(title))
+    text = text.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    text = text.replace("–", "-").replace("—", "-")
+    text = re.sub(r"[\s\u200b\xa0\ufeff]+", " ", text)
+    text = text.strip()
+    text = re.sub(r"[\s\.:;,-]+$", "", text)
+    return text
+
+
+def title_fingerprint(title: str) -> str:
+    """Returns alphanumeric-only lowercase."""
+    cleaned = clean_title_string(title)
+    return re.sub(r"[^\w]", "", cleaned).lower()
+
+
+# DOI Check
+DOI_RE = re.compile(
+    r"^(?:https?://(?:dx\.)?doi\.org/)?(10\.\d{4,9}/.+)$",
+    re.IGNORECASE,
+)
+
+
+def validate_doi(value):
+    """Reject values that don't match the standard DOI structure."""
+    if value and not DOI_RE.match(value.strip()):
+        raise ValidationError(
+            "Enter a valid DOI. "
+            "Accepted formats: \u201810.XXXX/suffix\u2019 "
+            "or \u2018https://doi.org/10.XXXX/suffix\u2019."
+        )
 
 
 class ResearchArea(SoftDeleteModel):
@@ -87,7 +123,7 @@ class ResearchProject(SoftDeleteModel):
     principal_investigator = models.ForeignKey(
         "faculty.Faculty",
         related_name="pi_projects_new",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
@@ -190,10 +226,9 @@ class ResearchScholar(SoftDeleteModel):
         null=True,
         validators=[
             RegexValidator(
-                regex=r'^\d{10}$',
-                message="Phone number must be exactly 10 digits."
+                regex=r"^\d{10}$", message="Phone number must be exactly 10 digits."
             )
-        ]
+        ],
     )
     email = models.EmailField(blank=True, null=True)
     address = models.CharField(max_length=255, null=True, blank=True)
@@ -201,7 +236,7 @@ class ResearchScholar(SoftDeleteModel):
     supervisor = models.ForeignKey(
         "faculty.Faculty",
         related_name="supervised_scholars_new",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
@@ -214,7 +249,7 @@ class ResearchScholar(SoftDeleteModel):
     research_topic = models.CharField(
         max_length=500, null=True, blank=True, verbose_name="Research Topic /Title"
     )
-    subject = models.CharField(
+    specialization = models.CharField(
         max_length=255, null=True, blank=True, verbose_name="Specialization"
     )
     date_of_registration = models.DateField(null=True, blank=True)
@@ -249,7 +284,7 @@ class ResearchScholar(SoftDeleteModel):
             )
 
         if self.contact_no:
-            if not re.match(r'^\d{10}$', str(self.contact_no).strip()):
+            if not re.match(r"^\d{10}$", str(self.contact_no).strip()):
                 raise ValidationError(
                     {"contact_no": "Phone number must be exactly 10 digits."}
                 )
@@ -258,12 +293,9 @@ class ResearchScholar(SoftDeleteModel):
             try:
                 validate_email(self.email)
             except ValidationError:
-                raise ValidationError(
-                    {"email": "Please enter a valid email address."}
-                )
+                raise ValidationError({"email": "Please enter a valid email address."})
 
         # --- Duplicate entry check ---
-        #  This manual check covers cases where supervisor or date_of_birth is NULL.)
         qs = ResearchScholar.objects.filter(
             scholar_name__iexact=self.scholar_name,
             department=self.department,
@@ -338,9 +370,9 @@ class Publication(SoftDeleteModel):
     full_author_list = models.TextField(
         blank=True,
         null=True,
-        help_text="Enter the list of all the author separated by commas ",
+        help_text="Enter the list of all the author separated by commas if they are form other institutions",
     )
-    title = models.TextField(null=True, blank=True)
+    title = models.TextField()
     campus = models.CharField(
         max_length=50,
         choices=[
@@ -361,7 +393,13 @@ class Publication(SoftDeleteModel):
         max_length=255, blank=True, null=True
     )
     publication_date = models.DateField(null=True, blank=True)
-    doi_url = models.URLField(max_length=500, blank=True, null=True)
+    doi_url = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        validators=[validate_doi],
+        help_text="Enter DOI as '10.XXXX/suffix' or 'https://doi.org/10.XXXX/suffix'.",
+    )
 
     indexing = models.CharField(
         max_length=50, blank=True, null=True, choices=Indexing_Choice
@@ -386,6 +424,12 @@ class Publication(SoftDeleteModel):
 
     def clean(self):
         super().clean()
+        if hasattr(self, "_existing_pub"):
+            return
+
+        if self.title:
+            self.title = clean_title_string(self.title)
+
         if self.publication_type == "Others" and not self.other_publication_type:
             raise ValidationError(
                 {
@@ -397,17 +441,14 @@ class Publication(SoftDeleteModel):
                 {"others_indexing": "This field is required when indexing is 'Others'."}
             )
 
-        if self.title:
-            qs_title = Publication.objects.filter(
-                title__iexact=self.title,
-                is_deleted=False,
-            )
-            if self.pk:
-                qs_title = qs_title.exclude(pk=self.pk)
-            # Cannot do a simple title match because titles might naturally overlap?
-            # We will rely on DOI primarily. If we want title duplicate check, we warn instead of block.
-
         if self.doi_url:
+            # Normalize to canonical https://doi.org/... form before saving.
+            raw = self.doi_url.strip()
+            match = DOI_RE.match(raw)
+            if match:
+                self.doi_url = f"https://doi.org/{match.group(1)}"
+
+            # DOI is the strict identifier — enforced at DB level too.
             qs_doi = Publication.objects.filter(
                 doi_url__iexact=self.doi_url,
                 is_deleted=False,
@@ -418,6 +459,41 @@ class Publication(SoftDeleteModel):
                 raise ValidationError(
                     {"doi_url": "A publication with this DOI URL already exists."}
                 )
+        else:
+            # No DOI — fall back to title-based duplicate check.
+            qs_title = Publication.objects.filter(
+                title__iexact=self.title,
+                is_deleted=False,
+            )
+            if self.pk:
+                qs_title = qs_title.exclude(pk=self.pk)
+            if qs_title.exists():
+                raise ValidationError(
+                    {
+                        "title": (
+                            "A publication with this exact title already exists. "
+                            "If this is a co-authored paper, use the 'Claim' action "
+                            "to link yourself to the existing record instead."
+                        )
+                    }
+                )
+            # Deep fingerprint check (ignores punctuation, symbols, case)
+            fp = title_fingerprint(self.title)
+            if fp:
+                candidates = Publication.objects.filter(is_deleted=False)
+                if self.pk:
+                    candidates = candidates.exclude(pk=self.pk)
+                for pub in candidates:
+                    if title_fingerprint(pub.title) == fp:
+                        raise ValidationError(
+                            {
+                                "title": (
+                                    f"A publication with a matching title already exists ('{pub.title}'). "
+                                    "If this is a co-authored paper, use the 'Claim' action "
+                                    "to link yourself to the existing record instead."
+                                )
+                            }
+                        )
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.publication_date})"
@@ -501,7 +577,7 @@ class Patent(SoftDeleteModel):
     full_inventor_list = models.TextField(
         blank=True,
         null=True,
-        help_text="Exact string of all inventors (e.g. 'J. Doe, M. Smith')",
+        help_text="Exact string of all inventors seperated by commas if they are form other institutions",
     )
     title = models.TextField()
     patent_number = models.CharField(max_length=100, blank=True, null=True)
@@ -521,16 +597,14 @@ class Patent(SoftDeleteModel):
 
     def clean(self):
         super().clean()
+        if hasattr(self, "_existing_patent"):
+            return
+
         if self.title:
-            qs_title = Patent.objects.filter(
-                title__iexact=self.title,
-                is_deleted=False,
-            )
-            if self.pk:
-                qs_title = qs_title.exclude(pk=self.pk)
-            # Similar to publication, a strict block on exact title might cause issues if different groups file identically titled but distinct patents, though unlikely. We'll rely on patent_number primarily for strict blocking.
+            self.title = clean_title_string(self.title)
 
         if self.patent_number:
+            # Patent number is the strict identifier — enforced at DB level too.
             qs_number = Patent.objects.filter(
                 patent_number__iexact=self.patent_number,
                 is_deleted=False,
@@ -543,6 +617,41 @@ class Patent(SoftDeleteModel):
                         "patent_number": "A patent with this Patent Number already exists."
                     }
                 )
+        else:
+            # No patent number — fall back to title-based duplicate check.
+            qs_title = Patent.objects.filter(
+                title__iexact=self.title,
+                is_deleted=False,
+            )
+            if self.pk:
+                qs_title = qs_title.exclude(pk=self.pk)
+            if qs_title.exists():
+                raise ValidationError(
+                    {
+                        "title": (
+                            "A patent with this exact title already exists. "
+                            "If this is a co-invented patent, use the 'Claim' action "
+                            "to link yourself to the existing record instead."
+                        )
+                    }
+                )
+            # title check (ignores punctuation, symbols, case)
+            fp = title_fingerprint(self.title)
+            if fp:
+                candidates = Patent.objects.filter(is_deleted=False)
+                if self.pk:
+                    candidates = candidates.exclude(pk=self.pk)
+                for pat in candidates:
+                    if title_fingerprint(pat.title) == fp:
+                        raise ValidationError(
+                            {
+                                "title": (
+                                    f"A patent with a matching title already exists ('{pat.title}'). "
+                                    "If this is a co-invented patent, use the 'Claim' action "
+                                    "to link yourself to the existing record instead."
+                                )
+                            }
+                        )
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.date_of_filing})"
