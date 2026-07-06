@@ -28,6 +28,12 @@ class PortalSecurityMixin:
                 if owner_obj and hasattr(owner_obj, "user") and owner_obj.user == user:
                     return True
 
+        # Check M2M faculty relations (Publication.internal_authors, Patent.internal_inventors)
+        if hasattr(obj, "internal_authors") and obj.internal_authors.filter(user=user).exists():
+            return True
+        if hasattr(obj, "internal_inventors") and obj.internal_inventors.filter(user=user).exists():
+            return True
+
         # Special case: The Faculty profile itself
         if self.model.__name__ == "Faculty" and hasattr(obj, "user"):
             return obj.user == user
@@ -94,6 +100,10 @@ class PortalSecurityMixin:
                         role_qs = qs.all()
                         if hasattr(self.model, "faculty"):
                             role_qs = role_qs.filter(faculty__user=request.user)
+                        elif hasattr(self.model, "internal_authors"):
+                            role_qs = role_qs.filter(internal_authors__user=request.user)
+                        elif hasattr(self.model, "internal_inventors"):
+                            role_qs = role_qs.filter(internal_inventors__user=request.user)
                         elif hasattr(self.model, "principal_investigator"):
                             role_qs = role_qs.filter(
                                 principal_investigator__user=request.user

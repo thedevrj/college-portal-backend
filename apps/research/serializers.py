@@ -1,15 +1,39 @@
 from rest_framework import serializers
+import re
 from .models import (
     ResearchArea,
     ResearchFacility,
     ResearchProject,
     ResearchScholar,
     Publication,
+    PublicationAuthor,
     Patent,
+    PatentAuthor,
     ResearchDevelopmentCellMember,
     Consultancy,
+    DOI_RE,
+    clean_title_string,
+    title_fingerprint,
 )
 from apps.faculty.serializers import FacultyListSerializer
+
+
+class PublicationAuthorSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="faculty.name", read_only=True)
+    slug = serializers.CharField(source="faculty.slug", read_only=True)
+
+    class Meta:
+        model = PublicationAuthor
+        fields = ["author_order", "author_role", "name", "slug"]
+
+
+class PatentAuthorSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="faculty.name", read_only=True)
+    slug = serializers.CharField(source="faculty.slug", read_only=True)
+
+    class Meta:
+        model = PatentAuthor
+        fields = ["author_order", "author_role", "name", "slug"]
 
 
 class ResearchAreaSerializer(serializers.ModelSerializer):
@@ -34,13 +58,22 @@ class ResearchAreaSerializer(serializers.ModelSerializer):
 
 
 class ConsultancySerializer(serializers.ModelSerializer):
-    faculty_name = serializers.CharField(source="faculty.name", read_only=True)
-    department_name = serializers.CharField(source="department.name", read_only=True)
-    department_slug = serializers.CharField(source="department.slug", read_only=True)
+    faculty_name = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    department_slug = serializers.SerializerMethodField()
     department = serializers.PrimaryKeyRelatedField(
         queryset=Consultancy._meta.get_field("department").related_model.objects.all(),
         required=False,
     )
+
+    def get_faculty_name(self, obj):
+        return obj.faculty.name if obj.faculty else None
+
+    def get_department_name(self, obj):
+        return obj.department.name if obj.department else None
+
+    def get_department_slug(self, obj):
+        return obj.department.slug if obj.department else None
 
     class Meta:
         model = Consultancy
@@ -70,7 +103,10 @@ class ConsultancySerializer(serializers.ModelSerializer):
 
 
 class ResearchFacilitySerializer(serializers.ModelSerializer):
-    incharge_name = serializers.CharField(source="incharge.name", read_only=True)
+    incharge_name = serializers.SerializerMethodField()
+
+    def get_incharge_name(self, obj):
+        return obj.incharge.name if obj.incharge else None
 
     class Meta:
         model = ResearchFacility
@@ -78,12 +114,13 @@ class ResearchFacilitySerializer(serializers.ModelSerializer):
 
 
 class ResearchProjectListSerializer(serializers.ModelSerializer):
-    pi_name = serializers.CharField(
-        source="principal_investigator.name", read_only=True
-    )
+    pi_name = serializers.SerializerMethodField()
     department_name = serializers.CharField(source="department.name", read_only=True)
     department_slug = serializers.CharField(source="department.slug", read_only=True)
     co_investigators_names = serializers.SerializerMethodField()
+
+    def get_pi_name(self, obj):
+        return obj.principal_investigator.name if obj.principal_investigator else None
 
     class Meta:
         model = ResearchProject
@@ -198,6 +235,12 @@ class ResearchScholarListSerializer(serializers.ModelSerializer):
 
 
 class PublicationSerializer(serializers.ModelSerializer):
+    # Structured author list: [{author_order, author_role, name, slug}]
+    # Uses the publicationauthor_set prefetch set in PublicationViewSet.
+    authors = PublicationAuthorSerializer(
+        source="publicationauthor_set", many=True, read_only=True
+    )
+
     class Meta:
         model = Publication
         fields = "__all__"
@@ -217,10 +260,31 @@ class PublicationSerializer(serializers.ModelSerializer):
             )
 
         title = attrs.get("title")
+        if title:
+            title = clean_title_string(title)
+            attrs["title"] = title
+
         doi_url = attrs.get("doi_url")
 
-        # we check for doi for uniqueness. If doi is not present, we check for title.
+        # --- DOI format check ---
+        if doi_url:
+            doi_url = doi_url.strip()
+            if not DOI_RE.match(doi_url):
+                raise serializers.ValidationError(
+                    {
+                        "doi_url": (
+                            "Enter a valid DOI. "
+                            "Accepted formats: \u201810.XXXX/suffix\u2019 "
+                            "or \u2018https://doi.org/10.XXXX/suffix\u2019."
+                        )
+                    }
+                )
+            # Normalize to canonical URL form for the uniqueness check below
+            match = DOI_RE.match(doi_url)
+            if match:
+                doi_url = f"https://doi.org/{match.group(1)}"
 
+        # --- Uniqueness check ---
         if doi_url:
             qs_doi = Publication.objects.filter(
                 doi_url__iexact=doi_url,
@@ -257,19 +321,33 @@ class PublicationSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not data.get("full_author_list"):
-            authors = instance.internal_authors.all().order_by('publicationauthor__author_order')
+            # .all() uses the prefetch cache; Meta.ordering on PublicationAuthor handles order
+            authors = instance.internal_authors.all()
             data["full_author_list"] = ", ".join([author.name for author in authors])
         return data
 
 
 class PatentSerializer(serializers.ModelSerializer):
+    # Structured inventor list: [{author_order, author_role, name, slug}]
+    # Uses the patentauthor_set prefetch set in PatentViewSet.
+    inventors = PatentAuthorSerializer(
+        source="patentauthor_set", many=True, read_only=True
+    )
+
     class Meta:
         model = Patent
         fields = "__all__"
 
     def validate(self, attrs):
         title = attrs.get("title")
+        if title:
+            title = clean_title_string(title)
+            attrs["title"] = title
+
         patent_number = attrs.get("patent_number")
+        if patent_number:
+            patent_number = patent_number.strip()
+            attrs["patent_number"] = patent_number
 
         # we check for patent_number for uniqueness. If no patent_number then check for title.
 
@@ -309,8 +387,11 @@ class PatentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not data.get("full_inventor_list"):
-            inventors = instance.internal_inventors.all().order_by('patentauthor__author_order')
-            data["full_inventor_list"] = ", ".join([inventor.name for inventor in inventors])
+            # .all() uses the prefetch cache; Meta.ordering on PatentAuthor handles order
+            inventors = instance.internal_inventors.all()
+            data["full_inventor_list"] = ", ".join(
+                [inventor.name for inventor in inventors]
+            )
         return data
 
 
