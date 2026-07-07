@@ -30,7 +30,14 @@ class AdmissionSession(SoftDeleteModel):
         ordering = ["-start_date", "-id"]
 
     def __str__(self):
-        return f"{self.session_name} {'(Active)' if self.is_active else '(Archived)'}"
+        return f"{self.session_name} {'(Active)' if self.is_active else '(Archived)'}" 
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError(
+                {"end_date": "End date cannot be before the start date."}
+            )
 
 
 class AdmissionStream(SoftDeleteModel):
@@ -50,6 +57,13 @@ class AdmissionStream(SoftDeleteModel):
     class Meta:
         ordering = ["order", "id"]
         verbose_name_plural = "Admission Programs"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session", "name"],
+                condition=models.Q(is_deleted=False),
+                name="unique_admission_stream_per_session",
+            )
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.session.session_name})"
@@ -115,6 +129,17 @@ class RegistrationPortal(SoftDeleteModel):
     def __str__(self):
         return f"{self.portal_name} - {self.get_category_display()}"
 
+    def clean(self):
+        super().clean()
+        if (
+            self.registration_start
+            and self.registration_end
+            and self.registration_end < self.registration_start
+        ):
+            raise ValidationError(
+                {"registration_end": "Registration end date cannot be before the start date."}
+            )
+
 
 class CounsellingPhase(SoftDeleteModel):
     stream = models.ForeignKey(
@@ -166,6 +191,17 @@ class AdmissionCommitteeMember(SoftDeleteModel):
     email = models.EmailField(blank=True, null=True)
     order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
     history = HistoricalRecords()
+
+    def clean(self):
+        super().clean()
+        if self.email:
+            from django.core.validators import validate_email
+            val = str(self.email).strip().lower()
+            try:
+                validate_email(val)
+            except Exception:
+                raise ValidationError({"email": "Please enter a valid email address."})
+            self.email = val
 
     def __str__(self):
         return f"{self.name} - Admission Committee"

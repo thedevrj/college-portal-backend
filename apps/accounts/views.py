@@ -233,7 +233,7 @@ class AdminDashboardStatsView(APIView):
         total_research_output = total_publications + total_projects + total_patents
 
         # Admissions
-        active_merit_lists = get_count("admission", "AdmissionMeritList", {"is_active": True})
+        total_merit_lists = get_count("admission", "MeritList")
         
         active_session_name = "None"
         try:
@@ -258,6 +258,6 @@ class AdminDashboardStatsView(APIView):
             },
             "admission": {
                 "active_session": active_session_name,
-                "merit_lists": active_merit_lists
+                "merit_lists": total_merit_lists
             }
         })

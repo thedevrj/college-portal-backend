@@ -59,10 +59,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const candidates = [
             prefix + "other_" + fieldName,
+            prefix + "others_" + fieldName,
             prefix + fieldName + "_other",
             prefix + "other_" + fieldName + "_name",
             prefix + "other_designation",
-            prefix + "other_" + fieldName.toLowerCase()
+            prefix + "other_" + fieldName.toLowerCase(),
+            prefix + "others_" + fieldName.toLowerCase()
         ];
 
         for (let i = 0; i < candidates.length; i++) {
