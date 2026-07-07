@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from apps.accounts.models import SoftDeleteModel
 from simple_history.models import HistoricalRecords
 
@@ -72,6 +73,11 @@ class MOU(SoftDeleteModel):
                 )
 
         # Date validation
+        if self.date_of_signing and self.date_of_signing > timezone.now().date():
+            raise ValidationError(
+                {"date_of_signing": "Date of signing cannot be in the future."}
+            )
+
         if self.date_of_signing and self.valid_till:
             if self.valid_till < self.date_of_signing:
                 raise ValidationError(

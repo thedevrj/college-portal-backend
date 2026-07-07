@@ -34,7 +34,7 @@ class School(SoftDeleteModel):
     dean_message = RichTextField(blank=True, null=True)
     about_school = RichTextField(blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
-    contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    contact_phone = models.CharField(max_length=10, blank=True, null=True)
     history = HistoricalRecords()
 
     class Meta:
@@ -211,7 +211,7 @@ class Department(SoftDeleteModel):
         help_text="Major research and academic focus areas of the department",
     )
     contact_email = models.EmailField(blank=True, null=True)
-    contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    contact_phone = models.CharField(max_length=10, blank=True, null=True)
     campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES, default="BBAU")
 
     class Meta:
@@ -418,6 +418,18 @@ class CBCSCourse(SoftDeleteModel):
 
     class Meta:
         ordering = ["semester", "course_code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["department", "course_code"],
+                condition=models.Q(is_deleted=False, department__isnull=False),
+                name="unique_cbcscourse_dept_code",
+            ),
+            models.UniqueConstraint(
+                fields=["centre", "course_code"],
+                condition=models.Q(is_deleted=False, centre__isnull=False),
+                name="unique_cbcscourse_centre_code",
+            ),
+        ]
 
     def clean(self):
         super().clean()
@@ -429,6 +441,23 @@ class CBCSCourse(SoftDeleteModel):
             raise ValidationError(
                 "A CBCS Course cannot be associated with both a Department and a Centre."
             )
+        # Duplicate course_code check within the same department or centre
+        qs = CBCSCourse.objects.filter(
+            course_code__iexact=self.course_code,
+            is_deleted=False,
+        )
+        if self.department:
+            qs = qs.filter(department=self.department)
+        elif self.centre:
+            qs = qs.filter(centre=self.centre)
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                {
+                    "course_code": f"A course with code '{self.course_code}' already exists in this department/centre."
+                }
+            )
 
     def __str__(self):
         return f"CBCS: {self.course_code} - {self.course_title}"
@@ -436,11 +465,8 @@ class CBCSCourse(SoftDeleteModel):
 
 def department_gallery_upload_path(instance, filename):
     # Creates a path like: departments/computer-science/gallery/image.png
-    dept_slug = (
-        instance.department.slug
-        if instance.department and instance.department.slug
-        else f"dept_{instance.department_id}" if instance.department else "unknown"
-    )
+    # department is always set (NOT NULL) so no null-guard needed.
+    dept_slug = instance.department.slug or f"dept_{instance.department_id}"
     if getattr(instance, "event", None):
         event_slug = slugify(instance.event.title)
         return f"departments/{dept_slug}/gallery/events/{event_slug}/{filename}"
@@ -449,11 +475,7 @@ def department_gallery_upload_path(instance, filename):
 
 class DepartmentGalleryEvent(SoftDeleteModel):
     department = models.ForeignKey(
-        Department,
-        related_name="gallery_events",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
+        Department, related_name="gallery_events", on_delete=models.CASCADE
     )
     title = models.CharField(max_length=255)
     date_of_event = models.DateField(null=True, blank=True)
@@ -465,17 +487,12 @@ class DepartmentGalleryEvent(SoftDeleteModel):
         verbose_name_plural = "Department Event Gallery"
 
     def __str__(self):
-        dept_name = self.department.name if self.department else "Unknown"
-        return f"{self.title} ({dept_name})"
+        return f"{self.title} ({self.department.name})"
 
 
 class DepartmentGallery(SoftDeleteModel):
     department = models.ForeignKey(
-        Department,
-        related_name="gallery_images",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
+        Department, related_name="gallery_images", on_delete=models.CASCADE
     )
     event = models.ForeignKey(
         DepartmentGalleryEvent,
@@ -496,10 +513,17 @@ class DepartmentGallery(SoftDeleteModel):
     class Meta:
         ordering = ["-uploaded_at"]
 
+    def clean(self):
+        super().clean()
+        # If an event is chosen, auto-sync department from the event.
+        # This prevents a mismatch like image.department=Physics but image.event belongs to Chemistry.
+        if self.event_id:
+            self.department = self.event.department
+
     def __str__(self):
         if self.event:
             return f"Gallery image for event: {self.event.title}"
-        return f"Gallery image for {self.department.name if self.department else 'Unknown'}"
+        return f"Gallery image for {self.department.name}"
 
 
 class Notice(SoftDeleteModel):

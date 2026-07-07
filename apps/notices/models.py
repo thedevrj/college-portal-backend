@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
 from simple_history.models import HistoricalRecords
 from apps.accounts.models import SoftDeleteModel
@@ -45,6 +46,21 @@ class GlobalNotice(SoftDeleteModel):
     class Meta:
         ordering = ["-date_posted"]
         verbose_name_plural = "General Notices"
+
+    def clean(self):
+        super().clean()
+        # Validate that every category value is a valid choice
+        valid_categories = {c[0] for c in self.CATEGORY_CHOICES}
+        invalid = [c for c in (self.categories or []) if c not in valid_categories]
+        if invalid:
+            raise ValidationError(
+                {"categories": f"Invalid category value(s): {', '.join(invalid)}. Must be one of: {', '.join(valid_categories)}."}
+            )
+        # Require at least a link or attachment so the notice is useful
+        if not self.link and not self.attachment:
+            raise ValidationError(
+                "A notice must have either an external link or a file attachment to be useful."
+            )
 
     def __str__(self):
         cats = ", ".join(self.categories) if self.categories else "Uncategorized"

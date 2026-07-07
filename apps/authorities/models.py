@@ -35,6 +35,13 @@ class BoardOfManagementMember(SoftDeleteModel):
                 raise ValidationError({"email": "Please enter a valid email address."})
             self.email = val
 
+        # Expiry cannot be before nomination
+        if self.date_of_nomination and self.date_of_expiry:
+            if self.date_of_expiry < self.date_of_nomination:
+                raise ValidationError(
+                    {"date_of_expiry": "Date of expiry cannot be before the date of nomination."}
+                )
+
     def __str__(self):
         return f"{self.name} - BoM"
 

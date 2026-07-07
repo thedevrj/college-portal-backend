@@ -35,7 +35,13 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
     def validate_new_password(self, value):
-        # You can add password complexity validation here if needed
+        import re
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters long")
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+        if not re.search(r'[0-9]', value):
+            raise serializers.ValidationError("Password must contain at least one digit.")
+        if not re.search(r'[!@#$%^&*(),.?\":{}|<>]', value):
+            raise serializers.ValidationError("Password must contain at least one special character (!@#$%^&* etc).")
         return value

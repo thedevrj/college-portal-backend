@@ -7,6 +7,7 @@ import re
 import unicodedata
 from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
+from django.utils import timezone
 
 
 def clean_title_string(title: str) -> str:
@@ -163,6 +164,28 @@ class ResearchProject(SoftDeleteModel):
 
     def clean(self):
         super().clean()
+
+        # Date order check
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError(
+                {"end_date": "End date cannot be before the start date."}
+            )
+
+        # Amount cannot be negative
+        if self.amount_sanctioned is not None and self.amount_sanctioned < 0:
+            raise ValidationError(
+                {"amount_sanctioned": "Amount sanctioned cannot be negative."}
+            )
+
+        # Others funding agency required if funding_agency = Others
+        if self.funding_agency == "Others" and not self.others_funding_agency:
+            raise ValidationError(
+                {
+                    "others_funding_agency": "Please specify the funding agency name when 'Others' is selected."
+                }
+            )
+
+        # Duplicate check
         qs = ResearchProject.objects.filter(
             title__iexact=self.title,
             principal_investigator=self.principal_investigator,
@@ -283,6 +306,36 @@ class ResearchScholar(SoftDeleteModel):
                 {"other_gender": "This field is required when gender is 'Other'."}
             )
 
+        # Date of birth cannot be in the future
+        if self.date_of_birth and self.date_of_birth > timezone.now().date():
+            raise ValidationError(
+                {"date_of_birth": "Date of birth cannot be in the future."}
+            )
+
+        # Date of registration must be after date of birth
+        if (
+            self.date_of_birth
+            and self.date_of_registration
+            and self.date_of_registration < self.date_of_birth
+        ):
+            raise ValidationError(
+                {
+                    "date_of_registration": "Date of registration cannot be before the scholar's date of birth."
+                }
+            )
+
+        # Thesis submission must be after registration
+        if (
+            self.date_of_registration
+            and self.thesis_submission_date
+            and self.thesis_submission_date < self.date_of_registration
+        ):
+            raise ValidationError(
+                {
+                    "thesis_submission_date": "Thesis submission date cannot be before registration date."
+                }
+            )
+
         if self.contact_no:
             if not re.match(r"^\d{10}$", str(self.contact_no).strip()):
                 raise ValidationError(
@@ -328,6 +381,23 @@ class PublicationAuthor(models.Model):
         ordering = ["author_order"]
         unique_together = [["publication", "faculty"]]
 
+    def clean(self):
+        super().clean()
+        # Prevent two authors sharing the same position number on the same paper
+        if self.publication_id and self.author_order is not None:
+            qs = PublicationAuthor.objects.filter(
+                publication_id=self.publication_id,
+                author_order=self.author_order,
+            )
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            if qs.exists():
+                raise ValidationError(
+                    {
+                        "author_order": f"Author order {self.author_order} is already taken for this publication. Please use a different position number."
+                    }
+                )
+
 
 class PatentAuthor(models.Model):
     AUTHOR_ROLE_CHOICES = [
@@ -344,6 +414,23 @@ class PatentAuthor(models.Model):
     class Meta:
         ordering = ["author_order"]
         unique_together = [["patent", "faculty"]]
+
+    def clean(self):
+        super().clean()
+        # Prevent two inventors sharing the same position number on the same patent
+        if self.patent_id and self.author_order is not None:
+            qs = PatentAuthor.objects.filter(
+                patent_id=self.patent_id,
+                author_order=self.author_order,
+            )
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            if qs.exists():
+                raise ValidationError(
+                    {
+                        "author_order": f"Inventor order {self.author_order} is already taken for this patent. Please use a different position number."
+                    }
+                )
 
 
 class Publication(SoftDeleteModel):
@@ -409,6 +496,13 @@ class Publication(SoftDeleteModel):
         blank=True,
         null=True,
         help_text="Please specify indexing name if 'Others' is selected",
+    )
+    title_fp = models.CharField(
+        max_length=1000,
+        blank=True,
+        db_index=True,
+        editable=False,
+        help_text="Auto-generated alphanumeric fingerprint of the title for duplicate detection.",
     )
     history = HistoricalRecords()
 
@@ -477,23 +571,36 @@ class Publication(SoftDeleteModel):
                         )
                     }
                 )
-            # Deep fingerprint check (ignores punctuation, symbols, case)
+            # Deep fingerprint check: single indexed DB query instead of O(N) Python loop.
             fp = title_fingerprint(self.title)
             if fp:
-                candidates = Publication.objects.filter(is_deleted=False)
+                # Store on instance so save() can persist it without recomputing.
+                self.title_fp = fp
+                qs_fp = Publication.objects.filter(
+                    title_fp=fp,
+                    is_deleted=False,
+                )
                 if self.pk:
-                    candidates = candidates.exclude(pk=self.pk)
-                for pub in candidates:
-                    if title_fingerprint(pub.title) == fp:
-                        raise ValidationError(
-                            {
-                                "title": (
-                                    f"A publication with a matching title already exists ('{pub.title}'). "
-                                    "If this is a co-authored paper, use the 'Claim' action "
-                                    "to link yourself to the existing record instead."
-                                )
-                            }
-                        )
+                    qs_fp = qs_fp.exclude(pk=self.pk)
+                conflict = qs_fp.first()
+                if conflict:
+                    raise ValidationError(
+                        {
+                            "title": (
+                                f"A publication with a matching title already exists ('{conflict.title}'). "
+                                "If this is a co-authored paper, use the 'Claim' action "
+                                "to link yourself to the existing record instead."
+                            )
+                        }
+                    )
+
+    def save(self, *args, **kwargs):
+        # Keep title_fp in sync on every save (including programmatic saves that skip clean()).
+        if self.title:
+            self.title_fp = title_fingerprint(self.title)
+        else:
+            self.title_fp = ""
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.publication_date})"
@@ -542,6 +649,24 @@ class Consultancy(SoftDeleteModel):
 
     def clean(self):
         super().clean()
+
+        # At least one of faculty or department must be set
+        if not self.faculty and not self.department:
+            raise ValidationError(
+                "A consultancy must be associated with at least a Faculty member or a Department."
+            )
+
+        # Date order check
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError(
+                {"end_date": "End date cannot be before the start date."}
+            )
+
+        # Amount cannot be negative
+        if self.amount is not None and self.amount < 0:
+            raise ValidationError({"amount": "Consultancy amount cannot be negative."})
+
+        # Duplicate check
         qs = Consultancy.objects.filter(
             faculty=self.faculty,
             nature_of_consultancy__iexact=self.nature_of_consultancy,
@@ -584,6 +709,15 @@ class Patent(SoftDeleteModel):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Filed")
     date_of_filing = models.DateField(blank=True, null=True)
     description = RichTextField(blank=True, null=True)
+    # Pre-computed, DB-indexed fingerprint for fast fuzzy-duplicate detection.
+    # Regenerated automatically on every save(); never edit directly.
+    title_fp = models.CharField(
+        max_length=1000,
+        blank=True,
+        db_index=True,
+        editable=False,
+        help_text="Auto-generated alphanumeric fingerprint of the title for duplicate detection.",
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -602,6 +736,26 @@ class Patent(SoftDeleteModel):
 
         if self.title:
             self.title = clean_title_string(self.title)
+
+        # Filing date cannot be in the future
+        if self.date_of_filing and self.date_of_filing > timezone.now().date():
+            raise ValidationError(
+                {"date_of_filing": "Date of filing cannot be in the future."}
+            )
+
+        # Patent number required when status is Published or Granted
+        # if self.status in ("Published", "Granted") and not self.patent_number:
+        #     raise ValidationError(
+        #         {"patent_number": f"Patent number is required when status is '{self.status}'."}
+        #     )
+
+        # Filing date required when status is Published or Granted
+        if self.status in ("Published", "Granted") and not self.date_of_filing:
+            raise ValidationError(
+                {
+                    "date_of_filing": f"Date of filing is required when status is '{self.status}'."
+                }
+            )
 
         if self.patent_number:
             # Patent number is the strict identifier — enforced at DB level too.
@@ -635,23 +789,36 @@ class Patent(SoftDeleteModel):
                         )
                     }
                 )
-            # title check (ignores punctuation, symbols, case)
+            # Deep fingerprint check: single indexed DB query instead of O(N) Python loop.
             fp = title_fingerprint(self.title)
             if fp:
-                candidates = Patent.objects.filter(is_deleted=False)
+                # Store on instance so save() can persist it without recomputing.
+                self.title_fp = fp
+                qs_fp = Patent.objects.filter(
+                    title_fp=fp,
+                    is_deleted=False,
+                )
                 if self.pk:
-                    candidates = candidates.exclude(pk=self.pk)
-                for pat in candidates:
-                    if title_fingerprint(pat.title) == fp:
-                        raise ValidationError(
-                            {
-                                "title": (
-                                    f"A patent with a matching title already exists ('{pat.title}'). "
-                                    "If this is a co-invented patent, use the 'Claim' action "
-                                    "to link yourself to the existing record instead."
-                                )
-                            }
-                        )
+                    qs_fp = qs_fp.exclude(pk=self.pk)
+                conflict = qs_fp.first()
+                if conflict:
+                    raise ValidationError(
+                        {
+                            "title": (
+                                f"A patent with a matching title already exists ('{conflict.title}'). "
+                                "If this is a co-invented patent, use the 'Claim' action "
+                                "to link yourself to the existing record instead."
+                            )
+                        }
+                    )
+
+    def save(self, *args, **kwargs):
+        # Keep title_fp in sync on every save (including programmatic saves that skip clean()).
+        if self.title:
+            self.title_fp = title_fingerprint(self.title)
+        else:
+            self.title_fp = ""
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.title[:50]}... ({self.date_of_filing})"
