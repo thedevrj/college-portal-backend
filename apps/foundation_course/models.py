@@ -85,6 +85,13 @@ class FoundationCourseMaterial(SoftDeleteModel):
         default="Document",
         verbose_name="Material Type",
     )
+    other_material_type = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Other Material Type",
+        help_text="Please specify if material type is 'Others'.",
+    )
     file = models.FileField(
         upload_to="foundation_courses/materials/",
         blank=True,
@@ -102,6 +109,12 @@ class FoundationCourseMaterial(SoftDeleteModel):
 
     def clean(self):
         super().clean()
+        if self.material_type == "Others" and not self.other_material_type:
+            raise ValidationError(
+                {
+                    "other_material_type": "Please specify the material type when 'Others' is selected."
+                }
+            )
         if not self.file and not self.link:
             raise ValidationError(
                 "Either a file attachment or an external link must be provided."

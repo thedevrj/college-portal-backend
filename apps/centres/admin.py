@@ -14,5 +14,3 @@ class CentreAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("head",)
 
-    class Media:
-        js = ("/static/js/admin_dynamic_fields.js",)
