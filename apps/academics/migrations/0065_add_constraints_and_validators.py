@@ -3,6 +3,47 @@
 from django.db import migrations, models
 
 
+def resolve_duplicate_courses(apps, schema_editor):
+    CBCSCourse = apps.get_model('academics', 'CBCSCourse')
+    from django.db.models import Count
+
+    # Resolve department duplicates
+    dept_duplicates = (
+        CBCSCourse.objects.filter(is_deleted=False, department__isnull=False)
+        .values('department', 'course_code')
+        .annotate(count=Count('id'))
+        .filter(count__gt=1)
+    )
+    for dup in dept_duplicates:
+        courses = list(CBCSCourse.objects.filter(
+            is_deleted=False,
+            department_id=dup['department'],
+            course_code=dup['course_code']
+        ).order_by('-id'))
+        # Keep the first one (latest), mark the rest as deleted
+        for extra_course in courses[1:]:
+            extra_course.is_deleted = True
+            extra_course.save()
+
+    # Resolve centre duplicates
+    centre_duplicates = (
+        CBCSCourse.objects.filter(is_deleted=False, centre__isnull=False)
+        .values('centre', 'course_code')
+        .annotate(count=Count('id'))
+        .filter(count__gt=1)
+    )
+    for dup in centre_duplicates:
+        courses = list(CBCSCourse.objects.filter(
+            is_deleted=False,
+            centre_id=dup['centre'],
+            course_code=dup['course_code']
+        ).order_by('-id'))
+        # Keep the first one (latest), mark the rest as deleted
+        for extra_course in courses[1:]:
+            extra_course.is_deleted = True
+            extra_course.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,6 +52,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(resolve_duplicate_courses, reverse_code=migrations.RunPython.noop),
         migrations.AlterModelOptions(
             name='committee',
             options={'verbose_name_plural': 'Departmental Committees'},
