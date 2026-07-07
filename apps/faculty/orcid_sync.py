@@ -43,9 +43,7 @@ def sync_faculty_orcid(faculty):
     orcid_id = faculty.orcid_id.strip()
     headers = {"Accept": "application/vnd.orcid+json"}
 
-    # ----------------------------------------------------
     # 1. Fetch Biography
-    # ----------------------------------------------------
     bio_updated = False
     person_url = f"https://pub.orcid.org/v3.0/{orcid_id}/person"
     try:
@@ -69,9 +67,8 @@ def sync_faculty_orcid(faculty):
     except Exception as e:
         logger.error(f"Error fetching ORCID biography for {faculty.name}: {str(e)}")
 
-    # ----------------------------------------------------
     # 2. Fetch Qualifications & Educations
-    # ----------------------------------------------------
+
     qualifications_updated = False
     educations_url = f"https://pub.orcid.org/v3.0/{orcid_id}/educations"
     try:
@@ -124,9 +121,7 @@ def sync_faculty_orcid(faculty):
     except Exception as e:
         logger.error(f"Error fetching ORCID educations for {faculty.name}: {str(e)}")
 
-    # ----------------------------------------------------
-    # 3. Fetch Works (Publications / Patents)
-    # ----------------------------------------------------
+    # 3. Fetch Publications & Patents
     works_url = f"https://pub.orcid.org/v3.0/{orcid_id}/works"
     publications_added = 0
     patents_added = 0
@@ -172,21 +167,60 @@ def sync_faculty_orcid(faculty):
 
                     # Handle Patent
                     if work_type == "patent":
-                        # Check if patent already exists
-                        patent_exists = Patent.objects.filter(
-                            internal_inventors=faculty, title__iexact=title_val
-                        ).exists()
-                        if not patent_exists:
-                            patent_number = None
-                            # Look for patent number in external-ids
-                            for ext_id in ext_ids:
-                                if ext_id.get("external-id-type") in [
-                                    "patent",
-                                    "other-id",
-                                ]:
-                                    patent_number = ext_id.get("external-id-value")
-                                    break
+                        patent_number = None
+                        for ext_id in ext_ids:
+                            if ext_id.get("external-id-type") in ["patent", "other-id"]:
+                                patent_number = ext_id.get("external-id-value")
+                                break
 
+                        global_patent = None
+                        if patent_number:
+                            global_patent = Patent.objects.filter(
+                                patent_number__iexact=patent_number, is_deleted=False
+                            ).first()
+
+                        if not global_patent:
+                            from apps.research.models import title_fingerprint
+
+                            fp = title_fingerprint(title_val)
+                            if fp:
+                                global_patent = Patent.objects.filter(
+                                    title_fp=fp, is_deleted=False
+                                ).first()
+                            else:
+                                global_patent = Patent.objects.filter(
+                                    title__iexact=title_val, is_deleted=False
+                                ).first()
+
+                        if global_patent:
+                            # Patent already exists in DB globally, just claim it if not already linked
+                            if not global_patent.internal_inventors.filter(
+                                id=faculty.id
+                            ).exists():
+                                PatentAuthor = apps.get_model(
+                                    "research", "PatentAuthor"
+                                )
+                                current_authors = PatentAuthor.objects.filter(
+                                    patent=global_patent
+                                )
+                                next_order = 1
+                                if current_authors.exists():
+                                    next_order = (
+                                        current_authors.order_by("-author_order")
+                                        .first()
+                                        .author_order
+                                        + 1
+                                    )
+
+                                PatentAuthor.objects.create(
+                                    patent=global_patent,
+                                    faculty=faculty,
+                                    author_order=next_order,
+                                    author_role="Co-Inventor",
+                                )
+                                patents_added += 1
+                        else:
+                            # Create new patent
                             patent = Patent.objects.create(
                                 title=title_val,
                                 patent_number=patent_number,
@@ -199,7 +233,7 @@ def sync_faculty_orcid(faculty):
                                 patent=patent,
                                 faculty=faculty,
                                 author_order=1,
-                                author_role="Main Inventor"
+                                author_role="Main Inventor",
                             )
                             patents_added += 1
                     else:
@@ -222,20 +256,59 @@ def sync_faculty_orcid(faculty):
                             pub_type = "Others"
                             other_pub_type = work_type or "ORCID Work"
 
-                        pub_exists = False
+                        global_pub = None
                         if doi_val:
-                            pub_exists = Publication.objects.filter(
-                                internal_authors=faculty, doi_url__icontains=doi_val
-                            ).exists()
-                        if not pub_exists:
-                            pub_exists = Publication.objects.filter(
-                                internal_authors=faculty, title__iexact=title_val
-                            ).exists()
+                            canonical_doi = f"https://doi.org/{doi_val}"
+                            global_pub = Publication.objects.filter(
+                                doi_url__iexact=canonical_doi, is_deleted=False
+                            ).first()
 
-                        if not pub_exists:
+                        if not global_pub:
+                            from apps.research.models import title_fingerprint
+
+                            fp = title_fingerprint(title_val)
+                            if fp:
+                                global_pub = Publication.objects.filter(
+                                    title_fp=fp, is_deleted=False
+                                ).first()
+                            else:
+                                global_pub = Publication.objects.filter(
+                                    title__iexact=title_val, is_deleted=False
+                                ).first()
+
+                        if global_pub:
+                            # Publication exists globally, auto-claim as co-author if not linked
+                            if not global_pub.internal_authors.filter(
+                                id=faculty.id
+                            ).exists():
+                                PublicationAuthor = apps.get_model(
+                                    "research", "PublicationAuthor"
+                                )
+                                current_authors = PublicationAuthor.objects.filter(
+                                    publication=global_pub
+                                )
+                                next_order = 1
+                                if current_authors.exists():
+                                    next_order = (
+                                        current_authors.order_by("-author_order")
+                                        .first()
+                                        .author_order
+                                        + 1
+                                    )
+
+                                PublicationAuthor.objects.create(
+                                    publication=global_pub,
+                                    faculty=faculty,
+                                    author_order=next_order,
+                                    author_role="Co-Author",
+                                )
+                                publications_added += 1
+                        else:
                             journal_title = work_summary.get("journal-title")
                             journal_name = (
-                                journal_title.get("value") if journal_title else None
+                                journal_title.get("value")
+                                if journal_title
+                                else "ORCID Journal/Conference"
                             )
 
                             pub = Publication.objects.create(
@@ -251,12 +324,14 @@ def sync_faculty_orcid(faculty):
                                 indexing="Others",
                                 others_indexing="Imported from ORCID",
                             )
-                            PublicationAuthor = apps.get_model("research", "PublicationAuthor")
+                            PublicationAuthor = apps.get_model(
+                                "research", "PublicationAuthor"
+                            )
                             PublicationAuthor.objects.create(
                                 publication=pub,
                                 faculty=faculty,
                                 author_order=1,
-                                author_role="Main Author"
+                                author_role="Main Author",
                             )
                             publications_added += 1
             else:
@@ -266,9 +341,8 @@ def sync_faculty_orcid(faculty):
     except Exception as e:
         logger.error(f"Error fetching ORCID works for {faculty.name}: {str(e)}")
 
-    # ----------------------------------------------------
-    # 4. Fetch Fundings (Research Projects)
-    # ----------------------------------------------------
+    # 4. Fetch Research Projects
+
     projects_added = 0
     fundings_url = f"https://pub.orcid.org/v3.0/{orcid_id}/fundings"
     try:
@@ -352,9 +426,8 @@ def sync_faculty_orcid(faculty):
     except Exception as e:
         logger.error(f"Error fetching ORCID fundings for {faculty.name}: {str(e)}")
 
-    # ----------------------------------------------------
-    # 5. Fetch Memberships & Services
-    # ----------------------------------------------------
+    # 5. Fetch Memberships
+
     memberships_added = 0
     memberships_url = f"https://pub.orcid.org/v3.0/{orcid_id}/memberships"
     try:
