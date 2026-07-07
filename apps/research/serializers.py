@@ -322,8 +322,8 @@ class PublicationSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if not data.get("full_author_list"):
             # .all() uses the prefetch cache; Meta.ordering on PublicationAuthor handles order
-            authors = instance.internal_authors.all()
-            data["full_author_list"] = ", ".join([author.name for author in authors])
+            authors = instance.publicationauthor_set.all()
+            data["full_author_list"] = ", ".join([author.faculty.name for author in authors])
         return data
 
 
@@ -388,9 +388,9 @@ class PatentSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if not data.get("full_inventor_list"):
             # .all() uses the prefetch cache; Meta.ordering on PatentAuthor handles order
-            inventors = instance.internal_inventors.all()
+            inventors = instance.patentauthor_set.all()
             data["full_inventor_list"] = ", ".join(
-                [inventor.name for inventor in inventors]
+                [inventor.faculty.name for inventor in inventors]
             )
         return data
 

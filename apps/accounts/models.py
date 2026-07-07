@@ -53,7 +53,17 @@ class UserProfile(models.Model):
         User, on_delete=models.CASCADE, related_name="portal_profile"
     )
     employee_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
-    phone = models.CharField(max_length=15, null=True, blank=True)
+    phone = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        validators=[
+            __import__('django.core.validators', fromlist=['RegexValidator']).RegexValidator(
+                regex=r'^\d{10}$',
+                message='Phone number must be exactly 10 digits.',
+            )
+        ],
+    )
     profile_photo = models.ImageField(
         upload_to="portal/profiles/", null=True, blank=True
     )

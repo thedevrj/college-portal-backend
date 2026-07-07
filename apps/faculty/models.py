@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
+from django.utils import timezone
+from django.core.validators import RegexValidator
 from ckeditor.fields import RichTextField
 from django.core.exceptions import ValidationError
 from simple_history.models import HistoricalRecords
@@ -65,6 +67,12 @@ class Faculty(SoftDeleteModel):
         null=True,
         blank=True,
         unique=True,
+        validators=[
+            RegexValidator(
+                regex=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$",
+                message="ORCID ID must be in the format XXXX-XXXX-XXXX-XXXX (e.g., 0000-0003-0902-4386).",
+            )
+        ],
         help_text="ORCID ID (e.g., 0000-0003-0902-4386)",
     )
 
@@ -158,6 +166,22 @@ class Faculty(SoftDeleteModel):
                         {email_field: "Institutional email must end with @bbau.ac.in"}
                     )
                 setattr(self, email_field, val)
+
+        # Date of birth cannot be in the future
+        if self.dob and self.dob > timezone.now().date():
+            raise ValidationError(
+                {"dob": "Date of birth cannot be in the future."}
+            )
+
+        # Date of superannuation must be after date of joining
+        if (
+            self.date_of_joining
+            and self.date_of_superannuation
+            and self.date_of_superannuation < self.date_of_joining
+        ):
+            raise ValidationError(
+                {"date_of_superannuation": "Date of superannuation cannot be before date of joining."}
+            )
 
     def save(self, *args, **kwargs):
         # 1. Sync or Create User if staff_no exists
@@ -355,6 +379,13 @@ class Membership(SoftDeleteModel):
         ordering = ["name"]
         verbose_name = "Membership"
         verbose_name_plural = "Member/Expert/Membership"
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError(
+                {"end_date": "End date cannot be before the start date."}
+            )
 
     def __str__(self):
         return f"{self.name[:50]} - {self.faculty.name}"

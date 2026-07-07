@@ -529,11 +529,16 @@ class PublicationAdminForm(forms.ModelForm):
         required=False,
         label="Confirm Co-Authorship Claim",
         help_text="Check this box if you are a co-author of the existing publication with this title/DOI and wish to link yourself to it.",
+        # Hidden by default; revealed by JS only when a duplicate is detected.
+        widget=forms.CheckboxInput(attrs={"class": "claim-confirm-checkbox"}),
     )
 
     class Meta:
         model = Publication
         fields = "__all__"
+
+    class Media:
+        js = ("admin/js/claim_checkbox_toggle.js",)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -556,13 +561,13 @@ class PublicationAdminForm(forms.ModelForm):
                     ).first()
 
             if not existing_pub and title:
+                # Use indexed title_fp for O(1) duplicate lookup.
                 cleaned_t = clean_title_string(title)
                 fp = title_fingerprint(cleaned_t)
                 if fp:
-                    for pub in Publication.objects.filter(is_deleted=False):
-                        if title_fingerprint(pub.title) == fp:
-                            existing_pub = pub
-                            break
+                    existing_pub = Publication.objects.filter(
+                        title_fp=fp, is_deleted=False
+                    ).first()
 
             if existing_pub:
                 if confirm_claim:
@@ -731,11 +736,16 @@ class PatentAdminForm(forms.ModelForm):
         required=False,
         label="Confirm Co-Inventor Claim",
         help_text="Check this box if you are a co-inventor of the existing patent with this title/number and wish to link yourself to it.",
+        # Hidden by default; revealed by JS only when a duplicate is detected.
+        widget=forms.CheckboxInput(attrs={"class": "claim-confirm-checkbox"}),
     )
 
     class Meta:
         model = Patent
         fields = "__all__"
+
+    class Media:
+        js = ("admin/js/claim_checkbox_toggle.js",)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -746,13 +756,13 @@ class PatentAdminForm(forms.ModelForm):
             from .models import clean_title_string, title_fingerprint
 
             existing_patent = None
+            # Use indexed title_fp for O(1) duplicate lookup.
             cleaned_t = clean_title_string(title)
             fp = title_fingerprint(cleaned_t)
             if fp:
-                for pat in Patent.objects.filter(is_deleted=False):
-                    if title_fingerprint(pat.title) == fp:
-                        existing_patent = pat
-                        break
+                existing_patent = Patent.objects.filter(
+                    title_fp=fp, is_deleted=False
+                ).first()
 
             if existing_patent:
                 if confirm_claim:
