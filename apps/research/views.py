@@ -36,14 +36,34 @@ class ResearchBaseViewSet(viewsets.ModelViewSet):
     permission_classes = [IsDepartmentAdmin]
 
     def perform_create(self, serializer):
-        dept = getattr(self.request.user, "managed_department", None)
+        from apps.academics.permissions import IsDepartmentAdmin
+        permission_checker = IsDepartmentAdmin()
+        managed_depts = permission_checker._get_managed_departments(self.request.user)
+        
         model_class = self.get_serializer().Meta.model
-        if (
-            dept
-            and hasattr(model_class, "department")
-            and hasattr(model_class._meta.get_field("department"), "remote_field")
-        ):
-            serializer.save(department=dept)
+        
+        if hasattr(model_class, "department") and hasattr(model_class._meta.get_field("department"), "remote_field"):
+            # Check if department is already in the validated data (i.e., passed by the frontend)
+            provided_dept = serializer.validated_data.get('department')
+            
+            if managed_depts == "ALL":
+                # Superusers can set any department, or if none provided, it might fail validation later if required
+                serializer.save()
+            else:
+                if provided_dept:
+                    if provided_dept not in managed_depts:
+                        from rest_framework.exceptions import PermissionDenied
+                        raise PermissionDenied("You do not have permission to create records for this department.")
+                    serializer.save()
+                else:
+                    if len(managed_depts) == 1:
+                        serializer.save(department=managed_depts[0])
+                    elif len(managed_depts) > 1:
+                        from rest_framework.exceptions import ValidationError
+                        raise ValidationError({"department": "You manage multiple departments. Please specify which department this belongs to."})
+                    else:
+                        from rest_framework.exceptions import PermissionDenied
+                        raise PermissionDenied("You do not have permission to create records.")
         else:
             serializer.save()
 
@@ -213,7 +233,7 @@ class PublicationViewSet(ResearchBaseViewSet):
     queryset = Publication.objects.prefetch_related(
         Prefetch(
             "publicationauthor_set",
-            queryset=PublicationAuthor.objects.select_related("faculty"),
+            queryset=PublicationAuthor.objects.select_related("faculty__department"),
         ),
         "internal_authors",
     ).distinct()
@@ -247,8 +267,17 @@ class PublicationViewSet(ResearchBaseViewSet):
             )
 
         faculty = request.user.faculty_profile
-        author_order = request.data.get("author_order", 1)
-        author_role = request.data.get("author_role", "Co-Author")
+        try:
+            author_order = int(request.data.get("author_order", 1))
+            if author_order < 1:
+                raise ValueError
+        except (ValueError, TypeError):
+            return Response({"error": "author_order must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+        author_role = str(request.data.get("author_role", "Co-Author")).strip()
+        allowed_roles = ["First Author", "Co-Author", "Corresponding Author", "Lead Author"]
+        if author_role not in allowed_roles:
+            return Response({"error": f"author_role must be one of {allowed_roles}."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             author, created = PublicationAuthor.objects.get_or_create(
@@ -298,7 +327,7 @@ class PatentViewSet(ResearchBaseViewSet):
     queryset = Patent.objects.prefetch_related(
         Prefetch(
             "patentauthor_set",
-            queryset=PatentAuthor.objects.select_related("faculty"),
+            queryset=PatentAuthor.objects.select_related("faculty__department"),
         ),
         "internal_inventors",
     ).distinct()
@@ -328,8 +357,17 @@ class PatentViewSet(ResearchBaseViewSet):
             )
 
         faculty = request.user.faculty_profile
-        author_order = request.data.get("author_order", 1)
-        author_role = request.data.get("author_role", "Co-Inventor")
+        try:
+            author_order = int(request.data.get("author_order", 1))
+            if author_order < 1:
+                raise ValueError
+        except (ValueError, TypeError):
+            return Response({"error": "author_order must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+        author_role = str(request.data.get("author_role", "Co-Inventor")).strip()
+        allowed_roles = ["First Inventor", "Co-Inventor", "Lead Inventor"]
+        if author_role not in allowed_roles:
+            return Response({"error": f"author_role must be one of {allowed_roles}."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             author, created = PatentAuthor.objects.get_or_create(
@@ -349,7 +387,7 @@ class PatentViewSet(ResearchBaseViewSet):
         )
 
 
-class ResearchDevelopmentCellMemberViewSet(viewsets.ModelViewSet):
+class ResearchDevelopmentCellMemberViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ResearchDevelopmentCellMember.objects.select_related("faculty")
     serializer_class = ResearchDevelopmentCellMemberSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]

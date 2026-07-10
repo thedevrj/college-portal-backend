@@ -414,6 +414,12 @@ class CBCSCourse(SoftDeleteModel):
     course_code = models.CharField(max_length=50)
     course_title = models.CharField(max_length=255)
     credits = models.PositiveIntegerField()
+    syllabus = models.FileField(
+        upload_to="cbcs_courses/syllabus/",
+        blank=True,
+        null=True,
+        help_text="Downloadable syllabus document",
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -515,8 +521,6 @@ class DepartmentGallery(SoftDeleteModel):
 
     def clean(self):
         super().clean()
-        # If an event is chosen, auto-sync department from the event.
-        # This prevents a mismatch like image.department=Physics but image.event belongs to Chemistry.
         if self.event_id:
             self.department = self.event.department
 
