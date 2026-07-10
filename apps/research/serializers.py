@@ -235,15 +235,25 @@ class ResearchScholarListSerializer(serializers.ModelSerializer):
 
 
 class PublicationSerializer(serializers.ModelSerializer):
-    # Structured author list: [{author_order, author_role, name, slug}]
-    # Uses the publicationauthor_set prefetch set in PublicationViewSet.
+
     authors = PublicationAuthorSerializer(
         source="publicationauthor_set", many=True, read_only=True
     )
+    department_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Publication
         fields = "__all__"
+
+    def get_department_name(self, obj):
+        departments = []
+        for author in obj.publicationauthor_set.all():
+            if (
+                getattr(author.faculty, "department", None)
+                and author.faculty.department.name not in departments
+            ):
+                departments.append(author.faculty.department.name)
+        return ", ".join(departments) if departments else "N/A"
 
     def validate(self, attrs):
         if attrs.get("publication_type") == "Others" and not attrs.get(
@@ -323,20 +333,32 @@ class PublicationSerializer(serializers.ModelSerializer):
         if not data.get("full_author_list"):
             # .all() uses the prefetch cache; Meta.ordering on PublicationAuthor handles order
             authors = instance.publicationauthor_set.all()
-            data["full_author_list"] = ", ".join([author.faculty.name for author in authors])
+            data["full_author_list"] = ", ".join(
+                [author.faculty.name for author in authors]
+            )
         return data
 
 
 class PatentSerializer(serializers.ModelSerializer):
-    # Structured inventor list: [{author_order, author_role, name, slug}]
-    # Uses the patentauthor_set prefetch set in PatentViewSet.
+
     inventors = PatentAuthorSerializer(
         source="patentauthor_set", many=True, read_only=True
     )
+    department_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Patent
         fields = "__all__"
+
+    def get_department_name(self, obj):
+        departments = []
+        for inventor in obj.patentauthor_set.all():
+            if (
+                getattr(inventor.faculty, "department", None)
+                and inventor.faculty.department.name not in departments
+            ):
+                departments.append(inventor.faculty.department.name)
+        return ", ".join(departments) if departments else "N/A"
 
     def validate(self, attrs):
         title = attrs.get("title")

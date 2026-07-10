@@ -20,9 +20,10 @@ from django.urls import path, include
 from django.http import HttpResponse
 from django.views.generic import RedirectView
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
+    TokenVerifyView,
 )
+from apps.accounts.views import CustomTokenObtainPairView
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -34,6 +35,12 @@ def health(request):
 
 urlpatterns = [
     path("health/", health),
+    path(
+        "admin/login/",
+        RedirectView.as_view(
+            pattern_name="portal_login", permanent=False, query_string=True
+        ),
+    ),
     path(
         "admin/logout/",
         RedirectView.as_view(pattern_name="portal_logout", permanent=False),
@@ -51,8 +58,11 @@ urlpatterns = [
     path("api/v1/", include("apps.foundation_course.urls")),
     path("api/v1/admission/", include("apps.admission.urls")),
     # Authentication
-    path("api/v1/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path(
+        "api/v1/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"
+    ),
     path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/v1/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     # ERP Portal Login
     path("portal/", include("apps.accounts.urls")),
 ]

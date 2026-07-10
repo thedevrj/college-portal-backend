@@ -24,9 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-dyrzlo#c7jt^pps1usz3rbr_e4bbju41l+22zrc$01&46-oxr("
-)
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
@@ -62,6 +60,8 @@ INSTALLED_APPS = [
     "apps.foundation_course",
     "simple_history",
     "django_cleanup.apps.CleanupConfig",
+    "axes",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 # Portal Login URL (used by @login_required)
@@ -80,6 +80,8 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "axes.middleware.AxesMiddleware",
+    "apps.accounts.middleware.FileValidationMiddleware",
 ]
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
@@ -140,6 +142,52 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+# Secure Password Hashing
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+]
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Session & Token Expiration
+SESSION_COOKIE_AGE = 300
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+PASSWORD_RESET_TIMEOUT = 120
+
+# HTTPS Cookie Security
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+
+# Prevent website loading inside the invisible third party iframe
+X_FRAME_OPTIONS = "DENY"
+
+# Prevents the browser from guessing file types (MIME-sniffing protection)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+if not DEBUG:
+    # Force HTTPS for 1 year
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    SECURE_SSL_REDIRECT = True
+
+
+# Rate Limiting configuration
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
+AXES_LOCKOUT_PARAMETERS = ["ip_address", "username"]
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -153,14 +201,19 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_PAGINATION_CLASS": "college_backend_portal.pagination.FlexiblePagination",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "100/minute", "user": "1000/minute"},
 }
 
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
@@ -198,6 +251,10 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# File uploads limits
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -229,9 +286,8 @@ CKEDITOR_CONFIGS = {
     }
 }
 
-# ------------------------------------------------------------------ #
-#  Jazzmin ERP Theme Configuration                                     #
-# ------------------------------------------------------------------ #
+#  Jazzmin ERP Theme Configuration
+
 JAZZMIN_SETTINGS = {
     # Branding
     "site_title": "BBAU Portal",
@@ -277,7 +333,7 @@ JAZZMIN_SETTINGS = {
         "admission.AdmissionCommitteeMember",
         "admission.AdmissionCommitteeMinutes",
         "research",
-        "research.Publication",  # Rearrange Research models here:
+        "research.Publication",
         "research.ResearchProject",
         "research.ResearchScholar",
         "research.Patent",
@@ -334,7 +390,7 @@ JAZZMIN_SETTINGS = {
     "custom_css": "css/portal_dashboard.css",
     "custom_js": "js/portal_dashboard.js",
     "use_google_fonts_cdn": True,
-    "show_ui_builder": False,  # Set to True temporarily to preview theme options
+    "show_ui_builder": False,
 }
 
 JAZZMIN_UI_TWEAKS = {

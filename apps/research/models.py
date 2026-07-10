@@ -283,6 +283,7 @@ class ResearchScholar(SoftDeleteModel):
     history = HistoricalRecords()
 
     class Meta:
+        ordering = ["-date_of_registration"]
         constraints = [
             models.UniqueConstraint(
                 fields=["scholar_name", "department", "supervisor", "date_of_birth"],
@@ -721,6 +722,7 @@ class Patent(SoftDeleteModel):
     history = HistoricalRecords()
 
     class Meta:
+        ordering = ["-date_of_filing"]
         constraints = [
             models.UniqueConstraint(
                 fields=["patent_number"],
