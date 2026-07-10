@@ -23,14 +23,14 @@ from .serializers import (
 
 # --- Board of Management (BoM) ViewSets ---
 
-class BoardOfManagementMemberViewSet(viewsets.ModelViewSet):
+class BoardOfManagementMemberViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BoardOfManagementMember.objects.all()
     serializer_class = BoardOfManagementMemberSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
-class BoardOfManagementMinutesViewSet(viewsets.ModelViewSet):
+class BoardOfManagementMinutesViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BoardOfManagementMinutes.objects.all()
     serializer_class = BoardOfManagementMinutesSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
@@ -39,14 +39,14 @@ class BoardOfManagementMinutesViewSet(viewsets.ModelViewSet):
 
 # --- Academic Council ViewSets ---
 
-class AcademicCouncilMemberViewSet(viewsets.ModelViewSet):
+class AcademicCouncilMemberViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AcademicCouncilMember.objects.all()
     serializer_class = AcademicCouncilMemberSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
-class AcademicCouncilMinutesViewSet(viewsets.ModelViewSet):
+class AcademicCouncilMinutesViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AcademicCouncilMinutes.objects.all()
     serializer_class = AcademicCouncilMinutesSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
@@ -55,14 +55,14 @@ class AcademicCouncilMinutesViewSet(viewsets.ModelViewSet):
 
 # --- Planning Board ViewSets ---
 
-class PlanningBoardMemberViewSet(viewsets.ModelViewSet):
+class PlanningBoardMemberViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PlanningBoardMember.objects.all()
     serializer_class = PlanningBoardMemberSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
-class PlanningBoardMinutesViewSet(viewsets.ModelViewSet):
+class PlanningBoardMinutesViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PlanningBoardMinutes.objects.all()
     serializer_class = PlanningBoardMinutesSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
@@ -71,14 +71,14 @@ class PlanningBoardMinutesViewSet(viewsets.ModelViewSet):
 
 # --- Finance Committee ViewSets ---
 
-class FinanceCommitteeMemberViewSet(viewsets.ModelViewSet):
+class FinanceCommitteeMemberViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = FinanceCommitteeMember.objects.all()
     serializer_class = FinanceCommitteeMemberSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
     pagination_class = None
 
 
-class FinanceCommitteeMinutesViewSet(viewsets.ModelViewSet):
+class FinanceCommitteeMinutesViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = FinanceCommitteeMinutes.objects.all()
     serializer_class = FinanceCommitteeMinutesSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]

@@ -15,7 +15,7 @@ class FoundationCourseFilter(django_filters.FilterSet):
         fields = ["level", "semester"]
 
 
-class FoundationCourseViewSet(viewsets.ModelViewSet):
+class FoundationCourseViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = FoundationCourse.objects.filter(is_deleted=False)
     serializer_class = FoundationCourseSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -36,7 +36,7 @@ class FoundationCourseMaterialFilter(django_filters.FilterSet):
         fields = ["course", "material_type"]
 
 
-class FoundationCourseMaterialViewSet(viewsets.ModelViewSet):
+class FoundationCourseMaterialViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = FoundationCourseMaterial.objects.filter(is_deleted=False)
     serializer_class = FoundationCourseMaterialSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]

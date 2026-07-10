@@ -47,49 +47,60 @@ def auto_unlock_password_change(sender, instance, **kwargs):
         pass
 
 
-from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
+from django.contrib.auth.signals import (
+    user_logged_in,
+    user_logged_out,
+    user_login_failed,
+)
+
 
 def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
+        ip = x_forwarded_for.split(",")[0]
     else:
-        ip = request.META.get('REMOTE_ADDR')
+        ip = request.META.get("REMOTE_ADDR")
     return ip
+
 
 @receiver(user_logged_in)
 def log_user_login(sender, request, user, **kwargs):
     from apps.accounts.models import UserActivityLog
+
     ip_address = get_client_ip(request) if request else None
-    user_agent = request.META.get('HTTP_USER_AGENT', '') if request else None
+    user_agent = request.META.get("HTTP_USER_AGENT", "") if request else None
     UserActivityLog.objects.create(
         user=user,
         action=UserActivityLog.ActionType.LOGIN,
         ip_address=ip_address,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
+
 
 @receiver(user_logged_out)
 def log_user_logout(sender, request, user, **kwargs):
     from apps.accounts.models import UserActivityLog
+
     ip_address = get_client_ip(request) if request else None
-    user_agent = request.META.get('HTTP_USER_AGENT', '') if request else None
+    user_agent = request.META.get("HTTP_USER_AGENT", "") if request else None
     UserActivityLog.objects.create(
         user=user,
         action=UserActivityLog.ActionType.LOGOUT,
         ip_address=ip_address,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
+
 
 @receiver(user_login_failed)
 def log_user_login_failed(sender, credentials, request, **kwargs):
     from apps.accounts.models import UserActivityLog
+
     ip_address = get_client_ip(request) if request else None
-    user_agent = request.META.get('HTTP_USER_AGENT', '') if request else None
-    
+    user_agent = request.META.get("HTTP_USER_AGENT", "") if request else None
+
     # Try to find the user by credentials
     user = None
-    username = credentials.get('username')
+    username = credentials.get("username")
     if username:
         try:
             user = User.objects.get(username=username)
@@ -100,5 +111,45 @@ def log_user_login_failed(sender, credentials, request, **kwargs):
         user=user,
         action=UserActivityLog.ActionType.LOGIN_FAILED,
         ip_address=ip_address,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
+
+
+@receiver(pre_save)
+def sanitize_html_fields(sender, instance, **kwargs):
+
+    # Globally sanitize all RichTextFields across the project to prevent XSS (Script Injection).
+
+    # Exclude non-model instances or migration-related classes if any
+    if not hasattr(instance, "_meta"):
+        return
+
+    # Avoid applying on 3rd party apps by restricting to our own apps
+    if not instance._meta.app_label in [
+        "academics",
+        "accounts",
+        "admission",
+        "authorities",
+        "centres",
+        "faculty",
+        "foundation_course",
+        "mou",
+        "notices",
+        "research",
+        "staff",
+    ]:
+        return
+
+    try:
+        import nh3
+    except ImportError:
+        return
+
+    for field in instance._meta.fields:
+        # Check if the field is a RichTextField (by its class name to avoid importing all apps)
+        if field.__class__.__name__ == "RichTextField":
+            value = getattr(instance, field.attname)
+            if value and isinstance(value, str):
+                # Clean the HTML value using nh3 which removes <script>, <iframe> etc
+                clean_value = nh3.clean(value)
+                setattr(instance, field.attname, clean_value)

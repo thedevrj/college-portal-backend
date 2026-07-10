@@ -29,6 +29,22 @@ class PortalLoginView(View):
     def post(self, request):
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "").strip()
+
+        # Strict validation on username to prevent injection attempts or overly long inputs
+        if not username.isalnum() and "_" not in username and "@" not in username:
+            return render(
+                request,
+                self.template_name,
+                {"error": "Invalid username format."},
+            )
+
+        if len(username) > 150 or len(password) > 128:
+            return render(
+                request,
+                self.template_name,
+                {"error": "Input length exceeds allowed limits."},
+            )
+
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
@@ -157,17 +173,11 @@ def get_entities_api(request):
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
-    """
-    Custom JWT login view that includes the 'force_password_change' flag.
-    """
 
     serializer_class = CustomTokenObtainPairSerializer
 
 
 class ChangePasswordView(APIView):
-    """
-    API endpoint to change password and clear the 'force_password_change' flag.
-    """
 
     permission_classes = [IsAuthenticated]
 
@@ -196,11 +206,11 @@ class ChangePasswordView(APIView):
 
 from rest_framework.authentication import SessionAuthentication
 
+
 class AdminDashboardStatsView(APIView):
-    """
-    Global ERP Dashboard Stats API.
-    Returns high-level statistics across all major modules for the Admin Dashboard.
-    """
+
+    # admin dashboard stats
+
     authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -234,7 +244,7 @@ class AdminDashboardStatsView(APIView):
 
         # Admissions
         total_merit_lists = get_count("admission", "MeritList")
-        
+
         active_session_name = "None"
         try:
             SessionModel = apps.get_model("admission", "AdmissionSession")
@@ -244,20 +254,17 @@ class AdminDashboardStatsView(APIView):
         except LookupError:
             pass
 
-        return Response({
-            "academics": {
-                "departments": total_departments,
-                "programs": total_programs
-            },
-            "people": {
-                "faculty": total_faculty,
-                "staff": total_staff
-            },
-            "research": {
-                "total_output": total_research_output
-            },
-            "admission": {
-                "active_session": active_session_name,
-                "merit_lists": total_merit_lists
+        return Response(
+            {
+                "academics": {
+                    "departments": total_departments,
+                    "programs": total_programs,
+                },
+                "people": {"faculty": total_faculty, "staff": total_staff},
+                "research": {"total_output": total_research_output},
+                "admission": {
+                    "active_session": active_session_name,
+                    "merit_lists": total_merit_lists,
+                },
             }
-        })
+        )

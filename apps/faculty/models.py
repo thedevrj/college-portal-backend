@@ -202,7 +202,7 @@ class Faculty(SoftDeleteModel):
                     user = User.objects.create_user(
                         username=username,
                         email=self.insti_email or "",
-                        password=f"bbau@{self.staff_no}",  # Default password
+                        password=User.objects.make_random_password(length=12),
                     )
                     self.user = user
 

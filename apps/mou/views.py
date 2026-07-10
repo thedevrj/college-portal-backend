@@ -10,7 +10,7 @@ class MOUFilter(django_filters.FilterSet):
     mou_date = django_filters.DateFromToRangeFilter(field_name="date_of_signing")
 
 
-class MOUViewSet(viewsets.ModelViewSet):
+class MOUViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MOU.objects.filter(is_deleted=False)
     serializer_class = MOUSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
