@@ -40,7 +40,7 @@ from .serializers import (
 
 
 class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = School.objects.all()
+    queryset = School.objects.select_related("dean").prefetch_related("departments")
     lookup_field = "slug"
     pagination_class = None
 
@@ -93,7 +93,7 @@ class DepartmentFilter(django_filters.FilterSet):
 
 
 class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Department.objects.all()
+    queryset = Department.objects.select_related("school", "hod")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = DepartmentFilter
     search_fields = ["name"]
@@ -118,7 +118,7 @@ class ProgramFilter(django_filters.FilterSet):
 
 
 class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Program.objects.all().prefetch_related("courses")
+    queryset = Program.objects.select_related("department", "department__school", "centre").prefetch_related("courses")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = ProgramFilter
     search_fields = ["name"]
@@ -174,7 +174,7 @@ class NoticeFilter(django_filters.FilterSet):
 
 
 class NoticeViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Notice.objects.filter(is_active=True).order_by("-date_posted")
+    queryset = Notice.objects.filter(is_active=True).select_related("department", "centre").order_by("-date_posted")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = NoticeFilter
     search_fields = ["title", "content"]
