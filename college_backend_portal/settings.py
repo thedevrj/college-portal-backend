@@ -173,13 +173,13 @@ X_FRAME_OPTIONS = "DENY"
 # Prevents the browser from guessing file types (MIME-sniffing protection)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-if not DEBUG:
-    # Force HTTPS for 1 year
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+# if not DEBUG:
+#     # Force HTTPS for 1 year
+#     SECURE_HSTS_SECONDS = 31536000
+#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+#     SECURE_HSTS_PRELOAD = True
 
-    SECURE_SSL_REDIRECT = True
+#     SECURE_SSL_REDIRECT = True
 
 
 # Rate Limiting configuration
