@@ -163,8 +163,9 @@ SESSION_SAVE_EVERY_REQUEST = True
 PASSWORD_RESET_TIMEOUT = 120
 
 # HTTPS Cookie Security
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# when ssl is active radd not DEBUG
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 
 # Prevent website loading inside the invisible third party iframe
