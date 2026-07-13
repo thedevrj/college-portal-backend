@@ -37,15 +37,18 @@ class ResearchBaseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         from apps.academics.permissions import IsDepartmentAdmin
+
         permission_checker = IsDepartmentAdmin()
         managed_depts = permission_checker._get_managed_departments(self.request.user)
-        
+
         model_class = self.get_serializer().Meta.model
-        
-        if hasattr(model_class, "department") and hasattr(model_class._meta.get_field("department"), "remote_field"):
+
+        if hasattr(model_class, "department") and hasattr(
+            model_class._meta.get_field("department"), "remote_field"
+        ):
             # Check if department is already in the validated data (i.e., passed by the frontend)
-            provided_dept = serializer.validated_data.get('department')
-            
+            provided_dept = serializer.validated_data.get("department")
+
             if managed_depts == "ALL":
                 # Superusers can set any department, or if none provided, it might fail validation later if required
                 serializer.save()
@@ -53,17 +56,28 @@ class ResearchBaseViewSet(viewsets.ModelViewSet):
                 if provided_dept:
                     if provided_dept not in managed_depts:
                         from rest_framework.exceptions import PermissionDenied
-                        raise PermissionDenied("You do not have permission to create records for this department.")
+
+                        raise PermissionDenied(
+                            "You do not have permission to create records for this department."
+                        )
                     serializer.save()
                 else:
                     if len(managed_depts) == 1:
                         serializer.save(department=managed_depts[0])
                     elif len(managed_depts) > 1:
                         from rest_framework.exceptions import ValidationError
-                        raise ValidationError({"department": "You manage multiple departments. Please specify which department this belongs to."})
+
+                        raise ValidationError(
+                            {
+                                "department": "You manage multiple departments. Please specify which department this belongs to."
+                            }
+                        )
                     else:
                         from rest_framework.exceptions import PermissionDenied
-                        raise PermissionDenied("You do not have permission to create records.")
+
+                        raise PermissionDenied(
+                            "You do not have permission to create records."
+                        )
         else:
             serializer.save()
 
@@ -83,7 +97,6 @@ class ResearchAreaViewSet(ResearchBaseViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = ResearchAreaFilter
     search_fields = ["available_research_areas_or_Specialization", "description"]
-    pagination_class = None
 
 
 class ResearchFacilityViewSet(ResearchBaseViewSet):
@@ -91,7 +104,6 @@ class ResearchFacilityViewSet(ResearchBaseViewSet):
     serializer_class = ResearchFacilitySerializer
     lookup_field = "slug"
     search_fields = ["name", "description"]
-    pagination_class = None
 
 
 class ConsultancyFilter(django_filters.FilterSet):
@@ -122,7 +134,6 @@ class ConsultancyViewSet(ResearchBaseViewSet):
     filterset_class = ConsultancyFilter
     search_fields = ["nature_of_consultancy"]
     ordering_fields = ["amount", "start_date", "end_date"]
-    pagination_class = None
 
 
 class ResearchProjectFilter(django_filters.FilterSet):
@@ -272,12 +283,23 @@ class PublicationViewSet(ResearchBaseViewSet):
             if author_order < 1:
                 raise ValueError
         except (ValueError, TypeError):
-            return Response({"error": "author_order must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "author_order must be a positive integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         author_role = str(request.data.get("author_role", "Co-Author")).strip()
-        allowed_roles = ["First Author", "Co-Author", "Corresponding Author", "Lead Author"]
+        allowed_roles = [
+            "First Author",
+            "Co-Author",
+            "Corresponding Author",
+            "Lead Author",
+        ]
         if author_role not in allowed_roles:
-            return Response({"error": f"author_role must be one of {allowed_roles}."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": f"author_role must be one of {allowed_roles}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         with transaction.atomic():
             author, created = PublicationAuthor.objects.get_or_create(
@@ -362,12 +384,18 @@ class PatentViewSet(ResearchBaseViewSet):
             if author_order < 1:
                 raise ValueError
         except (ValueError, TypeError):
-            return Response({"error": "author_order must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "author_order must be a positive integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         author_role = str(request.data.get("author_role", "Co-Inventor")).strip()
         allowed_roles = ["First Inventor", "Co-Inventor", "Lead Inventor"]
         if author_role not in allowed_roles:
-            return Response({"error": f"author_role must be one of {allowed_roles}."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": f"author_role must be one of {allowed_roles}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         with transaction.atomic():
             author, created = PatentAuthor.objects.get_or_create(
@@ -394,4 +422,3 @@ class ResearchDevelopmentCellMemberViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["order", "faculty__name"]
     ordering = ["order"]
-    pagination_class = None
