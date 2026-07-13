@@ -45,7 +45,7 @@ class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
         "date_of_joining",
         "date_of_superannuation",
     ]
-    ordering = ["?"]
+    ordering = ["name"]
     lookup_field = "slug"
 
     @action(detail=False, methods=["get"])
