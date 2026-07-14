@@ -29,9 +29,15 @@ class PortalSecurityMixin:
                     return True
 
         # Check M2M faculty relations (Publication.internal_authors, Patent.internal_inventors)
-        if hasattr(obj, "internal_authors") and obj.internal_authors.filter(user=user).exists():
+        if (
+            hasattr(obj, "internal_authors")
+            and obj.internal_authors.filter(user=user).exists()
+        ):
             return True
-        if hasattr(obj, "internal_inventors") and obj.internal_inventors.filter(user=user).exists():
+        if (
+            hasattr(obj, "internal_inventors")
+            and obj.internal_inventors.filter(user=user).exists()
+        ):
             return True
 
         # Special case: The Faculty profile itself
@@ -101,9 +107,13 @@ class PortalSecurityMixin:
                         if hasattr(self.model, "faculty"):
                             role_qs = role_qs.filter(faculty__user=request.user)
                         elif hasattr(self.model, "internal_authors"):
-                            role_qs = role_qs.filter(internal_authors__user=request.user)
+                            role_qs = role_qs.filter(
+                                internal_authors__user=request.user
+                            )
                         elif hasattr(self.model, "internal_inventors"):
-                            role_qs = role_qs.filter(internal_inventors__user=request.user)
+                            role_qs = role_qs.filter(
+                                internal_inventors__user=request.user
+                            )
                         elif hasattr(self.model, "principal_investigator"):
                             role_qs = role_qs.filter(
                                 principal_investigator__user=request.user
@@ -128,6 +138,14 @@ class PortalSecurityMixin:
                     elif hasattr(self.model, "department"):
                         # Use _id for direct FK filtering to avoid extra joins/leaks
                         role_qs = role_qs.filter(department_id=access.object_id)
+                    elif hasattr(self.model, "internal_authors"):
+                        role_qs = role_qs.filter(
+                            internal_authors__department_id=access.object_id
+                        )
+                    elif hasattr(self.model, "internal_inventors"):
+                        role_qs = role_qs.filter(
+                            internal_inventors__department_id=access.object_id
+                        )
                     else:
                         role_qs = role_qs.none()
 
@@ -146,6 +164,14 @@ class PortalSecurityMixin:
                         role_qs = role_qs.filter(department__school_id=access.object_id)
                     elif hasattr(self.model, "school"):
                         role_qs = role_qs.filter(school_id=access.object_id)
+                    elif hasattr(self.model, "internal_authors"):
+                        role_qs = role_qs.filter(
+                            internal_authors__department__school_id=access.object_id
+                        )
+                    elif hasattr(self.model, "internal_inventors"):
+                        role_qs = role_qs.filter(
+                            internal_inventors__department__school_id=access.object_id
+                        )
                     else:
                         role_qs = role_qs.none()
 
