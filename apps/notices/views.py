@@ -3,15 +3,17 @@ from django_filters import rest_framework as filters
 from .models import GlobalNotice
 from .serializers import GlobalNoticeListSerializer, GlobalNoticeDetailSerializer
 
+
 class GlobalNoticeFilter(filters.FilterSet):
-    category = filters.CharFilter(method='filter_category')
+    category = filters.CharFilter(method="filter_category")
 
     class Meta:
         model = GlobalNotice
-        fields = ['show_in_marquee']
+        fields = ["show_in_marquee"]
 
     def filter_category(self, queryset, name, value):
         return queryset.filter(categories__contains=[value])
+
 
 class GlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -27,8 +29,9 @@ class GlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == "list":
             return GlobalNoticeListSerializer
         return GlobalNoticeDetailSerializer
+
     filter_backends = [filters.DjangoFilterBackend]
     filterset_class = GlobalNoticeFilter

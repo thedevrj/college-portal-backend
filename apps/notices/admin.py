@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import models
 from django import forms
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
@@ -34,9 +35,18 @@ class GlobalNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmi
         "date_posted",
         "posted_by",
     )
-    list_filter = (SoftDeleteListFilter, "is_private", "show_in_marquee", "is_active", "date_posted")
+    list_filter = (
+        SoftDeleteListFilter,
+        "is_private",
+        "show_in_marquee",
+        "is_active",
+        "date_posted",
+    )
     search_fields = ("title",)
-    readonly_fields = ("posted_by", "date_posted")
+    readonly_fields = ("posted_by",)
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
     def display_categories(self, obj):
         return ", ".join(obj.categories) if obj.categories else "-"
