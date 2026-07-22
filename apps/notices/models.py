@@ -4,6 +4,7 @@ from django.contrib.postgres.fields import ArrayField
 from simple_history.models import HistoricalRecords
 from apps.accounts.models import SoftDeleteModel
 
+
 class GlobalNotice(SoftDeleteModel):
     CATEGORY_CHOICES = [
         ("Announcement", "Announcement"),
@@ -23,6 +24,7 @@ class GlobalNotice(SoftDeleteModel):
         blank=True, null=True, help_text="Optional external link or relative URL"
     )
     attachment = models.FileField(upload_to="global_notices/", blank=True, null=True)
+    date_posted = models.DateField()
     show_in_marquee = models.BooleanField(
         default=False,
         help_text="Show this notice in the scrolling marquee at the top of the homepage",
@@ -40,7 +42,6 @@ class GlobalNotice(SoftDeleteModel):
     )
 
     is_active = models.BooleanField(default=True)
-    date_posted = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     class Meta:
@@ -54,7 +55,9 @@ class GlobalNotice(SoftDeleteModel):
         invalid = [c for c in (self.categories or []) if c not in valid_categories]
         if invalid:
             raise ValidationError(
-                {"categories": f"Invalid category value(s): {', '.join(invalid)}. Must be one of: {', '.join(valid_categories)}."}
+                {
+                    "categories": f"Invalid category value(s): {', '.join(invalid)}. Must be one of: {', '.join(valid_categories)}."
+                }
             )
         # Require at least a link or attachment so the notice is useful
         if not self.link and not self.attachment:
