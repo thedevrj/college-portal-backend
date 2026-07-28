@@ -131,6 +131,7 @@ class CounsellingPhaseSerializer(serializers.ModelSerializer):
 class MeritListSerializer(serializers.ModelSerializer):
     phase_details = CounsellingPhaseSerializer(source="phase", read_only=True)
     department_name = serializers.CharField(source="department.name", read_only=True)
+    programme_name = serializers.CharField(source="programme", read_only=True)
     pdf_file = serializers.SerializerMethodField()
 
     class Meta:
@@ -141,6 +142,8 @@ class MeritListSerializer(serializers.ModelSerializer):
             "phase_details",
             "department",
             "department_name",
+            "programme",
+            "programme_name",
             "pdf_file",
             "upload_date",
         ]

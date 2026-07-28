@@ -47,7 +47,14 @@ class PortalSecurityMixin:
         return False
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        # Use all_objects for superusers so they can view/restore deleted items
+        if request.user.is_superuser and hasattr(self.model, "all_objects"):
+            qs = self.model.all_objects.get_queryset()
+            ordering = self.get_ordering(request)
+            if ordering:
+                qs = qs.order_by(*ordering)
+        else:
+            qs = super().get_queryset(request)
 
         # --- Soft Delete Filtering ---
         # Only show active records by default, unless superuser is using a filter
@@ -77,6 +84,7 @@ class PortalSecurityMixin:
                 "FoundationCourse",
                 "FoundationCourseMaterial",
                 "GlobalNotice",
+                "vigilance",
             ]
             if self.model.__name__ in global_models:
                 return qs
@@ -307,6 +315,7 @@ class PortalSecurityMixin:
             "GlobalNotice",
             "FoundationCourse",
             "FoundationCourseMaterial",
+            "vigilance",
         ]
         if self.model.__name__ in global_models:
             return super().has_delete_permission(request, obj)
@@ -343,6 +352,7 @@ class PortalSecurityMixin:
         """
         if hasattr(obj, "soft_delete"):
             obj.soft_delete()
+            self._log_soft_delete(request, [obj])
         else:
             super().delete_model(request, obj)
 
@@ -351,7 +361,9 @@ class PortalSecurityMixin:
         if hasattr(self.model, "soft_delete"):
             from django.utils import timezone
 
+            objs = list(queryset)
             queryset.update(is_deleted=True, deleted_at=timezone.now())
+            self._log_soft_delete(request, objs)
         else:
             super().delete_queryset(request, queryset)
 
@@ -360,13 +372,16 @@ class PortalSecurityMixin:
         """Bulk soft delete."""
         from django.utils import timezone
 
+        objs = list(queryset)
         queryset.update(is_deleted=True, deleted_at=timezone.now())
+        self._log_soft_delete(request, objs)
         self.message_user(request, "Selected items moved to Trash.")
 
     @admin.action(description="Permanently Delete selected")
     def permanently_delete_items(self, request, queryset):
         """Bulk permanent delete."""
         count = queryset.count()
+        self._cleanup_soft_delete(queryset)
         queryset.delete()
         self.message_user(
             request, f"Successfully purged {count} items from the database."
@@ -376,7 +391,46 @@ class PortalSecurityMixin:
     def restore_items(self, request, queryset):
         """Restore soft-deleted items."""
         queryset.update(is_deleted=False, deleted_at=None)
+        self._cleanup_soft_delete(queryset)
         self.message_user(request, "Selected items have been restored.")
+
+    def _log_soft_delete(self, request, objs):
+        from apps.accounts.models import GlobalTrashItem
+        from django.contrib.contenttypes.models import ContentType
+
+        if not objs:
+            return
+        ct = ContentType.objects.get_for_model(self.model)
+        for obj in objs:
+            item_name = None
+            # Check common attributes for a clean name/title
+            for attr in ["title", "name", "full_name", "subject", "name_of_complainant"]:
+                if hasattr(obj, attr):
+                    val = getattr(obj, attr)
+                    if val:
+                        item_name = str(val)
+                        break
+            if not item_name:
+                item_name = str(obj)
+
+            GlobalTrashItem.objects.create(
+                content_type=ct,
+                object_id=str(obj.pk),
+                item_name=item_name,
+                model_name=self.model._meta.verbose_name.title(),
+                deleted_by=request.user,
+            )
+
+    def _cleanup_soft_delete(self, queryset):
+        from apps.accounts.models import GlobalTrashItem
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(self.model)
+        obj_ids = [str(obj.pk) for obj in queryset]
+        if obj_ids:
+            GlobalTrashItem.objects.filter(
+                content_type=ct, object_id__in=obj_ids
+            ).delete()
 
     def get_actions(self, request):
         actions = super().get_actions(request)
