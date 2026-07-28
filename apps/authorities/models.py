@@ -87,6 +87,15 @@ class BoardOfManagementMinutes(SoftDeleteModel):
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",
     )
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive these minutes.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which these minutes automatically become archived.",
+    )
     history = HistoricalRecords()
 
     def __str__(self):
@@ -144,6 +153,15 @@ class AcademicCouncilMinutes(SoftDeleteModel):
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",
     )
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive these minutes.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which these minutes automatically become archived.",
+    )
     history = HistoricalRecords()
 
     def __str__(self):
@@ -194,6 +212,15 @@ class PlanningBoardMinutes(SoftDeleteModel):
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",
+    )
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive these minutes.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which these minutes automatically become archived.",
     )
     history = HistoricalRecords()
 
@@ -251,6 +278,15 @@ class FinanceCommitteeMinutes(SoftDeleteModel):
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",
+    )
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive these minutes.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which these minutes automatically become archived.",
     )
     history = HistoricalRecords()
 

@@ -53,6 +53,14 @@ class GlobalNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmi
 
     display_categories.short_description = "Categories"
 
+    def get_queryset(self, request):
+        """Exclude manually archived or expired notices from the main admin"""
+        from django.utils import timezone
+        from django.db.models import Q
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+
     def save_model(self, request, obj, form, change):
         if not obj.pk:
             obj.posted_by = request.user
