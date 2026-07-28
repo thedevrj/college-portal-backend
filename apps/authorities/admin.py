@@ -19,6 +19,8 @@ from .models import (
 
 import re
 from datetime import datetime
+from django.utils import timezone
+from django.db.models import Q
 
 
 # --- Robust Date Parser ---
@@ -240,6 +242,11 @@ class BoardOfManagementMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin,
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+
 
 @admin.register(AcademicCouncilMember)
 class AcademicCouncilMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
@@ -261,6 +268,11 @@ class AcademicCouncilMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, S
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 @admin.register(PlanningBoardMember)
@@ -290,6 +302,11 @@ class PlanningBoardMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, Sim
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+
 
 @admin.register(FinanceCommitteeMember)
 class FinanceCommitteeMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
@@ -311,3 +328,8 @@ class FinanceCommitteeMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, 
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))

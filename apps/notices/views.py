@@ -15,6 +15,10 @@ class GlobalNoticeFilter(filters.FilterSet):
         return queryset.filter(categories__contains=[value])
 
 
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+from django.db.models import Q
+
 class GlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows GlobalNotices to be viewed.
@@ -23,7 +27,12 @@ class GlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     def get_queryset(self):
-        queryset = GlobalNotice.objects.filter(is_active=True).order_by("-date_posted")
+        today = timezone.now().date()
+        # Exclude archived/expired from active notices
+        queryset = GlobalNotice.objects.filter(is_active=True).exclude(
+            Q(is_archived=True) | Q(archive_date__lt=today)
+        ).order_by("-date_posted")
+        
         if not self.request.user.is_authenticated:
             return queryset.filter(is_private=False)
         return queryset
@@ -35,3 +44,27 @@ class GlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
 
     filter_backends = [filters.DjangoFilterBackend]
     filterset_class = GlobalNoticeFilter
+
+
+class ArchivedGlobalNoticeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows Archived GlobalNotices to be viewed.
+    Only authenticated members (staff/faculty) can access this endpoint.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        today = timezone.now().date()
+        # Include ONLY archived or expired notices
+        return GlobalNotice.objects.filter(
+            Q(is_archived=True) | Q(archive_date__lt=today)
+        ).order_by("-date_posted")
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return GlobalNoticeListSerializer
+        return GlobalNoticeDetailSerializer
+
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = GlobalNoticeFilter
+

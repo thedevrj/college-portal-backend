@@ -30,7 +30,7 @@ class AdmissionSession(SoftDeleteModel):
         ordering = ["-start_date", "-id"]
 
     def __str__(self):
-        return f"{self.session_name} {'(Active)' if self.is_active else '(Archived)'}" 
+        return f"{self.session_name} {'(Active)' if self.is_active else '(Archived)'}"
 
     def clean(self):
         super().clean()
@@ -98,6 +98,15 @@ class AdmissionNotice(SoftDeleteModel):
     file = models.FileField(upload_to="admission/notices/", blank=True, null=True)
     date_posted = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive this notice.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which this notice automatically becomes archived.",
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -137,7 +146,9 @@ class RegistrationPortal(SoftDeleteModel):
             and self.registration_end < self.registration_start
         ):
             raise ValidationError(
-                {"registration_end": "Registration end date cannot be before the start date."}
+                {
+                    "registration_end": "Registration end date cannot be before the start date."
+                }
             )
 
 
@@ -166,20 +177,27 @@ class MeritList(SoftDeleteModel):
     phase = models.ForeignKey(
         CounsellingPhase, on_delete=models.CASCADE, related_name="merit_lists"
     )
+    programme = models.ForeignKey(
+        "academics.program",
+        on_delete=models.CASCADE,
+        related_name="admission_results",
+    )
     department = models.ForeignKey(
         "academics.Department",
         on_delete=models.CASCADE,
         related_name="admission_results",
+        blank=True,
+        null=True,
     )
     pdf_file = models.FileField(upload_to="admission/merit_lists/")
     upload_date = models.DateField(auto_now_add=True)
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ["department__name", "-upload_date"]
+        ordering = ["programme", "-upload_date"]
 
     def __str__(self):
-        return f"{self.department.name} ({self.phase.phase_name})"
+        return f" ({self.programme}) ({self.phase.phase_name}) "
 
 
 # --- Admission Committee ---
@@ -196,6 +214,7 @@ class AdmissionCommitteeMember(SoftDeleteModel):
         super().clean()
         if self.email:
             from django.core.validators import validate_email
+
             val = str(self.email).strip().lower()
             try:
                 validate_email(val)
@@ -218,6 +237,15 @@ class AdmissionCommitteeMinutes(SoftDeleteModel):
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to authenticated, authorized personnel.",
+    )
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive these minutes.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which these minutes automatically become archived.",
     )
     history = HistoricalRecords()
 

@@ -41,6 +41,15 @@ class MOU(SoftDeleteModel):
     document = models.FileField(
         upload_to="mou_documents/", null=True, blank=True, verbose_name="MOU Document"
     )
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive this MOU.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which this MOU automatically becomes archived.",
+    )
     history = HistoricalRecords()
 
     class Meta:

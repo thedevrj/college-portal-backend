@@ -58,6 +58,9 @@ INSTALLED_APPS = [
     "apps.admission",
     "apps.mou",
     "apps.foundation_course",
+    "apps.vigilance",
+    "apps.portals",
+    "apps.archives",
     "simple_history",
     "django_cleanup.apps.CleanupConfig",
     "axes",
@@ -157,10 +160,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Session & Token Expiration
-SESSION_COOKIE_AGE = 300
+SESSION_COOKIE_AGE = 600
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
-PASSWORD_RESET_TIMEOUT = 120
+PASSWORD_RESET_TIMEOUT = 600
 
 # HTTPS Cookie Security
 # when ssl is active radd not DEBUG
@@ -187,7 +190,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1
 AXES_ENABLE_ACCESS_FAILURE_LOG = True
-AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
+AXES_LOCKOUT_PARAMETERS = ["username"]
 AXES_META_PRECEDENCE_ORDER = [
     "HTTP_X_FORWARDED_FOR",
     "HTTP_X_REAL_IP",
@@ -326,6 +329,7 @@ JAZZMIN_SETTINGS = {
     "order_with_respect_to": [
         "accounts",
         "academics",
+        "foundation_course",
         "centres",
         "notices",
         "admission",
@@ -355,6 +359,10 @@ JAZZMIN_SETTINGS = {
         "staff",
         "authorities",
         "mou",
+        "vigilance",
+        "portals",
+        "portals.Grievance",
+        "archives",
     ],
     # Custom icons (FontAwesome 5)
     "icons": {
@@ -387,6 +395,7 @@ JAZZMIN_SETTINGS = {
         "admission.AdmissionContact": "fas fa-address-book",
         "admission.AdmissionLink": "fas fa-link",
         "mou.MOU": "fas fa-handshake",
+        "portals.Grievance": "fas fa-file-alt",
     },
     "default_icon_parents": "fas fa-folder",
     "default_icon_children": "fas fa-circle",

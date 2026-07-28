@@ -257,7 +257,7 @@ input[type=submit],
 }
 
 /* Style the "Add another" link as a left-aligned button */
-.tabular.inline-related .add-row, 
+.tabular.inline-related .add-row,
 .inline-group .add-row {
     display: flex !important;
     justify-content: flex-start !important;
@@ -284,4 +284,57 @@ input[type=submit],
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3) !important;
     color: white !important;
+}
+
+
+form .col-md-9,
+form .col-lg-9,
+form .col-md-3,
+form .col-lg-3 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Arrange the submit buttons horizontally at the bottom like a sleek action bar */
+form .col-md-3 .card,
+form .col-lg-3 .card,
+form .col-12.col-lg-3 .card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#jazzy-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    /* Align the stack to the right */
+    gap: 12px !important;
+    padding: 15px 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+}
+
+#jazzy-actions>div:first-child {
+    display: contents !important;
+}
+
+#jazzy-actions .form-group,
+#jazzy-actions .object-tools {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    /* Ensure uniform size for all stacked buttons */
+}
+
+#jazzy-actions .form-group .btn.form-control,
+#jazzy-actions .object-tools a {
+    width: 100% !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 10px 15px !important;
+    text-align: center;
+    box-sizing: border-box !important;
 }
