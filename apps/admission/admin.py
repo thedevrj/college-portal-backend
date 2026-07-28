@@ -5,6 +5,8 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
 from apps.accounts.mixins import PortalSecurityMixin
+from django.utils import timezone
+from django.db.models import Q
 from .models import (
     AdmissionSession,
     AdmissionStream,
@@ -60,6 +62,11 @@ class AdmissionNoticeAdmin(
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+
 
 @admin.register(RegistrationPortal)
 class RegistrationPortalAdmin(
@@ -93,9 +100,15 @@ class CounsellingPhaseAdmin(
 
 @admin.register(MeritList)
 class MeritListAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
-    list_display = ("id", "department", "phase", "upload_date")
-    list_filter = (SoftDeleteListFilter, "phase__stream", "phase", "department")
-    search_fields = ("id", "department__name")
+    list_display = ("id", "department", "programme", "phase", "upload_date")
+    list_filter = (
+        SoftDeleteListFilter,
+        "phase__stream",
+        "phase",
+        "department",
+        "programme",
+    )
+    search_fields = ("id", "department__name", "programme")
 
 
 @admin.register(AdmissionCommitteeMember)
@@ -118,3 +131,8 @@ class AdmissionCommitteeMinutesAdmin(
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))

@@ -8,9 +8,17 @@ from django.contrib.contenttypes.models import ContentType
 # --- Enums ---
 
 
+class SoftDeleteManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+
 class SoftDeleteModel(models.Model):
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = models.Manager()
 
     class Meta:
         abstract = True
@@ -58,9 +66,11 @@ class UserProfile(models.Model):
         null=True,
         blank=True,
         validators=[
-            __import__('django.core.validators', fromlist=['RegexValidator']).RegexValidator(
-                regex=r'^\d{10}$',
-                message='Phone number must be exactly 10 digits.',
+            __import__(
+                "django.core.validators", fromlist=["RegexValidator"]
+            ).RegexValidator(
+                regex=r"^\d{10}$",
+                message="Phone number must be exactly 10 digits.",
             )
         ],
     )
@@ -160,3 +170,27 @@ class UserActivityLog(models.Model):
 def trigger_profile_sync(sender, instance, **kwargs):
     if instance.is_portal_user:
         instance.sync_permissions()
+
+
+# global trash bin
+
+
+class GlobalTrashItem(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=255)
+
+    item_name = models.CharField(max_length=255)
+    model_name = models.CharField(max_length=100)
+
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    deleted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Global Trash Item"
+        verbose_name_plural = "(Recycle Bin)"
+        ordering = ["-deleted_at"]
+
+    def __str__(self):
+        return f"{self.item_name}"

@@ -290,3 +290,83 @@ class UserActivityLogAdmin(admin.ModelAdmin):
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_superuser
+
+
+from .models import GlobalTrashItem
+
+
+@admin.register(GlobalTrashItem)
+class GlobalTrashItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "item_name",
+        "model_name",
+        "deleted_by",
+        "deleted_at",
+        "manage_link",
+    )
+    list_filter = ("model_name", "deleted_by", "deleted_at")
+    search_fields = ("item_name", "model_name")
+    readonly_fields = ("item_name", "model_name", "deleted_by", "deleted_at")
+    date_hierarchy = "deleted_at"
+
+    def manage_link(self, obj):
+        try:
+            return format_html(
+                '<a class="button" href="/admin/{}/{}/{}/change/">Manage Original Object</a>',
+                obj.content_type.app_label,
+                obj.content_type.model,
+                obj.object_id,
+            )
+        except Exception:
+            return "-"
+
+    manage_link.short_description = "Action"
+    manage_link.allow_tags = True
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    @admin.action(description="Restore selected items")
+    def restore_items(self, request, queryset):
+        restored = 0
+        for trash_item in queryset:
+            ModelClass = trash_item.content_type.model_class()
+            if ModelClass:
+                try:
+                    obj = ModelClass.all_objects.get(pk=trash_item.object_id)
+                    obj.is_deleted = False
+                    obj.deleted_at = None
+                    obj.save()
+                    restored += 1
+                except Exception:
+                    pass
+        queryset.delete()  # Remove from trash bin
+        self.message_user(request, f"Successfully restored {restored} items.")
+
+    @admin.action(description="Permanently Delete selected")
+    def permanently_delete_items(self, request, queryset):
+        deleted = 0
+        for trash_item in queryset:
+            ModelClass = trash_item.content_type.model_class()
+            if ModelClass:
+                try:
+                    obj = ModelClass.all_objects.get(pk=trash_item.object_id)
+                    obj.delete()
+                    deleted += 1
+                except Exception:
+                    pass
+        queryset.delete()
+        self.message_user(
+            request, f"Successfully purged {deleted} items from the database."
+        )
+
+    actions = ["restore_items", "permanently_delete_items"]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if "delete_selected" in actions:
+            del actions["delete_selected"]
+        return actions

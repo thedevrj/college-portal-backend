@@ -42,6 +42,15 @@ class GlobalNotice(SoftDeleteModel):
     )
 
     is_active = models.BooleanField(default=True)
+    is_archived = models.BooleanField(
+        default=False,
+        help_text="Manually archive this notice immediately.",
+    )
+    archive_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date after which this notice automatically becomes archived.",
+    )
     history = HistoricalRecords()
 
     class Meta:
