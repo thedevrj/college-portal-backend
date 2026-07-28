@@ -67,8 +67,8 @@ class FileValidationMiddleware:
         ".txt",  # Documents
     }
 
-    # 10 MB limit
-    MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+    # 20 MB limit
+    MAX_UPLOAD_SIZE = 20 * 1024 * 1024
 
     def __init__(self, get_response):
         self.get_response = get_response
