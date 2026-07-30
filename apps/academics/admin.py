@@ -159,9 +159,9 @@ class CommitteeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(MinutesOfTheMeeting)
 class MinutesAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("meeting_title", "date_of_meeting", "department", "centre")
-    list_display_links = ("meeting_title", "date_of_meeting", "department", "centre")
-    list_filter = (SoftDeleteListFilter, "department", "centre", "date_of_meeting")
+    list_display = ("meeting_title", "committee", "date_of_meeting")
+    list_display_links = ("meeting_title", "committee", "date_of_meeting")
+    list_filter = (SoftDeleteListFilter, "committee", "date_of_meeting")
     search_fields = ("meeting_title", "date_of_meeting")
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},

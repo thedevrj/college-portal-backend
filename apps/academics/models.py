@@ -156,8 +156,6 @@ class SchoolBoardMOM(SoftDeleteModel):
     minutes = models.FileField(
         upload_to="schools/school-board-mom/",
         help_text="Upload Minutes of the Meeting",
-        null=True,
-        blank=True,
     )
     history = HistoricalRecords()
 
@@ -587,6 +585,13 @@ class Notice(SoftDeleteModel):
 
 
 class Committee(SoftDeleteModel):
+    COMMITTEE_CHOICES = [
+        ("DRC", "Departmental Research Committee (DRC)"),
+        ("BPGS", "Board of Post Graduate Studies (BPGS)"),
+        ("BUGS", "Board of Under Graduate Studies (BUGS)"),
+        ("DPC", "Departmental Purchase Committee (DPC)"),
+        ("Others", "Others"),
+    ]
     department = models.ForeignKey(
         Department,
         related_name="committees",
@@ -601,8 +606,12 @@ class Committee(SoftDeleteModel):
         null=True,
         blank=True,
     )
-    name = models.CharField(max_length=255)
-    description = RichTextField(blank=True, null=True)
+    name = models.CharField(
+        max_length=255, choices=COMMITTEE_CHOICES, verbose_name="Name of Committee"
+    )
+    other_name = models.CharField(
+        max_length=255, blank=True, null=True, help_text="Specify if 'Others' selected"
+    )
     notification_document = models.FileField(
         upload_to="committees/notification/",
         blank=True,
@@ -613,6 +622,10 @@ class Committee(SoftDeleteModel):
 
     def clean(self):
         super().clean()
+        if self.name == "Others" and not self.other_name:
+            raise ValidationError(
+                {"other_name": "This field is required when name is 'Others'."}
+            )
         if not self.department and not self.centre:
             raise ValidationError(
                 "A Committee must be associated with either a Department or a Centre."
@@ -679,52 +692,41 @@ class CommitteeMember(SoftDeleteModel):
 
 
 class MinutesOfTheMeeting(SoftDeleteModel):
-    department = models.ForeignKey(
-        Department,
+    committee = models.ForeignKey(
+        Committee,
         related_name="minutes",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
     )
-    centre = models.ForeignKey(
-        "centres.Centre",
-        related_name="minutes",
-        on_delete=models.CASCADE,
+    meeting_number = models.IntegerField(
+        verbose_name="Meeting Number",
         null=True,
         blank=True,
+        help_text="Enter the meeting number. Eg: 1st, 2nd, 3rd, etc.",
     )
     meeting_title = models.CharField(
-        max_length=255, null=True, blank=True, help_text="Title of the meeting"
+        max_length=155, null=True, blank=True, help_text="Title of the meeting"
     )
     date_of_meeting = models.DateField(
         help_text="Enter date of meeting in YYYY-MM-DD format"
     )
     minutes_of_meeting = models.FileField(
         upload_to="committees/minutes/",
-        blank=True,
-        null=True,
         help_text="Upload Minutes of the meeting",
     )
     history = HistoricalRecords()
 
     def clean(self):
         super().clean()
-        if not self.department and not self.centre:
+        if not self.committee:
             raise ValidationError(
-                "Minutes of Meeting must be associated with either a Department or a Centre."
-            )
-        if self.department and self.centre:
-            raise ValidationError(
-                "Minutes of Meeting cannot be associated with both a Department and a Centre."
+                {"committee": "Minutes of Meeting must be associated with a committee."}
             )
 
     def __str__(self):
-        owner = (
-            self.department.name
-            if self.department
-            else self.centre.name if self.centre else "Unknown"
-        )
-        return f"Minutes of {owner} - {self.date_of_meeting}"
+        committee_name = self.committee.name if self.committee else "Unknown Committee"
+        return f"Minutes of {committee_name} - {self.date_of_meeting}"
 
     class Meta:
         ordering = ["-date_of_meeting"]
