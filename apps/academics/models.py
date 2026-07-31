@@ -636,12 +636,17 @@ class Committee(SoftDeleteModel):
             )
 
     def __str__(self):
+        display_name = (
+            self.other_name
+            if self.name == "Others" and self.other_name
+            else self.get_name_display()
+        )
         owner = (
             self.department.name
             if self.department
             else self.centre.name if self.centre else "Unknown"
         )
-        return f"{self.name} ({owner})"
+        return f"{display_name} ({owner})"
 
     class Meta:
         verbose_name_plural = "Departmental Committees"
