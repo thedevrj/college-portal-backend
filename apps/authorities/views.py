@@ -41,6 +41,17 @@ class BoardOfManagementMinutesViewSet(viewsets.ReadOnlyModelViewSet):
         return BoardOfManagementMinutes.objects.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
+class ArchivedBoardOfManagementMinutesViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = BoardOfManagementMinutesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from django.db.models import Q
+        today = timezone.now().date()
+        return BoardOfManagementMinutes.objects.filter(Q(is_archived=True) | Q(archive_date__lt=today))
+
+
 # --- Academic Council ViewSets ---
 
 
@@ -59,6 +70,17 @@ class AcademicCouncilMinutesViewSet(viewsets.ReadOnlyModelViewSet):
         from django.db.models import Q
         today = timezone.now().date()
         return AcademicCouncilMinutes.objects.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+
+
+class ArchivedAcademicCouncilMinutesViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = AcademicCouncilMinutesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from django.db.models import Q
+        today = timezone.now().date()
+        return AcademicCouncilMinutes.objects.filter(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 # --- Planning Board ViewSets ---
@@ -81,6 +103,17 @@ class PlanningBoardMinutesViewSet(viewsets.ReadOnlyModelViewSet):
         return PlanningBoardMinutes.objects.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
+class ArchivedPlanningBoardMinutesViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = PlanningBoardMinutesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from django.db.models import Q
+        today = timezone.now().date()
+        return PlanningBoardMinutes.objects.filter(Q(is_archived=True) | Q(archive_date__lt=today))
+
+
 # --- Finance Committee ViewSets ---
 
 
@@ -99,3 +132,14 @@ class FinanceCommitteeMinutesViewSet(viewsets.ReadOnlyModelViewSet):
         from django.db.models import Q
         today = timezone.now().date()
         return FinanceCommitteeMinutes.objects.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+
+
+class ArchivedFinanceCommitteeMinutesViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = FinanceCommitteeMinutesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from django.db.models import Q
+        today = timezone.now().date()
+        return FinanceCommitteeMinutes.objects.filter(Q(is_archived=True) | Q(archive_date__lt=today))
