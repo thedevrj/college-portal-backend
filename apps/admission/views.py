@@ -61,12 +61,24 @@ class AdmissionNoticeViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         from django.utils import timezone
         from django.db.models import Q
-
         today = timezone.now().date()
-        return (
-            AdmissionNotice.objects.filter(is_active=True)
-            .select_related("session")
-            .exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+        return AdmissionNotice.objects.filter(is_active=True).select_related("session").exclude(
+            Q(is_archived=True) | Q(archive_date__lt=today)
+        )
+
+class ArchivedAdmissionNoticeViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = AdmissionNoticeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["session", "category"]
+    search_fields = ["title"]
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from django.db.models import Q
+        today = timezone.now().date()
+        return AdmissionNotice.objects.select_related("session").filter(
+            Q(is_archived=True) | Q(archive_date__lt=today)
         )
 
 
@@ -133,3 +145,16 @@ class AdmissionCommitteeMinutesViewSet(viewsets.ReadOnlyModelViewSet):
         if not self.request.user.is_authenticated:
             qs = qs.filter(is_private=False)
         return qs
+
+class ArchivedAdmissionCommitteeMinutesViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = AdmissionCommitteeMinutesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from django.db.models import Q
+        today = timezone.now().date()
+        return AdmissionCommitteeMinutes.objects.filter(
+            Q(is_archived=True) | Q(archive_date__lt=today)
+        )

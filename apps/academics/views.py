@@ -211,14 +211,18 @@ class CommitteeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MinutesFilter(django_filters.FilterSet):
-    centre_slug = django_filters.CharFilter(field_name="centre__slug")
-    department_slug = django_filters.CharFilter(field_name="department__slug")
-    centre__slug = django_filters.CharFilter(field_name="centre__slug")
-    department__slug = django_filters.CharFilter(field_name="department__slug")
+    centre_slug = django_filters.CharFilter(field_name="committee__centre__slug")
+    department_slug = django_filters.CharFilter(
+        field_name="committee__department__slug"
+    )
+    centre__slug = django_filters.CharFilter(field_name="committee__centre__slug")
+    department__slug = django_filters.CharFilter(
+        field_name="committee__department__slug"
+    )
 
     class Meta:
         model = MinutesOfTheMeeting
-        fields = []
+        fields = ["committee"]
 
 
 class MinutesViewSet(viewsets.ReadOnlyModelViewSet):
