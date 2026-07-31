@@ -272,6 +272,7 @@ class CommitteeSerializer(serializers.ModelSerializer):
 
 class MinutesSerializer(serializers.ModelSerializer):
     minutes_of_meeting = serializers.SerializerMethodField()
+    committee_name = serializers.CharField(source="committee.name", read_only=True)
 
     class Meta:
         model = MinutesOfTheMeeting

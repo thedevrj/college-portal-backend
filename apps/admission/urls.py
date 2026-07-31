@@ -11,6 +11,8 @@ from .views import (
     MeritListViewSet,
     AdmissionCommitteeMemberViewSet,
     AdmissionCommitteeMinutesViewSet,
+    ArchivedAdmissionNoticeViewSet,
+    ArchivedAdmissionCommitteeMinutesViewSet,
 )
 
 router = DefaultRouter()
@@ -23,6 +25,8 @@ router.register(r"counselling-phases", CounsellingPhaseViewSet, basename="admiss
 router.register(r"merit-lists", MeritListViewSet, basename="admission-merit-lists")
 router.register(r"committee-members", AdmissionCommitteeMemberViewSet, basename="admission-committee-members")
 router.register(r"committee-minutes", AdmissionCommitteeMinutesViewSet, basename="admission-committee-minutes")
+router.register(r"archived-notices", ArchivedAdmissionNoticeViewSet, basename="archived-admission-notices")
+router.register(r"archived-committee-minutes", ArchivedAdmissionCommitteeMinutesViewSet, basename="archived-admission-committee-minutes")
 
 urlpatterns = [
     path("", include(router.urls)),

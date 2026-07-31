@@ -143,6 +143,10 @@ class PortalSecurityMixin:
                         role_qs = role_qs.filter(
                             program__department_id=access.object_id
                         )
+                    elif self.model.__name__ == "MinutesOfTheMeeting":
+                        role_qs = role_qs.filter(
+                            committee__department_id=access.object_id
+                        )
                     elif hasattr(self.model, "department"):
                         # Use _id for direct FK filtering to avoid extra joins/leaks
                         role_qs = role_qs.filter(department_id=access.object_id)
@@ -276,6 +280,13 @@ class PortalSecurityMixin:
                         # Edit permission check for HODs: Verify the course belongs to their department
                         if dept_name and obj.program.department.name == dept_name:
                             return True
+                    elif (
+                        self.model.__name__ == "MinutesOfTheMeeting"
+                        and obj.committee
+                        and obj.committee.department
+                    ):
+                        if dept_name and obj.committee.department.name == dept_name:
+                            return True
                     elif hasattr(obj, "department") and obj.department:
                         if dept_name and obj.department.name == dept_name:
                             return True
@@ -286,6 +297,13 @@ class PortalSecurityMixin:
                             hasattr(obj, "school_id")
                             and obj.school_id == access.object_id
                         ):
+                            return True
+                    elif (
+                        self.model.__name__ == "MinutesOfTheMeeting"
+                        and obj.committee
+                        and obj.committee.department
+                    ):
+                        if obj.committee.department.school_id == access.object_id:
                             return True
                     elif hasattr(obj, "department") and obj.department:
                         if obj.department.school_id == access.object_id:
@@ -404,7 +422,13 @@ class PortalSecurityMixin:
         for obj in objs:
             item_name = None
             # Check common attributes for a clean name/title
-            for attr in ["title", "name", "full_name", "subject", "name_of_complainant"]:
+            for attr in [
+                "title",
+                "name",
+                "full_name",
+                "subject",
+                "name_of_complainant",
+            ]:
                 if hasattr(obj, attr):
                     val = getattr(obj, attr)
                     if val:
@@ -587,6 +611,7 @@ class PortalSecurityMixin:
                             "hod",
                             "dean",
                             "incharge",
+                            "committee",
                         ]:
                             combined_q |= (
                                 models.Q(department__name=dept_name)
