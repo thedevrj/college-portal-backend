@@ -55,6 +55,7 @@ urlpatterns = [
     path("api/v1/", include("apps.staff.urls")),
     path("api/v1/", include("apps.mou.urls")),
     path("api/v1/", include("apps.authorities.urls")),
+    path("api/v1/", include("apps.proctor.urls")),
     path("api/v1/", include("apps.foundation_course.urls")),
     path("api/v1/vigilance/", include("apps.vigilance.urls")),
     path("api/v1/portals/", include("apps.portals.urls")),
