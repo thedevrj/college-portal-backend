@@ -2,6 +2,9 @@ from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
 from apps.accounts.mixins import PortalSecurityMixin
+from django.db import models
+from django import forms
+
 from .models import ProctorialBoardMember, ProctorialBoardMinutes, ProctorialBoardNotice
 
 
@@ -11,7 +14,6 @@ class ProctorialBoardMemberAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "name",
         "designation",
         "in_the_capacity_of",
-        "notification",
         "email_id",
         "order",
     )
@@ -36,6 +38,17 @@ class ProctorialBoardMinutesAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     date_hierarchy = "date_of_meeting"
     ordering = ("-date_of_meeting",)
     exclude = ("is_deleted", "deleted_at")
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
+
+    def get_queryset(self, request):
+        from django.utils import timezone
+        from django.db.models import Q
+
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 @admin.register(ProctorialBoardNotice)
@@ -46,3 +59,6 @@ class ProctorialBoardNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     date_hierarchy = "date"
     ordering = ("-date",)
     exclude = ("is_deleted", "deleted_at")
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }

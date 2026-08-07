@@ -4,6 +4,7 @@ import django_filters
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import MOU
 from .serializers import MOUSerializer
+from django.utils import timezone
 
 
 class MOUFilter(django_filters.FilterSet):
@@ -13,6 +14,7 @@ class MOUFilter(django_filters.FilterSet):
 from django.utils import timezone
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
+
 
 class MOUViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MOUSerializer
@@ -33,11 +35,13 @@ class MOUViewSet(viewsets.ReadOnlyModelViewSet):
             Q(is_archived=True) | Q(archive_date__lt=today)
         )
 
+
 class ArchivedMOUViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows Archived MOUs to be viewed.
     Only authenticated members (staff/faculty) can access this endpoint.
     """
+
     serializer_class = MOUSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [
@@ -55,4 +59,3 @@ class ArchivedMOUViewSet(viewsets.ReadOnlyModelViewSet):
         return MOU.objects.filter(is_deleted=False).filter(
             Q(is_archived=True) | Q(archive_date__lt=today)
         )
-
