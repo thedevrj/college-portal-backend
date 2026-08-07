@@ -22,9 +22,6 @@ class ProctorialBoardMember(SoftDeleteModel):
         max_length=255, blank=True, null=True, help_text="Phone numbers"
     )
     email_id = models.EmailField(blank=True, null=True)
-    notification = models.FileField(
-        upload_to="proctorial_board/notifications/", null=True, blank=True
-    )
     order = models.PositiveIntegerField(default=0, help_text="For S.No sorting")
     history = HistoricalRecords()
 
