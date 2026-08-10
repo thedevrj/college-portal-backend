@@ -55,17 +55,33 @@ class AdmissionProspectusAdmin(
 class AdmissionNoticeAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = ("id", "title", "session", "category", "date_posted", "is_active")
-    list_filter = (SoftDeleteListFilter, "session", "category", "is_active")
+    list_display = (
+        "id",
+        "title",
+        "session",
+        "category",
+        "date_posted",
+        "is_active",
+        "is_archived",
+        "archive_date",
+    )
+    list_filter = (
+        SoftDeleteListFilter,
+        "session",
+        "category",
+        "is_active",
+        "is_archived",
+        "archive_date",
+    )
     search_fields = ("id", "title")
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 @admin.register(RegistrationPortal)
@@ -125,14 +141,20 @@ class AdmissionCommitteeMemberAdmin(
 class AdmissionCommitteeMinutesAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    list_display = ("meeting_title", "date_of_meeting", "is_private")
-    list_filter = (SoftDeleteListFilter, "is_private")
+    list_display = (
+        "meeting_title",
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+    )
+    list_filter = (SoftDeleteListFilter, "is_private", "is_archived")
     search_fields = ("meeting_title",)
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))

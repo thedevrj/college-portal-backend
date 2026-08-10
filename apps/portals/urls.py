@@ -1,10 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    GrievanceCreateView, GrievanceStatusView, AdminGrievanceViewSet,
-    ICCCreateView, ICCStatusView,
-    DiscriminationCreateView, DiscriminationStatusView,
-    FeedbackCreateView, FeedbackStatusView
+    GrievanceCreateView,
+    GrievanceStatusView,
+    AdminGrievanceViewSet,
+    ICCCreateView,
+    ICCStatusView,
+    DiscriminationCreateView,
+    DiscriminationStatusView,
+    FeedbackCreateView,
+    FeedbackStatusView,
 )
 
 router = DefaultRouter()

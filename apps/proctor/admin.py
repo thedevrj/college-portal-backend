@@ -42,13 +42,13 @@ class ProctorialBoardMinutesAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        from django.utils import timezone
-        from django.db.models import Q
+    # def get_queryset(self, request):
+    #     from django.utils import timezone
+    #     from django.db.models import Q
 
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 @admin.register(ProctorialBoardNotice)
