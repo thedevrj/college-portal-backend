@@ -12,6 +12,13 @@ from .models import (
     ArchivedAcademicCouncilMinutes,
     ArchivedPlanningBoardMinutes,
     ArchivedFinanceCommitteeMinutes,
+    ArchivedProctorialBoardNotice,
+    ArchivedProctorialBoardMinutes,
+    ArchivedCOENotice,
+    ArchivedPHDPreSubmissionSeminar,
+    ArchivedPHDVivaVoceDate,
+    ArchivedMPHILVivaVoceDate,
+    ArchivedRDCUNotice,
 )
 
 
@@ -153,4 +160,56 @@ class ArchivedPlanningBoardMinutesAdmin(BaseMinutesArchiveAdmin):
 
 @admin.register(ArchivedFinanceCommitteeMinutes)
 class ArchivedFinanceCommitteeMinutesAdmin(BaseMinutesArchiveAdmin):
+    pass
+
+
+@admin.register(ArchivedProctorialBoardMinutes)
+class ArchivedProctorialBoardMinutesAdmin(BaseMinutesArchiveAdmin):
+    pass
+
+
+class BaseCOEAdmin(BaseArchiveAdmin):
+    list_display = ("title", "date", "archive_date", "is_archived")
+    list_filter = ("date", "is_archived")
+    search_fields = ("title",)
+
+    @admin.action(
+        description="Restore selected items from Archive", permissions=["view"]
+    )
+    def restore_from_archive(self, request, queryset):
+        updated = queryset.update(is_archived=False, archive_date=None)
+        self.message_user(
+            request, f"Successfully restored {updated} item(s) back to the Active list."
+        )
+
+    actions = [restore_from_archive]
+
+
+@admin.register(ArchivedProctorialBoardNotice)
+class ArchivedProctorialBoardNoticeAdmin(BaseCOEAdmin):
+    pass
+
+
+@admin.register(ArchivedCOENotice)
+class ArchivedCOENoticeAdmin(BaseCOEAdmin):
+    pass
+
+
+@admin.register(ArchivedPHDPreSubmissionSeminar)
+class ArchivedPHDPreSubmissionSeminarAdmin(BaseCOEAdmin):
+    pass
+
+
+@admin.register(ArchivedPHDVivaVoceDate)
+class ArchivedPHDVivaVoceDateAdmin(BaseCOEAdmin):
+    pass
+
+
+@admin.register(ArchivedMPHILVivaVoceDate)
+class ArchivedMPHILVivaVoceDateAdmin(BaseCOEAdmin):
+    pass
+
+
+@admin.register(ArchivedRDCUNotice)
+class ArchivedRDCUNoticeAdmin(BaseCOEAdmin):
     pass

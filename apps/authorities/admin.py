@@ -222,7 +222,9 @@ class FinanceCommitteeMinutesResource(resources.ModelResource):
 
 
 @admin.register(BoardOfManagementMember)
-class BoardOfManagementMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class BoardOfManagementMemberAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = BoardOfManagementMemberResource
     list_display = ("name", "designation", "provision", "email", "order")
     search_fields = ("name", "designation", "email")
@@ -233,23 +235,39 @@ class BoardOfManagementMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, 
 
 
 @admin.register(BoardOfManagementMinutes)
-class BoardOfManagementMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class BoardOfManagementMinutesAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = BoardOfManagementMinutesResource
-    list_display = ("meeting_title", "date_of_meeting", "is_private")
+    list_display = (
+        "meeting_title",
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+    )
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    list_filter = (
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+        SoftDeleteListFilter,
+    )
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 @admin.register(AcademicCouncilMember)
-class AcademicCouncilMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class AcademicCouncilMemberAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = AcademicCouncilMemberResource
     list_display = ("name", "designation", "institution", "contact", "email", "order")
     search_fields = ("name", "designation", "institution", "email")
@@ -260,23 +278,39 @@ class AcademicCouncilMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, Si
 
 
 @admin.register(AcademicCouncilMinutes)
-class AcademicCouncilMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class AcademicCouncilMinutesAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = AcademicCouncilMinutesResource
-    list_display = ("meeting_title", "date_of_meeting", "is_private")
+    list_display = (
+        "meeting_title",
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+    )
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    list_filter = (
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+        SoftDeleteListFilter,
+    )
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 @admin.register(PlanningBoardMember)
-class PlanningBoardMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class PlanningBoardMemberAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = PlanningBoardMemberResource
     list_display = (
         "name",
@@ -293,23 +327,39 @@ class PlanningBoardMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, Simp
 
 
 @admin.register(PlanningBoardMinutes)
-class PlanningBoardMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class PlanningBoardMinutesAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = PlanningBoardMinutesResource
-    list_display = ("meeting_title", "date_of_meeting", "is_private")
+    list_display = (
+        "meeting_title",
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+    )
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    list_filter = (
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+        SoftDeleteListFilter,
+    )
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
 
 @admin.register(FinanceCommitteeMember)
-class FinanceCommitteeMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class FinanceCommitteeMemberAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = FinanceCommitteeMemberResource
     list_display = ("name", "designation", "contact", "email", "order")
     search_fields = ("name", "designation", "email")
@@ -320,16 +370,30 @@ class FinanceCommitteeMemberAdmin(PortalSecurityMixin, ImportExportModelAdmin, S
 
 
 @admin.register(FinanceCommitteeMinutes)
-class FinanceCommitteeMinutesAdmin(PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin):
+class FinanceCommitteeMinutesAdmin(
+    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+):
     resource_class = FinanceCommitteeMinutesResource
-    list_display = ("meeting_title", "date_of_meeting", "is_private")
+    list_display = (
+        "meeting_title",
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+    )
     search_fields = ("meeting_title",)
-    list_filter = ("date_of_meeting", "is_private", SoftDeleteListFilter)
+    list_filter = (
+        "date_of_meeting",
+        "is_private",
+        "is_archived",
+        "archive_date",
+        SoftDeleteListFilter,
+    )
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))

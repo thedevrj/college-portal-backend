@@ -10,20 +10,24 @@ class MOUAdmin(admin.ModelAdmin):
         "organization_name",
         "date_of_signing",
         "valid_till",
+        "is_archived",
+        "archive_date",
     )
+    list_filter = ("date_of_signing", "is_archived", "archive_date")
     search_fields = ("organization_name", "Nature_of_organization")
     date_hierarchy = "date_of_signing"
     exclude = ("is_deleted", "deleted_at")
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
-    def get_queryset(self, request):
-        """Exclude archived or expired MOUs from the main active admin view"""
-        from django.utils import timezone
-        from django.db.models import Q
-
-        qs = super().get_queryset(request)
-        today = timezone.now().date()
-        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+    # def get_queryset(self, request):
+    #     from django.utils import timezone
+    #     from django.db.models import Q
+    #     qs = super().get_queryset(request)
+    #     today = timezone.now().date()
+    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))

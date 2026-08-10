@@ -148,7 +148,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Secure Password Hashing
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -367,6 +366,21 @@ JAZZMIN_SETTINGS = {
         "portals",
         "portals.Grievance",
         "archives",
+        "archives.ArchivedGlobalNotice",
+        "archives.ArchivedAdmissionNotice",
+        "archives.ArchivedAdmissionCommitteeMinutes",
+        "archives.ArchivedCOENotice",
+        "archives.ArchivedPHDPreSubmissionSeminar",
+        "archives.ArchivedPHDVivaVoceDate",
+        "archives.ArchivedMPHILVivaVoceDate",
+        "archives.ArchivedRDCUNotice",
+        "archives.ArchivedBoardOfManagementMinutes",
+        "archives.ArchivedAcademicCouncilMinutes",
+        "archives.ArchivedPlanningBoardMinutes",
+        "archives.ArchivedFinanceCommitteeMinutes",
+        "archives.ArchivedProctorialBoardNotice",
+        "archives.ArchivedProctorialBoardMinutes",
+        "archives.ArchivedMOU",
     ],
     # Custom icons (FontAwesome 5)
     "icons": {
