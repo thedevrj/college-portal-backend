@@ -3,7 +3,6 @@ from .models import PortalRole, EntityType
 
 
 class IsPortalUser(BasePermission):
-    """User must be authenticated and flagged as a portal user."""
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -15,7 +14,6 @@ class IsPortalUser(BasePermission):
 
 
 class IsHOD(BasePermission):
-    """User must have HOD role for the department of the target object."""
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -37,7 +35,6 @@ class IsHOD(BasePermission):
 
 
 class IsDeptStaffOrAbove(BasePermission):
-    """User must have DEPT_STAFF, HOD, RD_ADMIN, or be superuser."""
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -65,7 +62,6 @@ class IsDeptStaffOrAbove(BasePermission):
 
 
 class IsRDAdmin(BasePermission):
-    """User must have RD_ADMIN role — university-wide research access."""
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -90,6 +86,7 @@ class IsRDAdminOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
         from rest_framework.permissions import SAFE_METHODS
+
         if not request.user or not request.user.is_authenticated:
             return False
         if request.method in SAFE_METHODS:

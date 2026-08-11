@@ -7,21 +7,47 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('academics', '0049_rename_title_minutesofthemeeting_meeting_title'),
+        ("academics", "0049_rename_title_minutesofthemeeting_meeting_title"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='HistoricalSchoolBoardCommittee',
-            new_name='HistoricalSchoolBoardCommitteeMember',
+            old_name="HistoricalSchoolBoardCommittee",
+            new_name="HistoricalSchoolBoardCommitteeMember",
         ),
         migrations.RenameModel(
-            old_name='SchoolBoardCommittee',
-            new_name='SchoolBoardCommitteeMember',
+            old_name="SchoolBoardCommittee",
+            new_name="SchoolBoardCommitteeMember",
+        ),
+        # PostgreSQL retains index names when a table is renamed. The following
+        # migration creates a new HistoricalSchoolBoardCommittee model, so move
+        # the retained names out of its generated-index namespace first.
+        migrations.RunSQL(
+            sql=[
+                'ALTER INDEX "academics_historicalschoolboardcommittee_id_c8badfc1" '
+                'RENAME TO "academics_hist_sbcommittee_member_id_idx"',
+                'ALTER INDEX "academics_historicalschoolboardcommittee_history_date_15a10ce5" '
+                'RENAME TO "academics_hist_sbcommittee_member_history_date_idx"',
+                'ALTER INDEX "academics_historicalschool_history_user_id_0599805e" '
+                'RENAME TO "academics_hist_sbcommittee_member_history_user_idx"',
+            ],
+            reverse_sql=[
+                'ALTER INDEX "academics_hist_sbcommittee_member_id_idx" '
+                'RENAME TO "academics_historicalschoolboardcommittee_id_c8badfc1"',
+                'ALTER INDEX "academics_hist_sbcommittee_member_history_date_idx" '
+                'RENAME TO "academics_historicalschoolboardcommittee_history_date_15a10ce5"',
+                'ALTER INDEX "academics_hist_sbcommittee_member_history_user_idx" '
+                'RENAME TO "academics_historicalschool_history_user_id_0599805e"',
+            ],
         ),
         migrations.AlterModelOptions(
-            name='historicalschoolboardcommitteemember',
-            options={'get_latest_by': ('history_date', 'history_id'), 'ordering': ('-history_date', '-history_id'), 'verbose_name': 'historical school board committee member', 'verbose_name_plural': 'historical School Board Committees'},
+            name="historicalschoolboardcommitteemember",
+            options={
+                "get_latest_by": ("history_date", "history_id"),
+                "ordering": ("-history_date", "-history_id"),
+                "verbose_name": "historical school board committee member",
+                "verbose_name_plural": "historical School Board Committees",
+            },
         ),
     ]

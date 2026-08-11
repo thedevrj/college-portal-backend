@@ -6,7 +6,6 @@ from django.dispatch import receiver
 @receiver(post_save, sender="academics.Department")
 def sync_hod_portal_access(sender, instance, created, **kwargs):
     """
-    DEACTIVATED: This logic was causing duplicate accounts for multi-login setups.
     Portal access for HODs should now be managed manually in the Admin.
     """
     pass
@@ -29,8 +28,7 @@ from django.db.models.signals import pre_save
 @receiver(pre_save, sender=User)
 def auto_unlock_password_change(sender, instance, **kwargs):
     """
-    Detects if a user has changed their password.
-    If so, and they were locked in 'force_password_change' mode, this unlocks them.
+    Detects if a user has changed their password if yes change to false.
     """
     if not instance.pk:
         return
@@ -55,12 +53,7 @@ from django.contrib.auth.signals import (
 
 
 def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(",")[0]
-    else:
-        ip = request.META.get("REMOTE_ADDR")
-    return ip
+    return request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR")
 
 
 @receiver(user_logged_in)

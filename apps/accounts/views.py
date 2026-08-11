@@ -15,7 +15,6 @@ from .models import PortalRole
 
 class PortalLoginView(View):
     """
-    Branded login page for all ERP portal users.
     URL: /portal/login/
     """
 
@@ -48,7 +47,6 @@ class PortalLoginView(View):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Superusers always have full access
             if user.is_superuser:
                 login(request, user)
                 return self._redirect_by_role(request, user)
@@ -112,7 +110,6 @@ class PortalLoginView(View):
 class PortalLogoutView(View):
     """
     Logs the user out and redirects to the login page.
-    URL: /portal/logout/
     """
 
     def get(self, request):
