@@ -14,13 +14,10 @@ urlpatterns = [
     path("logout/", PortalLogoutView.as_view(), name="portal_logout"),
     path("profile/", portal_profile, name="portal_profile"),
     path("api/get-entities/", get_entities_api, name="get_entities_api"),
-    # API endpoints for Notice Portal
     path("api/login/", CustomTokenObtainPairView.as_view(), name="api_login"),
     path(
         "api/change-password/", ChangePasswordView.as_view(), name="api_change_password"
     ),
-    # api for dashboard
-    # Global Admin Dashboard Stats
     path(
         "api/dashboard-stats/",
         AdminDashboardStatsView.as_view(),
