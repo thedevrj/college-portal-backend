@@ -15,7 +15,7 @@ from .models import (
 
 @admin.register(COENotice)
 class COENoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "date", "file")
+    list_display = ("title", "date", "file", "is_archived", "archive_date")
     list_filter = (SoftDeleteListFilter, "is_archived", "date")
     search_fields = ("title",)
     date_hierarchy = "date"
@@ -28,7 +28,7 @@ class COENoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(PHDVivaVoceDate)
 class PHDVivaVoceDateAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "date", "file")
+    list_display = ("title", "date", "file", "is_archived", "archive_date")
     list_filter = (SoftDeleteListFilter, "is_archived", "date")
     search_fields = ("title",)
     date_hierarchy = "date"
@@ -41,7 +41,7 @@ class PHDVivaVoceDateAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(MPHILVivaVoceDate)
 class MPHILVivaVoceDateAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "date", "file")
+    list_display = ("title", "date", "file", "is_archived", "archive_date")
     list_filter = (SoftDeleteListFilter, "is_archived", "date")
     search_fields = ("title",)
     date_hierarchy = "date"
@@ -54,7 +54,7 @@ class MPHILVivaVoceDateAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(PHDPreSubmissionSeminar)
 class PHDPreSubmissionSeminarAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "date", "file")
+    list_display = ("title", "date", "file", "is_archived", "archive_date")
     list_filter = (SoftDeleteListFilter, "is_archived", "date")
     search_fields = ("title",)
     date_hierarchy = "date"
@@ -67,7 +67,7 @@ class PHDPreSubmissionSeminarAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(RDCUNotice)
 class RDCUNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("title", "date", "file")
+    list_display = ("title", "date", "file", "is_archived", "archive_date")
     list_filter = (SoftDeleteListFilter, "is_archived", "date")
     search_fields = ("title",)
     date_hierarchy = "date"

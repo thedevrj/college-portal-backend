@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
+        migrations.AlterField(
             model_name='faculty',
             name='centre',
             field=models.ForeignKey(

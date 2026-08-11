@@ -85,6 +85,14 @@ class PortalSecurityMixin:
                 "FoundationCourseMaterial",
                 "GlobalNotice",
                 "vigilance",
+                "COENotice",
+                "PHDVivaVoceDate",
+                "MPHILVivaVoceDate",
+                "PHDPreSubmissionSeminar",
+                "RDCUNotice",
+                "ProctorialBoardMember",
+                "ProctorialBoardMinutes",
+                "ProctorialBoardNotice",
             ]
             if self.model.__name__ in global_models:
                 return qs
@@ -334,6 +342,14 @@ class PortalSecurityMixin:
             "FoundationCourse",
             "FoundationCourseMaterial",
             "vigilance",
+            "COENotice",
+            "PHDVivaVoceDate",
+            "MPHILVivaVoceDate",
+            "PHDPreSubmissionSeminar",
+            "RDCUNotice",
+            "ProctorialBoardMember",
+            "ProctorialBoardMinutes",
+            "ProctorialBoardNotice",
         ]
         if self.model.__name__ in global_models:
             return super().has_delete_permission(request, obj)

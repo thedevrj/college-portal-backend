@@ -4,8 +4,7 @@ from django.urls import reverse
 
 class ForcePasswordChangeMiddleware:
     """
-    Middleware to force a user to change their password on first login.
-    Intercepts the request and redirects to the password change form if flagged.
+    user to change their password on first login.
     """
 
     def __init__(self, get_response):
