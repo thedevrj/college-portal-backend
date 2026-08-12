@@ -12,7 +12,8 @@ class PortalConfig:
     ROLE_MODELS = {
         PortalRole.DEAN: [
             "school",
-            "SchoolBoardCommitteeMember",
+            "schoolboardcommittee",
+            "schoolboardcommitteemember",
             "schoolboardmom",
             "department",
             "faculty",
@@ -71,13 +72,19 @@ class PortalConfig:
         ],
         PortalRole.RD_ADMIN: [
             "researchproject",
-            "researchscholar",
-            "publication",
             "patent",
             "consultancy",
             "researcharea",
-            "faculty",
             "researchdevelopmentcellmember",
+            "researchfacility",
+        ],
+        PortalRole.COE: [
+            "researchscholar",
+            "coenotice",
+            "phdvivavocedate",
+            "mphilvivavocedate",
+            "phdpresubmissionseminar",
+            "rdcunotice",
         ],
     }
 
@@ -100,14 +107,20 @@ class PortalPermissionService:
                 role_models = PortalConfig.ROLE_MODELS.get(access.role, [])
                 models_to_grant.update(role_models)
 
-            permissions = Permission.objects.filter(
-                content_type__model__in=list(models_to_grant)
-            ).filter(
-                Q(codename__startswith="view_")
-                | Q(codename__startswith="add_")
-                | Q(codename__startswith="change_")
-            )
-
+            if any(access.role == PortalRole.RD_ADMIN for access in active_access_list):
+                permissions = Permission.objects.filter(
+                    content_type__model__in=list(models_to_grant)
+                ).filter(
+                    Q(codename__startswith="view_") | Q(codename__startswith="add_")
+                )
+            else:
+                permissions = Permission.objects.filter(
+                    content_type__model__in=list(models_to_grant)
+                ).filter(
+                    Q(codename__startswith="view_")
+                    | Q(codename__startswith="add_")
+                    | Q(codename__startswith="change_")
+                )
             group, _ = Group.objects.get_or_create(
                 name=f"Portal_AutoGroup_{user.username}"
             )
