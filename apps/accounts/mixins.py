@@ -1,3 +1,4 @@
+from apps.accounts.services import logger
 from django.contrib import admin
 from .models import PortalRole, EntityType
 from django.apps import apps
@@ -57,7 +58,6 @@ class PortalSecurityMixin:
             qs = super().get_queryset(request)
 
         # --- Soft Delete Filtering ---
-        # Only show active records by default, unless superuser is using a filter
         if hasattr(self.model, "is_deleted") and not request.user.is_superuser:
             qs = qs.filter(is_deleted=False)
 
@@ -72,6 +72,7 @@ class PortalSecurityMixin:
 
             # --- Bypass ---
             global_models = [
+                "ResearchScholar",
                 "BoardOfManagementMember",
                 "BoardOfManagementMinutes",
                 "AcademicCouncilMember",
@@ -234,17 +235,16 @@ class PortalSecurityMixin:
             if request.user.portal_profile.is_rd_admin():
                 rd_admin_models = [
                     "ResearchProject",
-                    "ResearchScholar",
-                    "Publication",
                     "Patent",
                     "Consultancy",
                     "ResearchArea",
+                    "ResearchFacility",
                     "ResearchDevelopmentCellMember",
                 ]
                 if self.model.__name__ in rd_admin_models:
                     return True
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"R&D Admin permission check failed: {e}")
 
         # 3. SPECIAL CASE: Faculty Profiles & Personal Data
         # HODs, Deans, and other Faculty should NOT be able to edit other faculty members' personal data
@@ -381,8 +381,7 @@ class PortalSecurityMixin:
 
     def delete_model(self, request, obj):
         """
-        Default to soft delete for everyone (including superusers) for safety.
-        Superusers can still use the 'Permanent Delete' action in the list view.
+        Default to soft delete for everyone.
         """
         if hasattr(obj, "soft_delete"):
             obj.soft_delete()
