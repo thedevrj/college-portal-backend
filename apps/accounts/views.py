@@ -102,7 +102,7 @@ class PortalLoginView(View):
             return redirect("/admin/research/")
 
         if access.role in [PortalRole.HOD, PortalRole.DEPT_STAFF]:
-            return redirect("/admin/research/")
+            return redirect("/admin/")
 
         return redirect("/admin/")
 

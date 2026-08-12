@@ -61,7 +61,14 @@ class PortalAccessForm(forms.ModelForm):
         dynamic_entity_id = cleaned_data.get("dynamic_entity")
 
         # If role is FACULTY or RD_ADMIN, they don't need an entity!
-        if role in ["FACULTY", "RD_ADMIN"]:
+        if role in [
+            "FACULTY",
+            "RD_ADMIN",
+            "COE",
+            "REGISTRAR",
+            "FINANCE_SECTION",
+            "ACADEMIC_SECTION",
+        ]:
             return cleaned_data
 
         # For HOD, DEAN, etc. an entity is required

@@ -78,11 +78,6 @@ class IsRDAdmin(BasePermission):
 
 
 class IsRDAdminOrReadOnly(BasePermission):
-    """
-    Safe methods allowed for any authenticated portal user.
-    Write methods require R&D Admin role.
-    Used for university-level models like ResearchFacility.
-    """
 
     def has_permission(self, request, view):
         from rest_framework.permissions import SAFE_METHODS
