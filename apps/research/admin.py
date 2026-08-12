@@ -922,6 +922,7 @@ class ResearchDevelopmentCellMemberAdmin(SimpleHistoryAdmin, admin.ModelAdmin):
     list_editable = ("order",)
     ordering = ("order",)
     autocomplete_fields = ("faculty",)
+    exclude = ("is_deleted", "deleted_at")
 
     def has_module_permission(self, request):
         if request.user.is_superuser:
