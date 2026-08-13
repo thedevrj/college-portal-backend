@@ -68,6 +68,12 @@ def log_user_login(sender, request, user, **kwargs):
         ip_address=ip_address,
         user_agent=user_agent,
     )
+    try:
+        profile = getattr(user, "portal_profile", None)
+        if profile and profile.is_portal_user:
+            profile.sync_permissions()
+    except Exception:
+        pass
 
 
 @receiver(user_logged_out)

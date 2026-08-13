@@ -25,7 +25,7 @@ class Command(BaseCommand):
         if reset_passwords:
             self.stdout.write(
                 self.style.WARNING(
-                    f"⚠️  Password reset is ENABLED. All accounts will be set to: {UNIVERSAL_PASSWORD}"
+                    f" Password reset is ENABLED. All accounts will be set to: {UNIVERSAL_PASSWORD}"
                 )
             )
 
@@ -147,9 +147,14 @@ class Command(BaseCommand):
                 access.save()
                 school.dean.user.portal_profile.sync_permissions()
 
+        # 4. Sync All Portal User Permissions
+        self.stdout.write(" Re-syncing permissions for all portal users...")
+        for profile in UserProfile.objects.filter(is_portal_user=True):
+            profile.sync_permissions()
+
         self.stdout.write(
             self.style.SUCCESS(
-                f"🎉 Sync Complete!\n"
+                f" Sync Complete!\n"
                 f"Created: {fac_count} new accounts. "
                 f"Reset/Updated: {reset_count} existing passwords."
             )
