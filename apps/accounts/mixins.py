@@ -15,7 +15,7 @@ class PortalSecurityMixin:
 
     def _is_owner(self, user, obj):
         """
-        Industry-standard helper to check if a user owns a specific record.
+        to check the owner of the particular record
         """
         if not obj:
             return False
@@ -64,15 +64,52 @@ class PortalSecurityMixin:
         if request.user.is_superuser:
             return qs
 
-        # Enforce row-level security even for autocomplete requests to filter dropdowns
+        # Allow full search in autocomplete dropdown widgets for core lookup models
+        is_autocomplete = (
+            request.path.endswith("/autocomplete/")
+            or getattr(request, "resolver_match", None)
+            and getattr(request.resolver_match, "url_name", "") == "autocomplete"
+        )
+        if is_autocomplete and self.model.__name__ in [
+            "Faculty",
+            "Department",
+            "School",
+            "Centre",
+        ]:
+            return qs
+
+        # Enforce row-level security for standard list views
         try:
             profile = getattr(request.user, "portal_profile", None)
+            active_access = request.user.access_entries.filter(is_active=True)
+            active_roles = list(active_access.values_list("role", flat=True))
+
             if profile and profile.is_rd_admin():
-                return qs
+                rd_admin_models = [
+                    "ResearchProject",
+                    "Patent",
+                    "Consultancy",
+                    "ResearchArea",
+                    "ResearchDevelopmentCellMember",
+                    "ResearchFacility",
+                ]
+                if self.model.__name__ in rd_admin_models:
+                    return qs
+
+            if "COE" in active_roles:
+                coe_models = [
+                    "ResearchScholar",
+                    "COENotice",
+                    "PHDVivaVoceDate",
+                    "MPHILVivaVoceDate",
+                    "PHDPreSubmissionSeminar",
+                    "RDCUNotice",
+                ]
+                if self.model.__name__ in coe_models:
+                    return qs
 
             # --- Bypass ---
             global_models = [
-                "ResearchScholar",
                 "BoardOfManagementMember",
                 "BoardOfManagementMinutes",
                 "AcademicCouncilMember",
@@ -98,7 +135,6 @@ class PortalSecurityMixin:
             if self.model.__name__ in global_models:
                 return qs
 
-            active_access = request.user.access_entries.filter(is_active=True)
             if not active_access.exists():
                 return qs.none()
 
@@ -136,7 +172,10 @@ class PortalSecurityMixin:
                                 principal_investigator__user=request.user
                             )
                         elif hasattr(self.model, "supervisor"):
-                            role_qs = role_qs.filter(supervisor__user=request.user)
+                            role_qs = role_qs.filter(
+                                models.Q(supervisor__user=request.user)
+                                | models.Q(co_supervisor__user=request.user)
+                            )
                         elif self.model.__name__ == "Faculty":
                             role_qs = role_qs.filter(user=request.user)
                         else:
@@ -227,9 +266,6 @@ class PortalSecurityMixin:
         if request.user.is_superuser:
             return True
 
-        if not obj:
-            return super().has_change_permission(request, obj)
-
         # 2. R&D Cell Admins have full access to all research
         try:
             if request.user.portal_profile.is_rd_admin():
@@ -245,6 +281,9 @@ class PortalSecurityMixin:
                     return True
         except Exception as e:
             logger.error(f"R&D Admin permission check failed: {e}")
+
+        if not obj:
+            return super().has_change_permission(request, obj)
 
         # 3. SPECIAL CASE: Faculty Profiles & Personal Data
         # HODs, Deans, and other Faculty should NOT be able to edit other faculty members' personal data
@@ -519,8 +558,14 @@ class PortalSecurityMixin:
                         form.base_fields[field].disabled = True
 
             active_access_list = request.user.access_entries.filter(is_active=True)
-            dept_access = active_access_list.filter(entity_type=EntityType.DEPARTMENT)
-            school_access = active_access_list.filter(entity_type=EntityType.SCHOOL)
+            dept_access = active_access_list.filter(
+                entity_type=EntityType.DEPARTMENT,
+                role__in=[PortalRole.HOD, PortalRole.DEPT_STAFF],
+            )
+            school_access = active_access_list.filter(
+                entity_type=EntityType.SCHOOL,
+                role=PortalRole.DEAN,
+            )
 
             # --- STRICT LOCK: Personal Models ---
             # Force the faculty field to the current user for personal models, regardless of role (HOD/Dean)
@@ -598,6 +643,27 @@ class PortalSecurityMixin:
         if not request.user.is_superuser:
             try:
                 active_access = request.user.access_entries.filter(is_active=True)
+
+                # Personal faculty models represent individual records(review this)
+                personal_models = [
+                    "InvitedTalk",
+                    "CourseDesign",
+                    "Membership",
+                    "Faculty",
+                ]
+
+                # review this late
+                if self.model.__name__ not in personal_models:
+                    mgmt_access = active_access.filter(
+                        role__in=[
+                            PortalRole.HOD,
+                            PortalRole.DEPT_STAFF,
+                            PortalRole.DEAN,
+                        ]
+                    )
+                    if mgmt_access.exists():
+                        active_access = mgmt_access
+
                 # Combine filters for all roles using OR logic (Q objects)
                 combined_q = models.Q()
                 for access in active_access:
