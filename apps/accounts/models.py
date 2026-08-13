@@ -173,6 +173,17 @@ def trigger_profile_sync(sender, instance, **kwargs):
         instance.sync_permissions()
 
 
+@receiver(post_save, sender=PortalAccess)
+@receiver(models.signals.post_delete, sender=PortalAccess)
+def trigger_access_sync(sender, instance, **kwargs):
+    try:
+        profile = getattr(instance.user, "portal_profile", None)
+        if profile and profile.is_portal_user:
+            profile.sync_permissions()
+    except Exception:
+        pass
+
+
 # global trash bin
 
 

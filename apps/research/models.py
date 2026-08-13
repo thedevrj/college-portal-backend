@@ -828,7 +828,10 @@ class Patent(SoftDeleteModel):
 
 class ResearchDevelopmentCellMember(SoftDeleteModel):
     faculty = models.ForeignKey(
-        "faculty.Faculty", on_delete=models.CASCADE, related_name="rd_cell_roles"
+        "faculty.Faculty",
+        on_delete=models.CASCADE,
+        related_name="rd_cell_roles",
+        verbose_name="R&D Cell Member",
     )
     designation = models.CharField(
         max_length=255, help_text="Designation in R&D Cell e.g. Director, Member"
