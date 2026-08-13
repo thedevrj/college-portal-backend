@@ -917,7 +917,7 @@ class PatentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmi
 
 
 @admin.register(ResearchDevelopmentCellMember)
-class ResearchDevelopmentCellMemberAdmin(SimpleHistoryAdmin, admin.ModelAdmin):
+class ResearchDevelopmentCellMemberAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("faculty", "designation", "order")
     list_editable = ("order",)
     ordering = ("order",)

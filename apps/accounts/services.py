@@ -69,6 +69,7 @@ class PortalConfig:
             "departmentgallery",
             "departmentgalleryevent",
             "department",
+            "faculty",
         ],
         PortalRole.RD_ADMIN: [
             "researchproject",
@@ -77,6 +78,7 @@ class PortalConfig:
             "researcharea",
             "researchdevelopmentcellmember",
             "researchfacility",
+            "faculty",
         ],
         PortalRole.COE: [
             "researchscholar",
@@ -85,6 +87,7 @@ class PortalConfig:
             "mphilvivavocedate",
             "phdpresubmissionseminar",
             "rdcunotice",
+            "faculty",
         ],
     }
 

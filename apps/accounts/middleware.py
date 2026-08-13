@@ -80,7 +80,7 @@ class FileValidationMiddleware:
 
                     # 1. Check File Size
                     if uploaded_file.size > self.MAX_UPLOAD_SIZE:
-                        error_msg = f"Upload Failed: File '{uploaded_file.name}' exceeds the maximum allowed size of 10MB."
+                        error_msg = f"Upload Failed: File '{uploaded_file.name}' exceeds the maximum allowed size of 20MB."
 
                     # 2. Check File Extension
                     ext = os.path.splitext(uploaded_file.name)[1].lower()

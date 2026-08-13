@@ -508,11 +508,13 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
             return True
         try:
             profile = request.user.portal_profile
-            active_roles = request.user.access_entries.filter(
-                is_active=True
-            ).values_list("role", flat=True)
-            # If they are ONLY an RD_ADMIN, hide the module entirely from the sidebar
-            if profile.is_rd_admin() and len(active_roles) == 1:
+            active_roles = list(
+                request.user.access_entries.filter(is_active=True).values_list(
+                    "role", flat=True
+                )
+            )
+            # If they are ONLY an RD_ADMIN or COE, hide the module entirely from the sidebar
+            if any(r in ["RD_ADMIN", "COE"] for r in active_roles) and len(active_roles) == 1:
                 return False
         except Exception:
             pass
@@ -523,11 +525,13 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
             return True
         try:
             profile = request.user.portal_profile
-            active_roles = request.user.access_entries.filter(
-                is_active=True
-            ).values_list("role", flat=True)
-            # RD_ADMIN should never be able to add a faculty profile
-            if profile.is_rd_admin() and len(active_roles) == 1:
+            active_roles = list(
+                request.user.access_entries.filter(is_active=True).values_list(
+                    "role", flat=True
+                )
+            )
+            # RD_ADMIN and COE should never be able to add a faculty profile
+            if any(r in ["RD_ADMIN", "COE"] for r in active_roles) and len(active_roles) == 1:
                 return False
         except Exception:
             pass
