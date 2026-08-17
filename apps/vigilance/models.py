@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from apps.accounts.models import SoftDeleteModel
+from django.core.exceptions import ValidationError
 import uuid
 
 User = get_user_model()
@@ -11,7 +12,7 @@ class Complaint(SoftDeleteModel):
         ("corruption", "Corruption"),
         ("malpractice", "Malpractice"),
         ("procedural_lapse", "Procedural Lapse"),
-        ("other", "Other"),
+        ("Others", "Others"),
     ]
 
     STATUS_CHOICES = [
@@ -20,6 +21,7 @@ class Complaint(SoftDeleteModel):
         ("resolved", "Resolved"),
         ("forwarded", "Forwarded to Higher Authorities"),
         ("dismissed", "Dismissed"),
+        ("Others", "Others"),
     ]
 
     tracking_id = models.CharField(max_length=50, unique=True, blank=True, null=True)
@@ -33,9 +35,18 @@ class Complaint(SoftDeleteModel):
     description = models.TextField()
 
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="pending")
+    others_status = models.CharField(max_length=30, blank=True, null=True)
 
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        permissions = [
+            (
+                "manage_complaints",
+                "Can view and update vigilance complaint case statuses through the API",
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
@@ -46,6 +57,11 @@ class Complaint(SoftDeleteModel):
             month_str = self.submitted_at.strftime("%Y%m")
             self.tracking_id = f"VIG-{month_str}-{self.id:04d}"
             self.save(update_fields=["tracking_id"])
+
+        if self.status == "Others" and not self.others_status:
+            raise ValidationError(
+                {"others_status": "This field is required when category is 'Others'."}
+            )
 
     def __str__(self):
         return f"{self.tracking_id} - {self.get_status_display()}"
@@ -98,7 +114,7 @@ class ComplaintActionLog(SoftDeleteModel):
     action_taken_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True
     )
-    action_description = models.TextField()
+    action_description = models.CharField()
     status_changed_to = models.CharField(
         max_length=30, choices=Complaint.STATUS_CHOICES, blank=True, null=True
     )
