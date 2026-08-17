@@ -1,5 +1,5 @@
-from rest_framework import generics, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import generics, mixins, viewsets
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -8,9 +8,11 @@ from django.shortcuts import get_object_or_404
 from .models import Complaint, FAQ, PolicyDocument, ComplaintActionLog
 from .serializers import (
     ComplaintSerializer,
+    ComplaintStatusUpdateSerializer,
     FAQSerializer,
     PolicyDocumentSerializer,
 )
+from .permissions import IsVigilanceOfficer
 
 
 class ComplaintCreateView(generics.CreateAPIView):
@@ -91,13 +93,24 @@ class PolicyDocumentListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
 
-class AdminComplaintViewSet(viewsets.ModelViewSet):
+class AdminComplaintViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
 
     # Private API for Vigilance Officers to manage complaints.
 
     queryset = Complaint.objects.all().order_by("-submitted_at")
     serializer_class = ComplaintSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsVigilanceOfficer]
+    http_method_names = ["get", "head", "options", "put", "patch"]
+
+    def get_serializer_class(self):
+        if self.action in {"update", "partial_update"}:
+            return ComplaintStatusUpdateSerializer
+        return ComplaintSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()

@@ -644,25 +644,27 @@ class PortalSecurityMixin:
             try:
                 active_access = request.user.access_entries.filter(is_active=True)
 
-                # Personal faculty models represent individual records(review this)
-                personal_models = [
-                    "InvitedTalk",
-                    "CourseDesign",
-                    "Membership",
-                    "Faculty",
+                # For departmental management models, restrict entity filtering to management roles (HOD, DEPT_STAFF, DEAN)
+                management_models = [
+                    "Program",
+                    "Notice",
+                    "Timetable",
+                    "StudyMaterial",
+                    "CBCSCourse",
+                    "Committee",
+                    "MinutesOfTheMeeting",
+                    "DepartmentGalleryEvent",
+                    "DepartmentGallery",
+                    "Course",
+                    "Department",
                 ]
-
-                # review this late
-                if self.model.__name__ not in personal_models:
-                    mgmt_access = active_access.filter(
+                if self.model.__name__ in management_models:
+                    active_access = active_access.filter(
                         role__in=[
                             PortalRole.HOD,
                             PortalRole.DEPT_STAFF,
-                            PortalRole.DEAN,
                         ]
                     )
-                    if mgmt_access.exists():
-                        active_access = mgmt_access
 
                 # Combine filters for all roles using OR logic (Q objects)
                 combined_q = models.Q()

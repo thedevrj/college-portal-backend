@@ -48,7 +48,7 @@ class PHDVivaVoceDate(SoftDeleteModel):
 
     class Meta:
         ordering = ["-date"]
-        verbose_name_plural = "PhD Viva Voce Dates"
+        verbose_name_plural = "PhD Viva Voce Notices"
 
 
 class MPHILVivaVoceDate(SoftDeleteModel):
@@ -72,7 +72,7 @@ class MPHILVivaVoceDate(SoftDeleteModel):
 
     class Meta:
         ordering = ["-date"]
-        verbose_name_plural = "MPhil Viva Voce Dates"
+        verbose_name_plural = "MPhil Viva Voce Notices"
 
 
 class PHDPreSubmissionSeminar(SoftDeleteModel):
@@ -96,7 +96,7 @@ class PHDPreSubmissionSeminar(SoftDeleteModel):
 
     class Meta:
         ordering = ["-date"]
-        verbose_name_plural = "PhD Pre-Submission Seminar Dates"
+        verbose_name_plural = "PhD Pre-Submission Seminar Notices"
 
 
 class RDCUNotice(SoftDeleteModel):
