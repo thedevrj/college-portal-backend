@@ -1,0 +1,74 @@
+"""
+URL configuration for college_backend_portal project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.0/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+
+from django.contrib import admin
+from django.urls import path, include
+from django.http import HttpResponse
+from django.views.generic import RedirectView
+from rest_framework_simplejwt.views import (
+    TokenRefreshView,
+    TokenVerifyView,
+)
+from apps.accounts.views import CustomTokenObtainPairView
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+
+def health(request):
+    return HttpResponse("OK")
+
+
+urlpatterns = [
+    path("health/", health),
+    path(
+        "admin/login/",
+        RedirectView.as_view(
+            pattern_name="portal_login", permanent=False, query_string=True
+        ),
+    ),
+    path(
+        "admin/logout/",
+        RedirectView.as_view(pattern_name="portal_logout", permanent=False),
+    ),
+    path("admin/", admin.site.urls),
+    path("api/v1/", include("apps.academics.urls")),
+    path("api/v1/", include("apps.faculty.urls")),
+    path("api/v1/", include("apps.centres.urls")),
+    path("api/v1/", include("apps.notices.urls")),
+    path("api/v1/", include("apps.research.urls")),
+    path("api/v1/", include("apps.staff.urls")),
+    path("api/v1/", include("apps.mou.urls")),
+    path("api/v1/authorities/", include("apps.authorities.urls")),
+    path("api/v1/proctor/", include("apps.proctor.urls")),
+    path("api/v1/coe/", include("apps.coe.urls")),
+    path("api/v1/", include("apps.foundation_course.urls")),
+    path("api/v1/vigilance/", include("apps.vigilance.urls")),
+    path("api/v1/portals/", include("apps.portals.urls")),
+    path("api/v1/admission/", include("apps.admission.urls")),
+    # Authentication
+    path(
+        "api/v1/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"
+    ),
+    path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/v1/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    # ERP Portal Login
+    path("portal/", include("apps.accounts.urls")),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

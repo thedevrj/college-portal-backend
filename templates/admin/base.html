@@ -1,0 +1,55 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+{% if request.user.is_authenticated %}
+<script src="{% static 'js/admin_dynamic_fields.js' %}"></script>
+<script>
+    // Inject user data for sidebar UI updates
+    window.PORTAL_USER = {
+        displayName: "{{ request.user.get_full_name|escapejs }}",
+        avatarUrl: "{% if request.user.portal_profile.profile_photo %}{{ request.user.portal_profile.profile_photo.url }}{% elif request.user.faculty_profile.photo %}{{ request.user.faculty_profile.photo.url }}{% endif %}"
+    };
+
+    // Sidebar scroll persistence and active item focus
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebar = document.querySelector('.main-sidebar .os-viewport') || document.querySelector('.main-sidebar');
+        
+        // Find all active items and get the most specific one (deepest in the tree)
+        const activeItems = document.querySelectorAll('.nav-sidebar .nav-link.active');
+        const activeItem = activeItems.length > 0 ? activeItems[activeItems.length - 1] : null;
+        
+        if (sidebar) {
+            const savedScrollPos = sessionStorage.getItem('sidebarScrollPos');
+            
+            // If there's an active item, ensure it's visible
+            if (activeItem) {
+                setTimeout(() => {
+                    activeItem.scrollIntoView({ behavior: 'auto', block: 'center' });
+                    // Update session storage after scrolling to active item
+                    setTimeout(() => {
+                        sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
+                    }, 50);
+                }, 100);
+            } else if (savedScrollPos !== null) {
+                // Fallback to saved position if no active item (e.g. dashboard)
+                sidebar.scrollTop = parseInt(savedScrollPos, 10);
+            }
+            
+            // Track scroll position
+            sidebar.addEventListener('scroll', function() {
+                sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
+            });
+            
+            // Track clicks to ensure we capture the intent immediately
+            document.querySelectorAll('.nav-sidebar .nav-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
+                });
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

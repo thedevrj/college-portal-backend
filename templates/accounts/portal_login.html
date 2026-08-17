@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BBAU ERP Portal — Login</title>
+  <meta name="description" content="BBAU ERP Portal — Login for department administrators, R&D Cell, and faculty." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* BBAU Classic Theme */
+      --bg-light: #fffcf2;
+      /* Warm Cream */
+      --card-bg: #ffffff;
+      --accent-maroon: #991b1b;
+      /* Deep University Red */
+      --accent-hover: #7f1d1d;
+      --text-primary: #450a0a;
+      /* Very deep red-black */
+      --text-secondary: #78350f;
+      /* Warm brown-muted */
+      --border: #f3e8ff;
+      /* Soft border */
+      --error: #ef4444;
+      --success: #22c55e;
+      --input-bg: #fffbf0;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-light);
+      background-image:
+        radial-gradient(at 0% 0%, #fff7ed 0px, transparent 50%),
+        radial-gradient(at 100% 0%, #fef3c7 0px, transparent 50%),
+        radial-gradient(at 100% 100%, #fff7ed 0px, transparent 50%),
+        radial-gradient(at 0% 100%, #fefce8 0px, transparent 50%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Grid overlay */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+    }
+
+    .login-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      width: 100%;
+      max-width: 920px;
+      min-height: 540px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--card-bg);
+      box-shadow:
+        0 10px 15px -3px rgba(69, 10, 10, 0.02),
+        0 40px 100px -20px rgba(69, 10, 10, 0.08),
+        0 0 0 1px rgba(153, 27, 27, 0.05);
+      margin: 24px;
+    }
+
+    /* --- Left panel (branding) --- */
+    .brand-panel {
+      flex: 1;
+      background: #fefce8;
+      /* Light Golden/Cream tint */
+      padding: 56px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid #fde68a;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-panel::before {
+      content: '';
+      position: absolute;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(153, 27, 27, 0.05) 0%, transparent 65%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo-icon {
+      width: 64px;
+      height: 64px;
+      background: white;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+    }
+
+    .brand-logo-icon img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .brand-logo-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-name {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .brand-center {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-headline {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .brand-headline span {
+      color: var(--accent-maroon);
+    }
+
+    .brand-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .brand-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .feature-item i {
+      width: 28px;
+      height: 28px;
+      background: rgba(153, 27, 27, 0.08);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-maroon);
+      font-size: 12px;
+      border: 1px solid rgba(153, 27, 27, 0.1);
+    }
+
+    /* --- Right panel (form) --- */
+    .form-panel {
+      width: 400px;
+      flex-shrink: 0;
+      background: var(--card-bg);
+      padding: 56px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-header {
+      margin-bottom: 36px;
+    }
+
+    .form-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .form-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .error-banner {
+      background: #fef2f2;
+      border: 1px solid #fee2e2;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #991b1b;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 14px;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 14px 13px 40px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input::placeholder {
+      color: #475569;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent-maroon);
+      box-shadow: 0 0 0 3px rgba(153, 27, 27, 0.1);
+    }
+
+    .form-input:focus~.input-icon {
+      color: var(--accent-maroon);
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .password-toggle:hover {
+      color: var(--accent-maroon);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent-maroon), #7f1d1d);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 6px 20px rgba(153, 27, 27, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(153, 27, 27, 0.5);
+      opacity: 0.95;
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .form-footer {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .form-footer a {
+      color: var(--accent-maroon);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .form-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .brand-panel {
+        display: none;
+      }
+
+      .form-panel {
+        width: 100%;
+      }
+
+      .login-wrapper {
+        max-width: 440px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid-overlay"></div>
+
+  <div class="login-wrapper">
+    <!-- Left Branding Panel -->
+    <div class="brand-panel">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">
+          <img src="{% static 'img/bbau_logo.png' %}" alt="BBAU Logo" />
+        </div>
+        <div class="brand-logo-text">
+          <span class="brand-name">Babasaheb Bhimrao Ambedkar University</span>
+        </div>
+      </div>
+
+      <div class="brand-center">
+        <h1 class="brand-headline">Manage your<span> profile, department and sections</span><br />with ease.</h1>
+        <p class="brand-desc">
+          A unified platform for research management, academic data, and university administration — all in one portal.
+        </p>
+      </div>
+
+      <div class="brand-features">
+        <div class="feature-item">
+          <i class="fas fa-shield-alt"></i>
+          <span>Role-based access control </span>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-flask"></i>
+          <span>Manage research projects, scholars & publications</span>
+        </div>
+        <!-- <div class="feature-item">
+          <i class="fas fa-check-double"></i>
+          <span>Approval workflow: Draft → Submitted → Published</span>
+        </div> -->
+      </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="form-panel">
+      <div class="form-header">
+        <h2 class="form-title">Welcome back</h2>
+        <p class="form-subtitle">Sign in to access the BBAU ERP portal.</p>
+      </div>
+
+      {% if error %}
+      <div class="error-banner">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="{% url 'portal_login' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <div class="input-wrapper">
+            <input class="form-input" type="text" id="username" name="username" placeholder="Enter your username"
+              autocomplete="username" required />
+            <i class="fas fa-user input-icon"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-wrapper">
+            <input class="form-input" type="password" id="password" name="password" placeholder="Enter your password"
+              autocomplete="current-password" required />
+            <i class="fas fa-lock input-icon"></i>
+            <button type="button" class="password-toggle" onclick="togglePassword()" title="Show/hide password">
+              <i class="fas fa-eye" id="toggle-icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="login-btn">
+          <i class="fas fa-sign-in-alt"></i> Sign In to Portal
+        </button>
+      </form>
+
+      <div class="divider"></div>
+
+      <div class="form-footer">
+        <p>Don't have credentials?</p>
+        <p>Contact <a href="mailto:computer.centre@bbau.ac.in">Computer Centre</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('toggle-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+  </script>
+</body>
+
+</html>
