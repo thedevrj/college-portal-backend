@@ -8,6 +8,9 @@ class SoftDeleteListFilter(admin.SimpleListFilter):
     parameter_name = "is_deleted"
 
     def lookups(self, request, model_admin):
+        # Only show this filter to superusers
+        if not request.user.is_superuser:
+            return ()
         return (
             (None, "Active"),
             ("all", "All"),
@@ -15,7 +18,7 @@ class SoftDeleteListFilter(admin.SimpleListFilter):
         )
 
     def choices(self, cl):
-        for lookup, title in self.lookups(None, None):
+        for lookup, title in self.lookup_choices:
             yield {
                 "selected": self.value() == lookup,
                 "query_string": cl.get_query_string({self.parameter_name: lookup}, []),
@@ -23,10 +26,12 @@ class SoftDeleteListFilter(admin.SimpleListFilter):
             }
 
     def queryset(self, request, queryset):
-        if self.value() == "1":
-            return queryset.filter(is_deleted=True)
-        if self.value() == "all":
-            return queryset
+        if request.user.is_superuser:
+            if self.value() == "1":
+                return queryset.filter(is_deleted=True)
+            if self.value() == "all":
+                return queryset
+        # Non-superusers always see only active items
         if self.value() is None:
             return queryset.filter(is_deleted=False)
-        return queryset
+        return queryset.filter(is_deleted=False)

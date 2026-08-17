@@ -13,6 +13,7 @@ class ComplaintAttachmentInline(admin.TabularInline):
     model = ComplaintAttachment
     extra = 0
     readonly_fields = ["uploaded_at"]
+    exclude = ("deleted_at", "is_deleted")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -26,10 +27,10 @@ class ComplaintActionLogInline(admin.TabularInline):
     extra = 0
     readonly_fields = [
         "action_taken_by",
-        "action_description",
         "status_changed_to",
         "timestamp",
     ]
+    exclude = ("deleted_at", "is_deleted")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -41,10 +42,17 @@ class ComplaintActionLogInline(admin.TabularInline):
 @admin.register(Complaint)
 class ComplaintAdmin(admin.ModelAdmin):
     list_display = ("tracking_id", "category", "status", "submitted_at")
-    list_filter = (SoftDeleteListFilter, "status", "category", "is_anonymous", "submitted_at")
+    list_filter = (
+        SoftDeleteListFilter,
+        "status",
+        "category",
+        "is_anonymous",
+        "submitted_at",
+    )
     search_fields = ("tracking_id", "name", "email", "phone")
     readonly_fields = ("tracking_id", "submitted_at", "updated_at")
     inlines = [ComplaintAttachmentInline, ComplaintActionLogInline]
+    exclude = ("deleted_at", "is_deleted")
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -80,6 +88,7 @@ class FAQAdmin(admin.ModelAdmin):
     search_fields = ("question",)
     list_filter = (SoftDeleteListFilter,)
     list_editable = ("order",)
+    exclude = ("deleted_at", "is_deleted")
 
 
 @admin.register(PolicyDocument)
@@ -87,3 +96,4 @@ class PolicyDocumentAdmin(admin.ModelAdmin):
     list_display = ("title", "document_type", "uploaded_at")
     list_filter = (SoftDeleteListFilter, "document_type")
     search_fields = ("title",)
+    exclude = ("deleted_at", "is_deleted")
