@@ -1,12 +1,17 @@
-from rest_framework import generics, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import generics, mixins, viewsets
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
 from .models import Grievance, GrievanceActionLog
-from .serializers import GrievanceSerializer, GrievanceStatusSerializer
+from .serializers import (
+    GrievanceSerializer,
+    GrievanceStatusSerializer,
+    GrievanceStatusUpdateSerializer,
+)
+from .permissions import IsGrievanceOfficer
 
 
 class GrievanceCreateView(generics.CreateAPIView):
@@ -56,11 +61,22 @@ class GrievanceStatusView(APIView):
         )
 
 
-class AdminGrievanceViewSet(viewsets.ModelViewSet):
+class AdminGrievanceViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
 
     queryset = Grievance.objects.filter(is_deleted=False).order_by("-submitted_at")
     serializer_class = GrievanceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsGrievanceOfficer]
+    http_method_names = ["get", "head", "options", "put", "patch"]
+
+    def get_serializer_class(self):
+        if self.action in {"update", "partial_update"}:
+            return GrievanceStatusUpdateSerializer
+        return GrievanceSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()
