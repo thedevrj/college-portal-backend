@@ -3,6 +3,7 @@ from django import forms
 from django.db import models
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.mixins import PortalSecurityMixin
+from apps.accounts.filters import SoftDeleteListFilter
 from .models import (
     Grievance,
     GrievanceAttachment,
@@ -77,6 +78,7 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "nature_of_grievance",
         "complainant_type",
@@ -269,6 +271,7 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "nature_of_grievance",
         "gender",
@@ -453,6 +456,7 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "complaint_discrimination",
         "gender",
@@ -653,6 +657,7 @@ class StudentFeedbackAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "subject_of_feedback",
         "course_name",

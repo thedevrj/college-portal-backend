@@ -1,5 +1,8 @@
 from django.contrib import admin
 from apps.accounts.filters import SoftDeleteListFilter
+from apps.accounts.mixins import PortalSecurityMixin
+from simple_history.admin import SimpleHistoryAdmin
+
 from .models import (
     Complaint,
     ComplaintAttachment,
@@ -40,7 +43,7 @@ class ComplaintActionLogInline(admin.TabularInline):
 
 
 @admin.register(Complaint)
-class ComplaintAdmin(admin.ModelAdmin):
+class ComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("tracking_id", "category", "status", "submitted_at")
     list_filter = (
         SoftDeleteListFilter,
@@ -83,7 +86,7 @@ class ComplaintAdmin(admin.ModelAdmin):
 
 
 @admin.register(FAQ)
-class FAQAdmin(admin.ModelAdmin):
+class FAQAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("question", "order")
     search_fields = ("question",)
     list_filter = (SoftDeleteListFilter,)
@@ -92,7 +95,7 @@ class FAQAdmin(admin.ModelAdmin):
 
 
 @admin.register(PolicyDocument)
-class PolicyDocumentAdmin(admin.ModelAdmin):
+class PolicyDocumentAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("title", "document_type", "uploaded_at")
     list_filter = (SoftDeleteListFilter, "document_type")
     search_fields = ("title",)
