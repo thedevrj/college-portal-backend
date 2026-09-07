@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     "apps.foundation_course",
     "apps.vigilance",
     "apps.portals",
+    "apps.affidavits",
+    "apps.antiragging",
     "apps.archives",
     "simple_history",
     "django_cleanup.apps.CleanupConfig",
@@ -126,6 +128,8 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
+        "CONN_MAX_AGE": 600,  # Reuse connections for 10 mins
+
     }
 }
 
@@ -202,6 +206,9 @@ AXES_META_PRECEDENCE_ORDER = [
 ]
 
 REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -230,15 +237,6 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
-
-# REST_FRAMEWORK = {
-#     "DEFAULT_PERMISSION_CLASSES": [
-#         "rest_framework.permissions.AllowAny"
-#     ],
-#     "DEFAULT_FILTER_BACKENDS": [
-#         "django_filters.rest_framework.DjangoFilterBackend"
-#     ]
-# }
 
 
 # Internationalization

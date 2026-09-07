@@ -26,7 +26,6 @@ class BaseAuthorityPermission(permissions.BasePermission):
         return any(role in user_roles for role in self.allowed_roles)
 
     def has_object_permission(self, request, view, obj):
-        # Already checked by has_permission, but just in case
         if request.method in permissions.SAFE_METHODS:
             return True
 
