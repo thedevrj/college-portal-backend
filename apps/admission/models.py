@@ -1,6 +1,5 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from ckeditor.fields import RichTextField
 from simple_history.models import HistoricalRecords
 from django.utils import timezone
 from apps.accounts.models import SoftDeleteModel

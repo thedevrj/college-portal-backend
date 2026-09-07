@@ -14,10 +14,6 @@ from .models import PortalRole
 
 
 class PortalLoginView(View):
-    """
-    URL: /portal/login/
-    """
-
     template_name = "accounts/portal_login.html"
 
     def get(self, request):
@@ -30,7 +26,7 @@ class PortalLoginView(View):
         password = request.POST.get("password", "").strip()
 
         # Strict validation on username to prevent injection attempts or overly long inputs
-        if not username.isalnum() and "_" not in username and "@" not in username:
+        if not all(char.isalnum() or char in "_@" for char in username):
             return render(
                 request,
                 self.template_name,
@@ -62,7 +58,7 @@ class PortalLoginView(View):
                     request,
                     self.template_name,
                     {
-                        "error": "Your account does not have portal access. Contact your HOD or IT Admin."
+                        "error": "Your account does not have portal access. Contact University Computer Centre."
                     },
                 )
             login(request, user)
@@ -139,20 +135,17 @@ from django.contrib.admin.views.decorators import staff_member_required
 def get_entities_api(request):
     """
     API endpoint for the dynamic PortalAccess form in the Django Admin.
-    URL: /portal/api/get-entities/
-    Params: ?type=DEPARTMENT (or SCHOOL, CENTRE, etc.)
     """
     entity_type = request.GET.get("type", "").strip().upper()
 
     # Mapping of EntityType to the actual Model
-    # As you add more entities in the future, just add them to this map!
     ENTITY_MODEL_MAP = {
         "DEPARTMENT": ("academics", "Department"),
         "SCHOOL": ("academics", "School"),
         "CENTRE": (
             "centres",
             "Centre",
-        ),  # Uncomment or add when Centre model is created
+        ),
     }
 
     if entity_type not in ENTITY_MODEL_MAP:
