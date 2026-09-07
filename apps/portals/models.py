@@ -38,14 +38,8 @@ class Grievance(SoftDeleteModel):
             "reservation_policy_breach",
             "Breach of the policy for reservation in admission",
         ),
-        (
-            "discrimination",
-            "Complaints of alleged discrimination of students from SC/ST/OBC/Women/Minority or Disabled categories",
-        ),
-        (
-            "scholarship_delay",
-            "Non payment or delay in payment of scholarships to any student",
-        ),
+        ("discrimination", "Complaints of alleged discrimination of students from SC/ST/OBC/Women/Minority or Disabled categories"),
+        ("scholarship_delay", "Non payment or delay in payment of scholarships to any student"),
         ("exam_delay", "Delay in conduct of examinations or declaration of results"),
         ("no_student_amenities", "No provision of student amenities"),
         ("unfair_evaluation", "Unfair evaluation practices"),

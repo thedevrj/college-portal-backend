@@ -458,7 +458,7 @@ class Publication(SoftDeleteModel):
     full_author_list = models.TextField(
         blank=True,
         null=True,
-        help_text="Enter the list of all the author separated by commas if they are form other institutions",
+        help_text="List of all the author separated by commas if they are from other institutions or scholars",
     )
     title = models.TextField()
     campus = models.CharField(
@@ -703,14 +703,14 @@ class Patent(SoftDeleteModel):
     full_inventor_list = models.TextField(
         blank=True,
         null=True,
-        help_text="Exact string of all inventors seperated by commas if they are form other institutions",
+        help_text="Name of all inventors seperated by commas if they are form other institutions",
     )
     title = models.TextField()
     patent_number = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Filed")
     date_of_filing = models.DateField(blank=True, null=True)
     description = RichTextField(blank=True, null=True)
-    # Pre-computed, DB-indexed fingerprint for fast fuzzy-duplicate detection.
+
     # Regenerated automatically on every save(); never edit directly.
     title_fp = models.CharField(
         max_length=1000,
