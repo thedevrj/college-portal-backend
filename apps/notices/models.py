@@ -21,8 +21,9 @@ class GlobalNotice(SoftDeleteModel):
         help_text="Select one or more categories",
     )
     link = models.URLField(
-        blank=True, null=True, help_text="Optional external link or relative URL"
+        blank=True, null=True, help_text="Optional external link or relative URL",verbose_name="External Link"
     )
+    internal_link = models.CharField(null=True,blank=True)
     attachment = models.FileField(upload_to="global_notices/", blank=True, null=True)
     date_posted = models.DateField()
     show_in_marquee = models.BooleanField(
@@ -69,9 +70,9 @@ class GlobalNotice(SoftDeleteModel):
                 }
             )
         # Require at least a link or attachment so the notice is useful
-        if not self.link and not self.attachment:
+        if not self.link and not self.attachment and not self.internal_link:
             raise ValidationError(
-                "A notice must have either an external link or a file attachment to be useful."
+                "A notice must have either an external link or a file attachment or a website internal link."
             )
 
     def __str__(self):

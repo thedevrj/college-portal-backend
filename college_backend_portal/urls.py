@@ -59,6 +59,8 @@ urlpatterns = [
     path("api/v1/", include("apps.foundation_course.urls")),
     path("api/v1/vigilance/", include("apps.vigilance.urls")),
     path("api/v1/portals/", include("apps.portals.urls")),
+    path("api/v1/affidavits/", include("apps.affidavits.urls")),
+    path("api/v1/antiragging/", include("apps.antiragging.urls")),
     path("api/v1/admission/", include("apps.admission.urls")),
     # Authentication
     path(
