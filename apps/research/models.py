@@ -242,7 +242,7 @@ class ResearchScholar(SoftDeleteModel):
         null=True,
     )
     other_category = models.CharField(max_length=100, blank=True, null=True)
-    date_of_birth = models.DateField(null=True)
+    date_of_birth = models.DateField(null=True,blank=True)
     contact_no = models.CharField(
         max_length=15,
         blank=True,

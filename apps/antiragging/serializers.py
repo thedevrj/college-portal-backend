@@ -12,11 +12,32 @@ class ResourceSerializer(serializers.ModelSerializer):
 
 class CommitteeMemberSerializer(serializers.ModelSerializer):
     committee_type_display = serializers.CharField(source="get_committee_type_display", read_only=True)
+    designation_display = serializers.SerializerMethodField()
     faculty_name = serializers.CharField(source="faculty.name", read_only=True, default=None)
+    name = serializers.CharField(source="member_name", read_only=True)
 
     class Meta:
         model = CommitteeMember
-        fields = ["id", "faculty", "faculty_name", "designation", "committee_type", "committee_type_display", "phone", "email", "display_order"]
+        fields = [
+            "id",
+            "faculty",
+            "faculty_name",
+            "name",
+            "affiliation",
+            "designation",
+            "designation_display",
+            "other_designation",
+            "committee_type",
+            "committee_type_display",
+            "phone",
+            "email",
+            "display_order",
+        ]
+
+    def get_designation_display(self, obj):
+        if obj.designation == "OTHER" and obj.other_designation:
+            return obj.other_designation
+        return obj.get_designation_display()
 
 
 class FAQSerializer(serializers.ModelSerializer):
