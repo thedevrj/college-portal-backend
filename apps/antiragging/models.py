@@ -27,6 +27,9 @@ class Resource(SoftDeleteModel):
         return self.title
 
 
+from django.core.exceptions import ValidationError
+
+
 class CommitteeType(models.TextChoices):
     ANTI_RAGGING_COMMITTEE = "committee", "Anti-Ragging Committee"
     ANTI_RAGGING_SQUAD = "squad", "Anti-Ragging Squad"
@@ -36,8 +39,10 @@ class CommitteeMember(SoftDeleteModel):
     designation_choices = [
         ("", "Select Designation"),
         ("CHAIRPERSON", "Chairperson"),
-        ("MEMBER","Member"),
-        ("MEMBER_CONVENER","Member & Convener")
+        ("MEMBER", "Member"),
+        ("CONVENER","Convener"),
+        ("MEMBER_CONVENER", "Member & Convener"),
+        ("OTHER", "Other"),
     ]
     faculty = models.ForeignKey(
         "faculty.Faculty",
@@ -45,21 +50,57 @@ class CommitteeMember(SoftDeleteModel):
         null=True,
         blank=True,
         related_name="antiragging_committee_members",
-        verbose_name="Committee Member",
+        verbose_name="Faculty Member (if internal faculty)",
+        help_text="Select faculty member, or leave blank and enter name below for external/non-faculty members.",
+    )
+    name = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Member Name (for external / non-faculty)",
+        help_text="Required if not selecting a faculty member above.",
+    )
+    affiliation = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Affiliation / Department / Organization",
+        help_text="e.g., District Administration, Lucknow Police, NGO, Student, Parent, Non-Teaching Staff",
     )
     designation = models.CharField(max_length=150, choices=designation_choices)
+    other_designation = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Specify Other Designation",
+        help_text="Required if Designation is 'Other'",
+    )
     committee_type = models.CharField(max_length=16, choices=CommitteeType.choices)
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
-    display_order = models.PositiveIntegerField(default=0)
+    display_order = models.PositiveIntegerField()
     history = HistoricalRecords()
 
     class Meta:
         ordering = ["committee_type", "display_order"]
 
+    @property
+    def member_name(self):
+        if self.faculty:
+            return self.faculty.name
+        return self.name
+
+    def clean(self):
+        super().clean()
+        if not self.faculty and not (self.name and self.name.strip()):
+            raise ValidationError(
+                {"name": "Please either select a Faculty member or enter the Member Name for non-faculty/external members."}
+            )
+        if self.designation == "OTHER" and not (self.other_designation and self.other_designation.strip()):
+            raise ValidationError(
+                {"other_designation": "Please specify the designation when 'Other' is selected."}
+            )
+
     def __str__(self):
-        faculty_name = self.faculty.name if self.faculty else "Unknown Faculty"
-        return f"{faculty_name} ({self.get_committee_type_display()})"
+        name_str = self.member_name or "Unknown Member"
+        return f"{name_str} ({self.get_committee_type_display()})"
 
 
 class FAQ(SoftDeleteModel):
