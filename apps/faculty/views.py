@@ -38,7 +38,7 @@ class FacultyViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     filterset_class = FacultyFilter
-    search_fields = ["name", "designation", "qualification", "research_int"]
+    search_fields = ["name", "designation",]
     ordering_fields = [
         "name",
         "designation",

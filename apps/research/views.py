@@ -180,6 +180,14 @@ class ResearchScholarFilter(django_filters.FilterSet):
     registration_date = django_filters.DateFromToRangeFilter(
         field_name="date_of_registration"
     )
+    award_date = django_filters.DateFromToRangeFilter(
+        field_name="award_date"
+    )
+    thesis_submission_date = django_filters.DateFromToRangeFilter(
+        field_name="thesis_submission_date"
+    )
+    date_after = django_filters.DateFilter(method="filter_date_after")
+    date_before = django_filters.DateFilter(method="filter_date_before")
     department_slug = django_filters.CharFilter(field_name="department__slug")
     department__slug = django_filters.CharFilter(field_name="department__slug")
     supervisor_slug = django_filters.CharFilter(field_name="supervisor__slug")
@@ -191,6 +199,26 @@ class ResearchScholarFilter(django_filters.FilterSet):
     class Meta:
         model = ResearchScholar
         fields = ["status", "gender", "campus"]
+
+    def _get_target_date_field(self):
+        status = self.data.get("status")
+        if status == "Awarded":
+            return "award_date"
+        elif status == "Thesis Submitted":
+            return "thesis_submission_date"
+        return "date_of_registration"
+
+    def filter_date_after(self, queryset, name, value):
+        if not value:
+            return queryset
+        field = self._get_target_date_field()
+        return queryset.filter(**{f"{field}__gte": value})
+
+    def filter_date_before(self, queryset, name, value):
+        if not value:
+            return queryset
+        field = self._get_target_date_field()
+        return queryset.filter(**{f"{field}__lte": value})
 
 
 class ResearchScholarViewSet(ResearchBaseViewSet):

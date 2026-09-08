@@ -31,7 +31,55 @@ class AffidavitViewSet(
         try:
             affidavit = Affidavit.objects.get(tracking_id=tracking_id)
             serializer = self.get_serializer(affidavit)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # History of Timeline
+            history_timeline = []
+            prev_status = None
+            prev_remarks = None
+
+            historical_records = list(affidavit.history.all().order_by("history_date"))
+            if historical_records:
+                for idx, h in enumerate(historical_records):
+                    status_display = h.get_status_display()
+                    
+                    if idx == 0 or h.history_type == "+":
+                        change_desc = "Affidavit submitted online by student."
+                        action_label = "Submitted"
+                    else:
+                        changes = []
+                        if prev_status != h.status:
+                            changes.append(f"Status changed to {status_display}")
+                        if h.remarks and h.remarks != prev_remarks:
+                            changes.append(f"Remarks: {h.remarks}")
+                        change_desc = " | ".join(changes) if changes else f"Details updated (Status: {status_display})"
+                        action_label = "Status Updated"
+
+                    history_timeline.append({
+                        "date": h.history_date,
+                        "status": h.status,
+                        "status_display": status_display,
+                        "remarks": h.remarks or "",
+                        "description": change_desc,
+                        "action": action_label,
+                    })
+                    prev_status = h.status
+                    prev_remarks = h.remarks
+            else:
+                history_timeline.append({
+                    "date": affidavit.submitted_on,
+                    "status": affidavit.status,
+                    "status_display": affidavit.get_status_display(),
+                    "remarks": affidavit.remarks or "",
+                    "description": "Affidavit submitted online by student.",
+                    "action": "Submitted",
+                })
+
+            response_data = {
+                **serializer.data,
+                "status_display": affidavit.get_status_display(),
+                "history": history_timeline,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         except Affidavit.DoesNotExist:
             return Response(
                 {"error": "Affidavit with the given tracking ID was not found."},
