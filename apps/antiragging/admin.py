@@ -16,11 +16,15 @@ class ResourceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
 @admin.register(CommitteeMember)
 class CommitteeMemberAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
-    list_display = ("faculty", "designation", "committee_type", "display_order")
-    list_filter = (SoftDeleteListFilter, "committee_type")
-    search_fields = ("faculty__name", "designation")
+    list_display = ("get_member_name", "affiliation", "designation", "committee_type", "display_order")
+    list_filter = (SoftDeleteListFilter, "committee_type", "designation")
+    search_fields = ("faculty__name", "name", "affiliation", "designation", "other_designation")
     list_editable = ("display_order",)
     exclude = ("is_deleted", "deleted_at")
+
+    @admin.display(description="Member Name")
+    def get_member_name(self, obj):
+        return obj.member_name
 
 
 @admin.register(FAQ)
