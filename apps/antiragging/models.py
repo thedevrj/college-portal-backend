@@ -1,6 +1,9 @@
 from django.db import models
 from apps.accounts.models import SoftDeleteModel
 from simple_history.models import HistoricalRecords
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+import re
 
 
 class ResourceCategory(models.TextChoices):
@@ -25,9 +28,6 @@ class Resource(SoftDeleteModel):
 
     def __str__(self):
         return self.title
-
-
-from django.core.exceptions import ValidationError
 
 
 class CommitteeType(models.TextChoices):
@@ -91,12 +91,29 @@ class CommitteeMember(SoftDeleteModel):
         super().clean()
         if not self.faculty and not (self.name and self.name.strip()):
             raise ValidationError(
-                {"name": "Please either select a Faculty member or enter the Member Name for non-faculty/external members."}
+                {"name": "Please either select a Faculty member or enter the Member Name for non-teaching/external members."}
             )
         if self.designation == "OTHER" and not (self.other_designation and self.other_designation.strip()):
             raise ValidationError(
                 {"other_designation": "Please specify the designation when 'Other' is selected."}
             )
+        if self.phone:
+            val = str(self.phone).strip()
+            if not re.match(r"^\d{10}$", val):
+                raise ValidationError(
+                    {"phone": "Phone number must be exactly 10 digits."}
+                )
+            self.phone = val
+
+        if self.email:
+            val = str(self.email).strip().lower()
+            try:
+                validate_email(val)
+            except ValidationError:
+                raise ValidationError(
+                    {"email": "Please enter a valid email address."}
+                )
+            self.email = val
 
     def __str__(self):
         name_str = self.member_name or "Unknown Member"
@@ -130,6 +147,26 @@ class EmergencyContact(SoftDeleteModel):
 
     class Meta:
         ordering = ["display_order", "name"]
+        
+    def clean(self):
+        super().clean()
+        if self.phone:
+            val = str(self.phone).strip()
+            if not re.match(r"^\d{10}$", val):
+                raise ValidationError(
+                    {"phone": "Phone number must be exactly 10 digits."}
+                )
+            self.phone = val
+
+        if self.email:
+            val = str(self.email).strip().lower()
+            try:
+                validate_email(val)
+            except ValidationError:
+                raise ValidationError(
+                    {"email": "Please enter a valid email address."}
+                )
+            self.email = val
 
     def __str__(self):
         return f"{self.name} - {self.role}"

@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     GrievanceCreateView,
     GrievanceStatusView,
+    GrievanceStatsView,
     AdminGrievanceViewSet,
     ICCCreateView,
     ICCStatusView,
@@ -18,6 +19,7 @@ router.register(r"admin/grievances", AdminGrievanceViewSet, basename="admin-grie
 urlpatterns = [
     path("grievance/submit/",GrievanceCreateView.as_view(),name="grievance-submit",),
     path("grievance/status/<str:tracking_id>/",GrievanceStatusView.as_view(),name="grievance-status",),
+    path("grievance/stats/", GrievanceStatsView.as_view(), name="grievance-stats"),
     path("icc/submit/",ICCCreateView.as_view(),name="icc-submit",),
     path("icc/status/<str:tracking_id>/", ICCStatusView.as_view(), name="icc-status"),
     path("discrimination/submit/",DiscriminationCreateView.as_view(),name="discrimination-submit",),
