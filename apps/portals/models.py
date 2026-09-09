@@ -21,6 +21,8 @@ class Grievance(SoftDeleteModel):
             "refusing_admission",
             "Refusing admission in accordance with the declared admission policy of the institute",
         ),
+        ("ragging", "Ragging"),
+        ("sexual_harassment", "Sexual harassment"),
         ("non_publication_of_prospectus", "Non publication of prospectus"),
         (
             "false_misleading_prospectus",
@@ -62,9 +64,8 @@ class Grievance(SoftDeleteModel):
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("under_review", "Under Review"),
-        ("resolved", "Resolved"),
         ("forwarded", "Forwarded to Higher Authority"),
-        ("closed", "Closed"),
+        ("resolved", "Resolved"),
         ("rejected", "Rejected"),
     ]
 

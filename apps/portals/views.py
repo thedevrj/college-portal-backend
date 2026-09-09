@@ -3,6 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 
 from .models import Grievance, GrievanceActionLog
@@ -87,6 +88,19 @@ class GrievanceStatusView(APIView):
             {**serializer.data, "history": history},
             status=status.HTTP_200_OK,
         )
+
+
+class GrievanceStatsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        stats = Grievance.objects.filter(is_deleted=False).aggregate(
+            total_grievances=Count("id"),
+            resolved=Count("id", filter=Q(status="resolved")),
+            in_progress=Count("id", filter=Q(status__in=["under_review", "forwarded"])),
+            pending=Count("id", filter=Q(status="pending")),
+        )
+        return Response(stats, status=status.HTTP_200_OK)
 
 
 class AdminGrievanceViewSet(
