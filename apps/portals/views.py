@@ -1,12 +1,18 @@
-from rest_framework import generics, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import generics, mixins, viewsets
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 
 from .models import Grievance, GrievanceActionLog
-from .serializers import GrievanceSerializer, GrievanceStatusSerializer
+from .serializers import (
+    GrievanceSerializer,
+    GrievanceStatusSerializer,
+    GrievanceStatusUpdateSerializer,
+)
+from .permissions import IsGrievanceOfficer
 
 
 class GrievanceCreateView(generics.CreateAPIView):
@@ -30,24 +36,52 @@ class GrievanceStatusView(APIView):
                 "date": grievance.submitted_at,
                 "status": "pending",
                 "status_display": "Pending",
-                "description": "Grievance successfully submitted and is pending review.",
+                "description": "Grievance / Incident successfully submitted and registered.",
+                "action": "Submitted",
             }
         ]
 
-        for log in grievance.action_logs.all().order_by("timestamp"):
-            status_display = ""
-            if log.status_changed_to:
-                status_display = dict(Grievance.STATUS_CHOICES).get(
-                    log.status_changed_to, log.status_changed_to
+        action_logs = list(grievance.action_logs.all().order_by("timestamp"))
+        if action_logs:
+            for log in action_logs:
+                status_display = ""
+                if log.status_changed_to:
+                    status_display = dict(Grievance.STATUS_CHOICES).get(
+                        log.status_changed_to, log.status_changed_to
+                    )
+                history.append(
+                    {
+                        "date": log.timestamp,
+                        "status": log.status_changed_to or grievance.status,
+                        "status_display": status_display or "Updated",
+                        "description": log.action_description or "Status updated.",
+                        "action": "Updated",
+                    }
                 )
-            history.append(
-                {
-                    "date": log.timestamp,
-                    "status": log.status_changed_to or grievance.status,
-                    "status_display": status_display,
-                    "description": log.action_description,
-                }
-            )
+        else:
+            # Fallback to historical records from Django Admin
+            historical_records = list(grievance.history.all().order_by("history_date"))
+            if len(historical_records) > 1:
+                prev_status = None
+                for idx, h in enumerate(historical_records):
+                    if idx == 0:
+                        prev_status = h.status
+                        continue
+                    status_display = dict(Grievance.STATUS_CHOICES).get(h.status, h.status)
+                    if prev_status != h.status:
+                        desc = f"Status updated to {status_display}."
+                    else:
+                        desc = f"Record details updated (Status: {status_display})."
+                    history.append(
+                        {
+                            "date": h.history_date,
+                            "status": h.status,
+                            "status_display": status_display,
+                            "description": desc,
+                            "action": "Status Updated",
+                        }
+                    )
+                    prev_status = h.status
 
         serializer = GrievanceStatusSerializer(grievance)
         return Response(
@@ -56,11 +90,35 @@ class GrievanceStatusView(APIView):
         )
 
 
-class AdminGrievanceViewSet(viewsets.ModelViewSet):
+class GrievanceStatsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        stats = Grievance.objects.filter(is_deleted=False).aggregate(
+            total_grievances=Count("id"),
+            resolved=Count("id", filter=Q(status="resolved")),
+            in_progress=Count("id", filter=Q(status__in=["under_review", "forwarded"])),
+            pending=Count("id", filter=Q(status="pending")),
+        )
+        return Response(stats, status=status.HTTP_200_OK)
+
+
+class AdminGrievanceViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
 
     queryset = Grievance.objects.filter(is_deleted=False).order_by("-submitted_at")
     serializer_class = GrievanceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsGrievanceOfficer]
+    http_method_names = ["get", "head", "options", "put", "patch"]
+
+    def get_serializer_class(self):
+        if self.action in {"update", "partial_update"}:
+            return GrievanceStatusUpdateSerializer
+        return GrievanceSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()

@@ -1,6 +1,9 @@
 from django.contrib import admin
+from django import forms
+from django.db import models
 from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.mixins import PortalSecurityMixin
+from apps.accounts.filters import SoftDeleteListFilter
 from .models import (
     Grievance,
     GrievanceAttachment,
@@ -25,6 +28,7 @@ class GrievanceAttachmentInline(admin.TabularInline):
     model = GrievanceAttachment
     extra = 0
     readonly_fields = ["file", "uploaded_at"]
+    exclude = ["is_deleted", "deleted_at"]
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -37,6 +41,7 @@ class GrievanceSignatureInline(admin.TabularInline):
     model = GrievanceSignature
     extra = 0
     readonly_fields = ["image", "uploaded_at"]
+    exclude = ["is_deleted", "deleted_at"]
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -50,10 +55,10 @@ class GrievanceActionLogInline(admin.TabularInline):
     extra = 0
     readonly_fields = [
         "action_taken_by",
-        "action_description",
         "status_changed_to",
         "timestamp",
     ]
+    exclude = ["is_deleted", "deleted_at"]
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -73,6 +78,7 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "nature_of_grievance",
         "complainant_type",
@@ -92,6 +98,9 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         GrievanceSignatureInline,
         GrievanceActionLogInline,
     ]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
     fieldsets = (
         (
@@ -105,9 +114,9 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
             {
                 "fields": (
                     "nature_of_grievance",
-                    "other_nature_of_grievance",
+                    "others_nature_of_grievance",
                     "complainant_type",
-                    "other_complainant_type",
+                    "others_complainant_type",
                 ),
             },
         ),
@@ -164,9 +173,9 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
                 "submitted_at",
                 "updated_at",
                 "nature_of_grievance",
-                "other_nature_of_grievance",
+                "others_nature_of_grievance",
                 "complainant_type",
-                "other_complainant_type",
+                "others_complainant_type",
                 "name_of_complainant",
                 "aadhaar_number",
                 "enrollment_id",
@@ -208,10 +217,12 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 # Internal Complaints Committee (ICC) Admin
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class ICCAttachmentInline(admin.TabularInline):
     model = ICCAttachment
     extra = 0
     readonly_fields = ["file", "uploaded_at"]
+    exclude = ("is_deleted", "deleted_at")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -223,6 +234,7 @@ class ICCAttachmentInline(admin.TabularInline):
 class ICCSignatureInline(admin.TabularInline):
     model = ICCSignature
     extra = 0
+    exclude = ("is_deleted", "deleted_at")
     readonly_fields = ["image", "uploaded_at"]
 
     def has_add_permission(self, request, obj=None):
@@ -237,10 +249,10 @@ class ICCActionLogInline(admin.TabularInline):
     extra = 0
     readonly_fields = [
         "action_taken_by",
-        "action_description",
         "status_changed_to",
         "timestamp",
     ]
+    exclude = ("is_deleted", "deleted_at")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -259,6 +271,7 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "nature_of_grievance",
         "gender",
@@ -272,11 +285,15 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "enrollment_id",
     )
     readonly_fields = ("tracking_id", "submitted_at", "updated_at")
+    exclude = ("is_deleted", "deleted_at")
     inlines = [
         ICCAttachmentInline,
         ICCSignatureInline,
         ICCActionLogInline,
     ]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
     fieldsets = (
         (
@@ -290,7 +307,7 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
             {
                 "fields": (
                     "nature_of_grievance",
-                    "other_nature_of_grievance",
+                    "others_nature_of_grievance",
                 ),
             },
         ),
@@ -343,7 +360,7 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
                 "submitted_at",
                 "updated_at",
                 "nature_of_grievance",
-                "other_nature_of_grievance",
+                "others_nature_of_grievance",
                 "name_of_complainant",
                 "aadhaar_number",
                 "enrollment_id",
@@ -385,10 +402,12 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 # SC/ST, OBC, Disable & Minority Discrimination Admin
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class DiscriminationAttachmentInline(admin.TabularInline):
     model = DiscriminationAttachment
     extra = 0
     readonly_fields = ["file", "uploaded_at"]
+    exclude = ("is_deleted", "deleted_at")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -401,6 +420,7 @@ class DiscriminationSignatureInline(admin.TabularInline):
     model = DiscriminationSignature
     extra = 0
     readonly_fields = ["image", "uploaded_at"]
+    exclude = ("is_deleted", "deleted_at")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -414,10 +434,10 @@ class DiscriminationActionLogInline(admin.TabularInline):
     extra = 0
     readonly_fields = [
         "action_taken_by",
-        "action_description",
         "status_changed_to",
         "timestamp",
     ]
+    exclude = ("is_deleted", "deleted_at")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -436,6 +456,7 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "complaint_discrimination",
         "gender",
@@ -456,6 +477,9 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         DiscriminationSignatureInline,
         DiscriminationActionLogInline,
     ]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
     fieldsets = (
         (
@@ -469,6 +493,7 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
             {
                 "fields": (
                     "complaint_discrimination",
+                    "others_complaint_discrimination",
                     "complaint_text",
                     "declaration_accepted",
                 ),
@@ -530,6 +555,7 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
                 "submitted_at",
                 "updated_at",
                 "complaint_discrimination",
+                "others_complaint_discrimination",
                 "complaint_text",
                 "declaration_accepted",
                 "enrollment_id",
@@ -577,10 +603,12 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 # Student Feedback Admin
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class FeedbackAttachmentInline(admin.TabularInline):
     model = FeedbackAttachment
     extra = 0
     readonly_fields = ["file", "uploaded_at"]
+    exclude = ("deleted_at", "is_deleted")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -593,6 +621,7 @@ class FeedbackSignatureInline(admin.TabularInline):
     model = FeedbackSignature
     extra = 0
     readonly_fields = ["image", "uploaded_at"]
+    exclude = ("deleted_at", "is_deleted")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -606,10 +635,10 @@ class FeedbackActionLogInline(admin.TabularInline):
     extra = 0
     readonly_fields = [
         "action_taken_by",
-        "action_description",
         "status_changed_to",
         "timestamp",
     ]
+    exclude = ("deleted_at", "is_deleted")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -628,6 +657,7 @@ class StudentFeedbackAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_at",
     )
     list_filter = (
+        SoftDeleteListFilter,
         "status",
         "subject_of_feedback",
         "course_name",
@@ -648,6 +678,9 @@ class StudentFeedbackAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         FeedbackSignatureInline,
         FeedbackActionLogInline,
     ]
+    formfield_overrides = {
+        models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
+    }
 
     fieldsets = (
         (

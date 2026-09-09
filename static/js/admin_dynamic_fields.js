@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
             otherInput.closest('.fieldBox') ||
             otherInput.closest('.form-row');
 
-        if (dropdown.value === 'Others' || dropdown.value === 'Other') {
+        if (dropdown.value === 'Others' || dropdown.value === 'Other' || dropdown.value === 'others' || dropdown.value === 'other') {
             otherInput.readOnly = false;
             otherInput.disabled = false;
             otherInput.style.backgroundColor = '';

@@ -16,7 +16,12 @@ python manage.py collectstatic --noinput
 
 echo "Starting server..."
 if [ "$DJANGO_ENV" = "live" ] || [ "$DJANGO_ENV" = "stag" ]; then
-    exec gunicorn college_backend_portal.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-5}
+    exec gunicorn college_backend_portal.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers ${GUNICORN_WORKERS:-5} \
+    --timeout 60 \
+    --max-requests 1000 \
+    --max-requests-jitter 50
 else
     exec python manage.py runserver 0.0.0.0:8000
 fi

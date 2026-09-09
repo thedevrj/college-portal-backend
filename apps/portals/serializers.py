@@ -46,9 +46,9 @@ class GrievanceSerializer(serializers.ModelSerializer):
         fields = [
             "tracking_id",
             "nature_of_grievance",
-            "other_nature_of_grievance",
+            "others_nature_of_grievance",
             "complainant_type",
-            "other_complainant_type",
+            "others_complainant_type",
             "name_of_complainant",
             "aadhaar_number",
             "enrollment_id",
@@ -83,19 +83,19 @@ class GrievanceSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         complainant_type = data.get("complainant_type")
-        other_complainant_type = data.get("other_complainant_type")
+        others_complainant_type = data.get("others_complainant_type")
         nature_of_grievance = data.get("nature_of_grievance")
-        other_nature_of_grievance = data.get("other_nature_of_grievance")
+        others_nature_of_grievance = data.get("others_nature_of_grievance")
 
         errors = {}
-        if complainant_type == "other" and not other_complainant_type:
-            errors["other_complainant_type"] = (
-                "Please specify the complainant type when 'Other' is selected."
+        if complainant_type == "other" and not others_complainant_type:
+            errors["others_complainant_type"] = (
+                "Please specify the complainant type when 'Others' is selected."
             )
 
-        if nature_of_grievance == "other" and not other_nature_of_grievance:
-            errors["other_nature_of_grievance"] = (
-                "Please specify the nature of grievance when 'Other' is selected."
+        if nature_of_grievance == "other" and not others_nature_of_grievance:
+            errors["others_nature_of_grievance"] = (
+                "Please specify the nature of grievance when 'Others' is selected."
             )
 
         if errors:
@@ -186,13 +186,33 @@ class GrievanceStatusSerializer(serializers.ModelSerializer):
         ]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+class GrievanceStatusUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Grievance
+        fields = ["status"]
+
+    def validate(self, attrs):
+        unexpected_fields = set(self.initial_data) - {"status"}
+        if unexpected_fields:
+            raise serializers.ValidationError(
+                {
+                    field: "This field cannot be changed through this endpoint."
+                    for field in unexpected_fields
+                }
+            )
+        return attrs
+
+
 # Internal Complaints Committee (ICC) Serializers
-# ─────────────────────────────────────────────────────────────────────────────
+
 from .models import ICCComplaint, ICCAttachment, ICCSignature, ICCActionLog
 
+
 class ICCActionLogSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source="get_status_changed_to_display", read_only=True)
+    status_display = serializers.CharField(
+        source="get_status_changed_to_display", read_only=True
+    )
     date = serializers.DateTimeField(source="timestamp", read_only=True)
     description = serializers.CharField(source="action_description", read_only=True)
     status = serializers.CharField(source="status_changed_to", read_only=True)
@@ -219,7 +239,9 @@ class ICCComplaintSerializer(serializers.ModelSerializer):
     signature = ICCSignatureSerializer(read_only=True)
 
     uploaded_files = serializers.ListField(
-        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        child=serializers.FileField(
+            max_length=100000, allow_empty_file=False, use_url=False
+        ),
         write_only=True,
         required=False,
         help_text="Only PDF files allowed.",
@@ -236,7 +258,7 @@ class ICCComplaintSerializer(serializers.ModelSerializer):
         fields = [
             "tracking_id",
             "nature_of_grievance",
-            "other_nature_of_grievance",
+            "others_nature_of_grievance",
             "name_of_complainant",
             "aadhaar_number",
             "enrollment_id",
@@ -264,45 +286,59 @@ class ICCComplaintSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         nature_of_grievance = data.get("nature_of_grievance")
-        other_nature_of_grievance = data.get("other_nature_of_grievance")
+        others_nature_of_grievance = data.get("others_nature_of_grievance")
 
         errors = {}
-        if nature_of_grievance == "other" and not other_nature_of_grievance:
-            errors["other_nature_of_grievance"] = "Please specify the nature of grievance when 'Other' is selected."
+        if nature_of_grievance == "other" and not others_nature_of_grievance:
+            errors["others_nature_of_grievance"] = (
+                "Please specify the nature of grievance when 'Other' is selected."
+            )
 
         if errors:
             raise serializers.ValidationError(errors)
-        
+
         return data
 
     def validate_aadhaar_number(self, value):
         if not value.isdigit():
-            raise serializers.ValidationError("Aadhaar number must contain only digits.")
+            raise serializers.ValidationError(
+                "Aadhaar number must contain only digits."
+            )
         if len(value) != 12:
-            raise serializers.ValidationError("Aadhaar number must be exactly 12 digits.")
+            raise serializers.ValidationError(
+                "Aadhaar number must be exactly 12 digits."
+            )
         return value
 
     def validate_complaint_text(self, value):
         if len(value) > 2000:
-            raise serializers.ValidationError("Complaint must not exceed 2000 characters.")
+            raise serializers.ValidationError(
+                "Complaint must not exceed 2000 characters."
+            )
         return value
 
     def validate_declaration_accepted(self, value):
         if not value:
-            raise serializers.ValidationError("You must accept the declaration to submit the grievance.")
+            raise serializers.ValidationError(
+                "You must accept the declaration to submit the grievance."
+            )
         return value
 
     def validate_uploaded_files(self, files):
         for f in files:
             ext = os.path.splitext(f.name)[1].lower()
             if ext not in [".pdf"]:
-                raise serializers.ValidationError(f"'{f.name}' is not allowed. Only PDF files are accepted.")
+                raise serializers.ValidationError(
+                    f"'{f.name}' is not allowed. Only PDF files are accepted."
+                )
         return files
 
     def validate_signature_image(self, value):
         ext = os.path.splitext(value.name)[1].lower()
         if ext not in ALLOWED_SIGNATURE_EXTENSIONS:
-            raise serializers.ValidationError("Only JPG, JPEG, or PNG files are accepted for the signature.")
+            raise serializers.ValidationError(
+                "Only JPG, JPEG, or PNG files are accepted for the signature."
+            )
         return value
 
     def create(self, validated_data):
@@ -322,7 +358,9 @@ class ICCComplaintSerializer(serializers.ModelSerializer):
 
 class ICCStatusSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-    nature_display = serializers.CharField(source="get_nature_of_grievance_display", read_only=True)
+    nature_display = serializers.CharField(
+        source="get_nature_of_grievance_display", read_only=True
+    )
     history = ICCActionLogSerializer(source="action_logs", many=True, read_only=True)
 
     class Meta:
@@ -339,9 +377,8 @@ class ICCStatusSerializer(serializers.ModelSerializer):
         ]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # SC/ST, OBC, Disable & Minority Discrimination Complaint Serializers
-# ─────────────────────────────────────────────────────────────────────────────
+
 from .models import (
     DiscriminationComplaint,
     DiscriminationAttachment,
@@ -349,8 +386,11 @@ from .models import (
     DiscriminationActionLog,
 )
 
+
 class DiscriminationActionLogSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source="get_status_changed_to_display", read_only=True)
+    status_display = serializers.CharField(
+        source="get_status_changed_to_display", read_only=True
+    )
     date = serializers.DateTimeField(source="timestamp", read_only=True)
     description = serializers.CharField(source="action_description", read_only=True)
     status = serializers.CharField(source="status_changed_to", read_only=True)
@@ -377,7 +417,9 @@ class DiscriminationComplaintSerializer(serializers.ModelSerializer):
     signature = DiscriminationSignatureSerializer(read_only=True)
 
     uploaded_files = serializers.ListField(
-        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        child=serializers.FileField(
+            max_length=100000, allow_empty_file=False, use_url=False
+        ),
         write_only=True,
         required=False,
         help_text="Only PDF files allowed.",
@@ -394,6 +436,7 @@ class DiscriminationComplaintSerializer(serializers.ModelSerializer):
         fields = [
             "tracking_id",
             "complaint_discrimination",
+            "others_complaint_discrimination",
             "complaint_text",
             "enrollment_id",
             "roll_no",
@@ -427,32 +470,63 @@ class DiscriminationComplaintSerializer(serializers.ModelSerializer):
 
     def validate_aadhaar_number(self, value):
         if not value.isdigit():
-            raise serializers.ValidationError("Aadhaar number must contain only digits.")
+            raise serializers.ValidationError(
+                "Aadhaar number must contain only digits."
+            )
         if len(value) != 12:
-            raise serializers.ValidationError("Aadhaar number must be exactly 12 digits.")
+            raise serializers.ValidationError(
+                "Aadhaar number must be exactly 12 digits."
+            )
         return value
 
     def validate_complaint_text(self, value):
         if len(value) > 2000:
-            raise serializers.ValidationError("Complaint must not exceed 2000 characters.")
+            raise serializers.ValidationError(
+                "Complaint must not exceed 2000 characters."
+            )
         return value
+
+    def validate(self, data):
+        complaint_discrimination = data.get("complaint_discrimination")
+        others_complaint_discrimination = data.get("others_complaint_discrimination")
+        complaint_text = data.get("complaint_text")
+
+        errors = {}
+        if complaint_discrimination == "other" and not others_complaint_discrimination:
+            errors["others_complaint_discrimination"] = (
+                "Please specify the nature of complaint discrimination when 'Other' is selected."
+            )
+
+        if complaint_text and len(complaint_text) > 2000:
+            errors["complaint_text"] = "Complaint must not exceed 2000 characters."
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return data
 
     def validate_declaration_accepted(self, value):
         if not value:
-            raise serializers.ValidationError("You must accept the declaration to submit the grievance.")
+            raise serializers.ValidationError(
+                "You must accept the declaration to submit the grievance."
+            )
         return value
 
     def validate_uploaded_files(self, files):
         for f in files:
             ext = os.path.splitext(f.name)[1].lower()
             if ext not in [".pdf"]:
-                raise serializers.ValidationError(f"'{f.name}' is not allowed. Only PDF files are accepted.")
+                raise serializers.ValidationError(
+                    f"'{f.name}' is not allowed. Only PDF files are accepted."
+                )
         return files
 
     def validate_signature_image(self, value):
         ext = os.path.splitext(value.name)[1].lower()
         if ext not in ALLOWED_SIGNATURE_EXTENSIONS:
-            raise serializers.ValidationError("Only JPG, JPEG, or PNG files are accepted for the signature.")
+            raise serializers.ValidationError(
+                "Only JPG, JPEG, or PNG files are accepted for the signature."
+            )
         return value
 
     def create(self, validated_data):
@@ -465,15 +539,21 @@ class DiscriminationComplaintSerializer(serializers.ModelSerializer):
             DiscriminationAttachment.objects.create(complaint=complaint, file=f)
 
         if signature_image:
-            DiscriminationSignature.objects.create(complaint=complaint, image=signature_image)
+            DiscriminationSignature.objects.create(
+                complaint=complaint, image=signature_image
+            )
 
         return complaint
 
 
 class DiscriminationStatusSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-    discrimination_display = serializers.CharField(source="get_complaint_discrimination_display", read_only=True)
-    history = DiscriminationActionLogSerializer(source="action_logs", many=True, read_only=True)
+    discrimination_display = serializers.CharField(
+        source="get_complaint_discrimination_display", read_only=True
+    )
+    history = DiscriminationActionLogSerializer(
+        source="action_logs", many=True, read_only=True
+    )
 
     class Meta:
         model = DiscriminationComplaint
@@ -489,9 +569,8 @@ class DiscriminationStatusSerializer(serializers.ModelSerializer):
         ]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Student Feedback Serializers
-# ─────────────────────────────────────────────────────────────────────────────
+
 from .models import (
     StudentFeedback,
     FeedbackAttachment,
@@ -499,8 +578,11 @@ from .models import (
     FeedbackActionLog,
 )
 
+
 class FeedbackActionLogSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source="get_status_changed_to_display", read_only=True)
+    status_display = serializers.CharField(
+        source="get_status_changed_to_display", read_only=True
+    )
     date = serializers.DateTimeField(source="timestamp", read_only=True)
     description = serializers.CharField(source="action_description", read_only=True)
     status = serializers.CharField(source="status_changed_to", read_only=True)
@@ -527,7 +609,9 @@ class StudentFeedbackSerializer(serializers.ModelSerializer):
     signature = FeedbackSignatureSerializer(read_only=True)
 
     uploaded_files = serializers.ListField(
-        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        child=serializers.FileField(
+            max_length=100000, allow_empty_file=False, use_url=False
+        ),
         write_only=True,
         required=False,
         help_text="Only PDF files allowed.",
@@ -544,6 +628,7 @@ class StudentFeedbackSerializer(serializers.ModelSerializer):
         fields = [
             "tracking_id",
             "subject_of_feedback",
+            "others_subject_of_feedback",
             "name_of_student",
             "aadhaar_number",
             "fathers_name",
@@ -572,27 +657,56 @@ class StudentFeedbackSerializer(serializers.ModelSerializer):
 
     def validate_aadhaar_number(self, value):
         if not value.isdigit():
-            raise serializers.ValidationError("Aadhaar number must contain only digits.")
+            raise serializers.ValidationError(
+                "Aadhaar number must contain only digits."
+            )
         if len(value) != 12:
-            raise serializers.ValidationError("Aadhaar number must be exactly 12 digits.")
+            raise serializers.ValidationError(
+                "Aadhaar number must be exactly 12 digits."
+            )
         return value
 
     def validate_feedback_text(self, value):
         if len(value) > 2000:
-            raise serializers.ValidationError("Feedback must not exceed 2000 characters.")
+            raise serializers.ValidationError(
+                "Feedback must not exceed 2000 characters."
+            )
         return value
+
+    def validate(self, data):
+        subject_of_feedback = data.get("subject_of_feedback")
+        others_subject_of_feedback = data.get("others_subject_of_feedback")
+        feedback_text = data.get("feedback_text")
+
+        errors = {}
+        if subject_of_feedback == "other" and not others_subject_of_feedback:
+            errors["others_subject_of_feedback"] = (
+                "Please specify the subject of feedback when 'Other' is selected."
+            )
+
+        if feedback_text and len(feedback_text) > 2000:
+            errors["feedback_text"] = "Feedback must not exceed 2000 characters."
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return data
 
     def validate_uploaded_files(self, files):
         for f in files:
             ext = os.path.splitext(f.name)[1].lower()
             if ext not in [".pdf"]:
-                raise serializers.ValidationError(f"'{f.name}' is not allowed. Only PDF files are accepted.")
+                raise serializers.ValidationError(
+                    f"'{f.name}' is not allowed. Only PDF files are accepted."
+                )
         return files
 
     def validate_signature_image(self, value):
         ext = os.path.splitext(value.name)[1].lower()
         if ext not in ALLOWED_SIGNATURE_EXTENSIONS:
-            raise serializers.ValidationError("Only JPG, JPEG, or PNG files are accepted for the signature.")
+            raise serializers.ValidationError(
+                "Only JPG, JPEG, or PNG files are accepted for the signature."
+            )
         return value
 
     def create(self, validated_data):
@@ -612,8 +726,12 @@ class StudentFeedbackSerializer(serializers.ModelSerializer):
 
 class FeedbackStatusSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-    subject_display = serializers.CharField(source="get_subject_of_feedback_display", read_only=True)
-    history = FeedbackActionLogSerializer(source="action_logs", many=True, read_only=True)
+    subject_display = serializers.CharField(
+        source="get_subject_of_feedback_display", read_only=True
+    )
+    history = FeedbackActionLogSerializer(
+        source="action_logs", many=True, read_only=True
+    )
 
     class Meta:
         model = StudentFeedback

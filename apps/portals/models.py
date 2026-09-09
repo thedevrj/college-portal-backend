@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from apps.accounts.models import SoftDeleteModel
 from simple_history.models import HistoricalRecords
 
@@ -20,6 +21,8 @@ class Grievance(SoftDeleteModel):
             "refusing_admission",
             "Refusing admission in accordance with the declared admission policy of the institute",
         ),
+        ("ragging", "Ragging"),
+        ("sexual_harassment", "Sexual harassment"),
         ("non_publication_of_prospectus", "Non publication of prospectus"),
         (
             "false_misleading_prospectus",
@@ -37,25 +40,19 @@ class Grievance(SoftDeleteModel):
             "reservation_policy_breach",
             "Breach of the policy for reservation in admission",
         ),
-        (
-            "discrimination",
-            "Complaints of alleged discrimination of students from SC/ST/OBC/Women/Minority or Disabled categories",
-        ),
-        (
-            "scholarship_delay",
-            "Non payment or delay in payment of scholarships to any student",
-        ),
+        ("discrimination", "Complaints of alleged discrimination of students from SC/ST/OBC/Women/Minority or Disabled categories"),
+        ("scholarship_delay", "Non payment or delay in payment of scholarships to any student"),
         ("exam_delay", "Delay in conduct of examinations or declaration of results"),
         ("no_student_amenities", "No provision of student amenities"),
         ("unfair_evaluation", "Unfair evaluation practices"),
-        ("other", "Other"),
+        ("Other", "Others"),
     ]
 
     COMPLAINANT_TYPE_CHOICES = [
         ("student", "Student"),
         ("faculty", "Faculty"),
         ("non_teaching_staff", "Non Teaching Staff"),
-        ("other", "Other"),
+        ("Other", "Others"),
     ]
 
     GENDER_CHOICES = [
@@ -67,9 +64,8 @@ class Grievance(SoftDeleteModel):
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("under_review", "Under Review"),
-        ("resolved", "Resolved"),
         ("forwarded", "Forwarded to Higher Authority"),
-        ("closed", "Closed"),
+        ("resolved", "Resolved"),
         ("rejected", "Rejected"),
     ]
 
@@ -80,10 +76,12 @@ class Grievance(SoftDeleteModel):
         choices=NATURE_OF_GRIEVANCE_CHOICES,
         verbose_name="Nature of Grievance",
     )
-    other_nature_of_grievance = models.CharField(
+    others_nature_of_grievance = models.CharField(
         max_length=255,
+        blank=True,
+        null=True,
         verbose_name="Specify Other Nature of Grievance",
-        help_text="Required if Nature of Grievance is 'Other'",
+        help_text="Required if Nature of Grievance is 'Others'",
     )
 
     complainant_type = models.CharField(
@@ -91,10 +89,12 @@ class Grievance(SoftDeleteModel):
         choices=COMPLAINANT_TYPE_CHOICES,
         verbose_name="Complainant",
     )
-    other_complainant_type = models.CharField(
+    others_complainant_type = models.CharField(
         max_length=255,
+        blank=True,
+        null=True,
         verbose_name="Specify Other Complainant Type",
-        help_text="Required if Complainant Type is 'Other'",
+        help_text="Required if Complainant Type is 'Others'",
     )
 
     name_of_complainant = models.CharField(
@@ -175,6 +175,12 @@ class Grievance(SoftDeleteModel):
         verbose_name = "Grievance"
         verbose_name_plural = "Grievances"
         ordering = ["-submitted_at"]
+        permissions = [
+            (
+                "manage_grievances",
+                "Can view and update grievance case statuses through the API",
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
@@ -184,15 +190,22 @@ class Grievance(SoftDeleteModel):
             self.tracking_id = f"GRV-{month_str}-{self.id:04d}"
             self.save(update_fields=["tracking_id"])
 
+    def clean(self):
+        super().clean()
+        if self.nature_of_grievance == "Other" and not self.others_nature_of_grievance:
+            raise ValidationError(
+                {"others_nature_of_grievance": "This field is required."}
+            )
+        if self.complainant_type == "Other" and not self.others_complainant_type:
+            raise ValidationError(
+                {"others_complainant_type": "This field is required."}
+            )
+
     def __str__(self):
         return f"{self.tracking_id} — {self.name_of_complainant} ({self.get_status_display()})"
 
 
 class GrievanceAttachment(SoftDeleteModel):
-    """
-    One or more file attachments per grievance.
-    Accepted formats: PDF, DOC, DOCX (enforced in the serializer).
-    """
 
     grievance = models.ForeignKey(
         Grievance,
@@ -203,21 +216,14 @@ class GrievanceAttachment(SoftDeleteModel):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Grievance Attachment"
-        verbose_name_plural = "Grievance Attachments"
+        verbose_name = "Attachment"
+        verbose_name_plural = "Attachments"
 
     def __str__(self):
         return f"Attachment for {self.grievance.tracking_id}"
 
 
-# ── Form Field 17: Signature * (jpg, jpeg, png — 475 × 75 px) ────────────────
-
-
 class GrievanceSignature(SoftDeleteModel):
-    """
-    Single signature image per grievance.
-    Accepted formats: JPG, JPEG, PNG (enforced in the serializer).
-    """
 
     grievance = models.OneToOneField(
         Grievance,
@@ -228,14 +234,11 @@ class GrievanceSignature(SoftDeleteModel):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Grievance Signature"
-        verbose_name_plural = "Grievance Signatures"
+        verbose_name = "Signature"
+        verbose_name_plural = "Signatures"
 
     def __str__(self):
         return f"Signature for {self.grievance.tracking_id}"
-
-
-# ── Backend-only: Audit trail for status changes ──────────────────────────────
 
 
 class GrievanceActionLog(SoftDeleteModel):
@@ -273,7 +276,7 @@ class ICCComplaint(SoftDeleteModel):
         ("sexual_harassment", "Sexual Harassment"),
         ("workplace_bullying", "Workplace Bullying"),
         ("discrimination", "Discrimination"),
-        ("other", "Other"),
+        ("Other", "Other"),
     ]
 
     STATUS_CHOICES = [
@@ -291,7 +294,7 @@ class ICCComplaint(SoftDeleteModel):
         choices=ICC_NATURE_CHOICES,
         verbose_name="Nature of Grievance",
     )
-    other_nature_of_grievance = models.CharField(
+    others_nature_of_grievance = models.CharField(
         max_length=255,
         blank=True,
         null=True,
@@ -430,8 +433,8 @@ class ICCSignature(SoftDeleteModel):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "ICC Signature"
-        verbose_name_plural = "ICC Signatures"
+        verbose_name = "Signature"
+        verbose_name_plural = "Signatures"
 
 
 class ICCActionLog(SoftDeleteModel):
@@ -467,7 +470,7 @@ class DiscriminationComplaint(SoftDeleteModel):
         ("obc", "OBC"),
         ("disable", "Disable (PwD)"),
         ("minority", "Minority"),
-        ("other", "Other"),
+        ("Other", "Other"),
     ]
     MARITAL_STATUS_CHOICES = [
         ("single", "Single"),
@@ -489,6 +492,13 @@ class DiscriminationComplaint(SoftDeleteModel):
         max_length=50,
         choices=DISCRIMINATION_CHOICES,
         verbose_name="Complaint Discrimination",
+    )
+    others_complaint_discrimination = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Specify Other Complaint Discrimination",
+        help_text="Required if Complaint Discrimination is 'Other'",
     )
     complaint_text = models.TextField(
         verbose_name="Complaint Details",
@@ -633,8 +643,8 @@ class DiscriminationAttachment(SoftDeleteModel):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Discrimination Attachment"
-        verbose_name_plural = "Discrimination Attachments"
+        verbose_name = "Attachment"
+        verbose_name_plural = "Attachments"
 
 
 class DiscriminationSignature(SoftDeleteModel):
@@ -679,6 +689,7 @@ class DiscriminationActionLog(SoftDeleteModel):
 # Student Feedback Portal
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class StudentFeedback(SoftDeleteModel):
     SUBJECT_CHOICES = [
         ("academic", "Academic"),
@@ -686,7 +697,7 @@ class StudentFeedback(SoftDeleteModel):
         ("hostel", "Hostel"),
         ("extracurricular", "Extracurricular Activities"),
         ("administration", "Administration"),
-        ("other", "Other"),
+        ("Other", "Other"),
     ]
 
     COURSE_CHOICES = [
@@ -694,7 +705,7 @@ class StudentFeedback(SoftDeleteModel):
         ("pg", "Postgraduate"),
         ("phd", "Ph.D."),
         ("diploma", "Diploma"),
-        ("other", "Other"),
+        ("Other", "Other"),
     ]
 
     STATUS_CHOICES = [
@@ -711,6 +722,13 @@ class StudentFeedback(SoftDeleteModel):
         choices=SUBJECT_CHOICES,
         verbose_name="Subject of your Feedback",
     )
+    others_subject_of_feedback = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Specify Other Subject of Feedback",
+        help_text="Required if Subject of Feedback is 'Other'",
+    )
     name_of_student = models.CharField(
         max_length=255,
         verbose_name="Name of Student",
@@ -725,7 +743,8 @@ class StudentFeedback(SoftDeleteModel):
     )
     mothers_name = models.CharField(
         max_length=255,
-        blank=True, null=True,
+        blank=True,
+        null=True,
         verbose_name="Mother's Name",
     )
     permanent_address = models.TextField(
@@ -805,7 +824,9 @@ class StudentFeedback(SoftDeleteModel):
             self.save(update_fields=["tracking_id"])
 
     def __str__(self):
-        return f"{self.tracking_id} — {self.name_of_student} ({self.get_status_display()})"
+        return (
+            f"{self.tracking_id} — {self.name_of_student} ({self.get_status_display()})"
+        )
 
 
 class FeedbackAttachment(SoftDeleteModel):
@@ -818,8 +839,8 @@ class FeedbackAttachment(SoftDeleteModel):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Feedback Attachment"
-        verbose_name_plural = "Feedback Attachments"
+        verbose_name = "Attachment"
+        verbose_name_plural = "Attachments"
 
 
 class FeedbackSignature(SoftDeleteModel):
@@ -849,7 +870,8 @@ class FeedbackActionLog(SoftDeleteModel):
     status_changed_to = models.CharField(
         max_length=30,
         choices=StudentFeedback.STATUS_CHOICES,
-        blank=True, null=True,
+        blank=True,
+        null=True,
     )
     timestamp = models.DateTimeField(auto_now_add=True)
 
