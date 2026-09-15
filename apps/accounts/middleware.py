@@ -22,7 +22,7 @@ class ForcePasswordChangeMiddleware:
                         reverse("admin:password_change"),
                         reverse("admin:password_change_done"),
                         reverse("portal_logout"),
-                        reverse("admin:logout"),  # Allow Django admin logout button
+                        reverse("admin:logout"),
                     ]
 
                     # If the current path is not allowed, redirect them
@@ -56,14 +56,14 @@ class FileValidationMiddleware:
         ".jpg",
         ".jpeg",
         ".png",
-        ".webp",  # Images
+        ".webp", 
         ".pdf",
         ".doc",
         ".docx",
         ".xls",
         ".xlsx",
         ".csv",
-        ".txt",  # Documents
+        ".txt", 
     }
 
     # 20 MB limit
