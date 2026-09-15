@@ -137,8 +137,8 @@ class FAQ(SoftDeleteModel):
 
 class EmergencyContact(SoftDeleteModel):
     name = models.CharField(max_length=150)
-    role = models.CharField(max_length=150)
-    phone = models.CharField(max_length=20)
+    role = models.CharField(max_length=150,null =True,blank=True)
+    phone = models.CharField(max_length=20,blank=True)
     email = models.EmailField(blank=True)
     available_hours = models.CharField(max_length=100, blank=True, help_text="e.g. 24x7 or 9:00 AM - 5:00 PM")
     display_order = models.PositiveIntegerField(default=0)
@@ -149,13 +149,13 @@ class EmergencyContact(SoftDeleteModel):
         
     def clean(self):
         super().clean()
-        if self.phone:
-            val = str(self.phone).strip()
-            if not re.match(r"^\d{10}$", val):
-                raise ValidationError(
-                    {"phone": "Phone number must be exactly 10 digits."}
-                )
-            self.phone = val
+        # if self.phone:
+        #     val = str(self.phone).strip()
+        #     if not re.match(r"^\d{10}$", val):
+        #         raise ValidationError(
+        #             {"phone": "Phone number must be exactly 10 digits."}
+        #         )
+        #     self.phone = val
 
         if self.email:
             val = str(self.email).strip().lower()
