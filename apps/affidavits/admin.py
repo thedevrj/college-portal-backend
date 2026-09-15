@@ -24,7 +24,7 @@ class AffidavitAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "submitted_on",
     )
     list_filter = (SoftDeleteListFilter, "status", "department", "submitted_on")
-    search_fields = (
+    search_fields = (   
         "tracking_id",
         "student_name",
         "roll_number",
@@ -34,7 +34,58 @@ class AffidavitAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         "student_phone",
         "parent_name",
     )
-    readonly_fields = ("tracking_id", "submitted_on", "updated_on")
+    readonly_fields = ("tracking_id", "submitted_on", "updated_on",  "student_name",
+                    "roll_number",
+                    "enrollment_number",
+                    "department",
+                    "program_name",
+                    "student_email",
+                    "student_phone",
+                    "student_affidavit",
+                    "parent_name",
+                    "parent_phone",
+                    "parent_affidavit",
+                )
+    fieldsets = (
+        (
+            "Tracking Details",
+            {
+                "fields": (
+                    "tracking_id",
+                    "status",
+                    "remarks",
+                    "submitted_on",
+                    "updated_on",
+                )
+            },
+        ),
+        (
+            "Student Details",
+            {
+                "fields": (
+                    "student_name",
+                    "roll_number",
+                    "enrollment_number",
+                    "department",
+                    "program_name",
+                    "student_email",
+                    "student_phone",
+                    "student_affidavit",
+                )
+            },
+        ),
+        (
+            "Parent/Guardian Details",
+            {
+                "fields": (
+                    "parent_name",
+                    "parent_phone",
+                    "parent_affidavit",
+                )
+            },
+        ),
+    )
+    
     list_editable = ("status",)
     date_hierarchy = "submitted_on"
     exclude = ("is_deleted", "deleted_at")

@@ -32,9 +32,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
-
     new_password = serializers.CharField(required=True, write_only=True)
-
     confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
@@ -56,7 +54,6 @@ class ChangePasswordSerializer(serializers.Serializer):
                 {"confirm_password": "New password and confirm password do not match."}
             )
 
-        # Run Django's configured password validators (including ComplexityPasswordValidator)
         try:
             validate_password(new_password, user=user)
         except DjangoValidationError as e:

@@ -6,6 +6,7 @@ from .views import (
     get_entities_api,
     CustomTokenObtainPairView,
     ChangePasswordView,
+    SessionStatusView,
     AdminDashboardStatsView,
 )
 
@@ -18,6 +19,7 @@ urlpatterns = [
     path(
         "api/change-password/", ChangePasswordView.as_view(), name="api_change_password"
     ),
+    path("api/session/", SessionStatusView.as_view(), name="api_session"),
     path(
         "api/dashboard-stats/",
         AdminDashboardStatsView.as_view(),

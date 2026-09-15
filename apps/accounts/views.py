@@ -110,19 +110,19 @@ class PortalLogoutView(View):
 
     def get(self, request):
         logout(request)
-        return redirect("/portal/login/")
+        response = redirect("/portal/login/")
+        response.delete_cookie("access_token", path="/")
+        return response
 
     def post(self, request):
         logout(request)
-        return redirect("/portal/login/")
+        response = redirect("/portal/login/")
+        response.delete_cookie("access_token", path="/")
+        return response
 
 
 @login_required
 def portal_profile(request):
-    """
-    Simple profile page for logged-in portal users.
-    URL: /portal/profile/
-    """
     return render(request, "accounts/portal_profile.html", {"user": request.user})
 
 
@@ -166,6 +166,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     serializer_class = CustomTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK and "access" in response.data:
+            access_token = response.data.pop("access")
+            response.data.pop("refresh", None)
+            response.set_cookie(
+                "access_token",
+                access_token,
+                httponly=True,
+                secure=False,
+                samesite="Lax",
+                max_age=600,
+                path="/",
+            )
+        return response
+
 
 class ChangePasswordView(APIView):
 
@@ -192,6 +208,13 @@ class ChangePasswordView(APIView):
                 {"message": "Password updated successfully"}, status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SessionStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({"authenticated": True, "username": request.user.get_username()})
 
 
 from rest_framework.authentication import SessionAuthentication
