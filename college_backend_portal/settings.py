@@ -210,7 +210,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "apps.accounts.authentication.CookieJWTAuthentication",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -366,6 +366,8 @@ JAZZMIN_SETTINGS = {
         "vigilance",
         "portals",
         "portals.Grievance",
+        "antiragging",
+        "affidavits",
         "archives",
         "archives.ArchivedGlobalNotice",
         "archives.ArchivedAdmissionNotice",

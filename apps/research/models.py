@@ -337,6 +337,16 @@ class ResearchScholar(SoftDeleteModel):
                 }
             )
 
+        if( self.status == "Thesis Submitted" and not self.thesis_submission_date):
+            raise ValidationError(
+                {"thesis_submission_date": "Thesis submission date cannot be empty when status is 'Thesis Submitted'."}
+            )
+
+        if( self.status == "Award" and not self.award_date):
+            raise ValidationError(
+                {"award_date": "Award date cannot be empty when status is 'Award'."}
+            )
+
         if self.contact_no:
             if not re.match(r"^\d{10}$", str(self.contact_no).strip()):
                 raise ValidationError(

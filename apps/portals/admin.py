@@ -163,10 +163,6 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     )
 
     def get_readonly_fields(self, request, obj=None):
-        """
-        All submitted grievance data is immutable — only status can be changed
-        by the officer from the admin panel.
-        """
         if obj:
             return (
                 "tracking_id",

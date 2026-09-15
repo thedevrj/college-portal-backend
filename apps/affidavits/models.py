@@ -2,7 +2,9 @@ import uuid
 from django.db import models
 from apps.accounts.models import SoftDeleteModel
 from simple_history.models import HistoricalRecords
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 
 from django.core.validators import RegexValidator, EmailValidator

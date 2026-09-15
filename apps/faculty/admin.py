@@ -11,11 +11,6 @@ from apps.centres.models import Centre
 
 
 class FuzzyForeignKeyWidget(ForeignKeyWidget):
-    """
-    Custom widget that attempts to find a match by stripping whitespace
-    and ignoring case sensitivity.
-    """
-
     def get_queryset(self, value, row, *args, **kwargs):
         if value:
             value = str(value).strip()

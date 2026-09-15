@@ -137,6 +137,14 @@ class PortalSecurityMixin:
                 "ProctorialBoardMember",
                 "ProctorialBoardMinutes",
                 "ProctorialBoardNotice",
+                "AffidavitFAQ",
+                "SampleAffidavit",
+                "AffidavitGuidelines",
+                "CommitteeMember",
+                "Resource",
+                "FAQ",
+                "EmergencyContact",
+
             ]
             if self.model.__name__ in global_models:
                 return qs
@@ -396,6 +404,13 @@ class PortalSecurityMixin:
             "ProctorialBoardMember",
             "ProctorialBoardMinutes",
             "ProctorialBoardNotice",
+            "AffidavitFAQ",
+            "SampleAffidavit",
+            "AffidavitGuidelines",
+            "CommitteeMember",
+            "Resource",
+            "FAQ",
+            "EmergencyContact",
         ]
         if self.model.__name__ in global_models:
             return super().has_delete_permission(request, obj)
