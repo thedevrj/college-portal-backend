@@ -26,11 +26,6 @@ class Staff(SoftDeleteModel):
     department_section_cell = models.CharField(
         max_length=255, blank=True, verbose_name="Department/Section/Cell"
     )
-    roles = models.CharField(
-        max_length=500,
-        blank=True,
-        help_text="Comma separated values indicating associated sections for roles",
-    )
     dob = models.DateField(null=True, blank=True)
 
     insti_email = models.EmailField(null=True, blank=True)

@@ -10,6 +10,6 @@ class StaffViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Staff.objects.filter(is_active=True)
     serializer_class = StaffSerializer
     permission_classes = [AllowAny]
-    search_fields = ["name", "designation", "department_section_cell", "roles", "staff_no"]
+    search_fields = ["name", "designation", "department_section_cell", "staff_no"]
     ordering_fields = '__all__'
     filterset_fields = ["department_section_cell", "staff_type", "campus"]

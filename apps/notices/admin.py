@@ -30,13 +30,14 @@ class GlobalNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmi
         "title",
         "show_in_marquee",
         "display_categories",
+        "appointment_type",
         "is_private",
-        "is_archived",
         "archive_date",
         "posted_by",
     )
     list_filter = (
         SoftDeleteListFilter,
+        "appointment_type",
         "is_private",
         "show_in_marquee",
         "is_active",
@@ -50,18 +51,21 @@ class GlobalNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmi
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
 
+    class Media:
+        js = ("admin/js/notice_appointment_toggle.js",)
+
     def display_categories(self, obj):
         return ", ".join(obj.categories) if obj.categories else "-"
 
     display_categories.short_description = "Categories"
 
-    # def get_queryset(self, request):
-    #     from django.utils import timezone
-    #     from django.db.models import Q
+    def get_queryset(self, request):
+        from django.utils import timezone
+        from django.db.models import Q
 
-    #     qs = super().get_queryset(request)
-    #     today = timezone.now().date()
-    #     return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
+        qs = super().get_queryset(request)
+        today = timezone.now().date()
+        return qs.exclude(Q(is_archived=True) | Q(archive_date__lt=today))
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:
