@@ -1,10 +1,7 @@
 // Portal Dashboard Custom JavaScript
-// This file is used for general UI tweaks across the ERP portal.
 
 /**
  * Sidebar User Panel Fix
- * Replaces the numeric Staff ID with the Faculty's Full Name
- * and ensures the correct Profile Photo is displayed.
  */
 function updateSidebarIdentity() {
     if (window.PORTAL_USER) {
@@ -50,13 +47,11 @@ setTimeout(updateSidebarIdentity, 500);
 setTimeout(updateSidebarIdentity, 2000);
 
 
-/**
- * Global ERP Dashboard Widgets
- * Fetches stats from the API and renders them in AdminLTE 3 small-boxes
- */
+// Global ERP Dashboard Widgets
+
 function renderGlobalDashboard() {
     const container = document.getElementById("global-dashboard-widgets");
-    if (!container) return; // Not on the dashboard page
+    if (!container) return;
 
     fetch('/portal/api/dashboard-stats/', { credentials: 'same-origin' })
         .then(response => {
@@ -140,20 +135,20 @@ if (document.readyState === "loading") {
 function setupImportFormatDetection() {
     var fileInput = document.getElementById('id_import_file');
     var formatSelect = document.getElementById('id_input_format');
-    
+
     if (fileInput && formatSelect) {
         // Hide the format select field's container row so user doesn't see it
         var formatRow = formatSelect.closest('.form-row') || formatSelect.parentElement;
         if (formatRow) {
             formatRow.style.display = 'none';
         }
-        
+
         // Auto-select format based on file extension when user picks a file
-        fileInput.addEventListener('change', function(e) {
+        fileInput.addEventListener('change', function (e) {
             var fileName = e.target.value;
             if (!fileName) return;
             var ext = fileName.split('.').pop().toLowerCase();
-            
+
             // Map extension to the format select option text
             for (var i = 0; i < formatSelect.options.length; i++) {
                 var optionText = formatSelect.options[i].text.toLowerCase().trim();
@@ -164,7 +159,7 @@ function setupImportFormatDetection() {
                 }
             }
         });
-        
+
         // Trigger change if file already selected (e.g. on form reload with errors)
         if (fileInput.value) {
             fileInput.dispatchEvent(new Event('change'));
@@ -178,3 +173,37 @@ if (document.readyState === "loading") {
 } else {
     setupImportFormatDetection();
 }
+
+// Adds  Reset button next to the Search button
+
+function setupChangelistResetButton() {
+    const searchForm = document.getElementById('changelist-search');
+    if (!searchForm) return;
+
+    // Avoid duplicate buttons
+    if (document.getElementById('admin-changelist-reset-btn')) return;
+
+    // Find the submit/search button
+    const searchBtn = searchForm.querySelector('input[type="submit"], button[type="submit"]');
+    if (!searchBtn) return;
+
+    const resetBtn = document.createElement('a');
+    resetBtn.id = 'admin-changelist-reset-btn';
+    resetBtn.href = window.location.pathname;
+    resetBtn.className = 'btn btn-secondary';
+    resetBtn.innerHTML = '<i class="fas fa-undo me-1"></i> Reset';
+    resetBtn.style.marginLeft = '6px';
+    resetBtn.style.padding = '0.375rem 0.75rem';
+    resetBtn.style.display = 'inline-flex';
+    resetBtn.style.alignItems = 'center';
+    resetBtn.style.gap = '4px';
+
+    searchBtn.parentNode.insertBefore(resetBtn, searchBtn.nextSibling);
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupChangelistResetButton);
+} else {
+    setupChangelistResetButton();
+}
+

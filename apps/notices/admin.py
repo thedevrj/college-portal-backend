@@ -23,6 +23,19 @@ class GlobalNoticeForm(forms.ModelForm):
         return self.cleaned_data["categories"]
 
 
+class CategoryListFilter(admin.SimpleListFilter):
+    title = "Category"
+    parameter_name = "category"
+
+    def lookups(self, request, model_admin):
+        return GlobalNotice.CATEGORY_CHOICES
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(categories__contains=[self.value()])
+        return queryset
+
+
 @admin.register(GlobalNotice)
 class GlobalNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     form = GlobalNoticeForm
@@ -37,6 +50,7 @@ class GlobalNoticeAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmi
     )
     list_filter = (
         SoftDeleteListFilter,
+        CategoryListFilter,
         "appointment_type",
         "is_private",
         "show_in_marquee",
