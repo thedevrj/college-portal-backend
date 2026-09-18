@@ -15,7 +15,7 @@ class GlobalNotice(SoftDeleteModel):
     Appointment_choice = [
         ("Teaching", "Teaching"),
         ("Non-Teaching", "Non-Teaching"),
-        ("Resourse Person", "Resourse Person"),
+        ("Resource Person", "Resource Person"),
         ("Others", "Others"),
     ]
 

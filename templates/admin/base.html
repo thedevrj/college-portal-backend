@@ -13,42 +13,67 @@
     };
 
     // Sidebar scroll persistence and active item focus
-    document.addEventListener("DOMContentLoaded", function() {
-        const sidebar = document.querySelector('.main-sidebar .os-viewport') || document.querySelector('.main-sidebar');
-        
-        // Find all active items and get the most specific one (deepest in the tree)
-        const activeItems = document.querySelectorAll('.nav-sidebar .nav-link.active');
-        const activeItem = activeItems.length > 0 ? activeItems[activeItems.length - 1] : null;
-        
-        if (sidebar) {
+    function scrollToActiveSidebarItem() {
+        const sidebar = document.querySelector('.main-sidebar .os-viewport') ||
+                        document.querySelector('.sidebar') ||
+                        document.querySelector('.main-sidebar');
+
+        if (!sidebar) return;
+
+        let activeItem = document.querySelector('.nav-sidebar .nav-link.active');
+
+        if (!activeItem) {
+            const currentPath = window.location.pathname;
+            const link = document.querySelector(`.nav-sidebar a[href="${currentPath}"]`) ||
+                         document.querySelector(`.nav-sidebar a[href^="${currentPath}"]`);
+            if (link) {
+                link.classList.add('active');
+                activeItem = link;
+                const parentNav = link.closest('.has-treeview');
+                if (parentNav) {
+                    parentNav.classList.add('menu-open');
+                    const childUl = parentNav.querySelector('.nav-treeview');
+                    if (childUl) childUl.style.display = 'block';
+                }
+            }
+        }
+
+        if (activeItem) {
+            activeItem.scrollIntoView({ behavior: 'auto', block: 'center' });
+            if (sidebar.scrollTop !== undefined) {
+                sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
+            }
+        } else {
             const savedScrollPos = sessionStorage.getItem('sidebarScrollPos');
-            
-            // If there's an active item, ensure it's visible
-            if (activeItem) {
-                setTimeout(() => {
-                    activeItem.scrollIntoView({ behavior: 'auto', block: 'center' });
-                    // Update session storage after scrolling to active item
-                    setTimeout(() => {
-                        sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
-                    }, 50);
-                }, 100);
-            } else if (savedScrollPos !== null) {
-                // Fallback to saved position if no active item (e.g. dashboard)
+            if (savedScrollPos !== null) {
                 sidebar.scrollTop = parseInt(savedScrollPos, 10);
             }
-            
-            // Track scroll position
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebar = document.querySelector('.main-sidebar .os-viewport') ||
+                        document.querySelector('.sidebar') ||
+                        document.querySelector('.main-sidebar');
+
+        // Scroll immediately, then after Jazzmin and OverlayScrollbars finish initializing
+        scrollToActiveSidebarItem();
+        setTimeout(scrollToActiveSidebarItem, 150);
+        setTimeout(scrollToActiveSidebarItem, 400);
+
+        if (sidebar) {
             sidebar.addEventListener('scroll', function() {
                 sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
             });
-            
-            // Track clicks to ensure we capture the intent immediately
-            document.querySelectorAll('.nav-sidebar .nav-link').forEach(link => {
-                link.addEventListener('click', function() {
-                    sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
-                });
-            });
         }
+
+        document.querySelectorAll('.nav-sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                if (sidebar) {
+                    sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop);
+                }
+            });
+        });
     });
 </script>
 {% endif %}
