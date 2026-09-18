@@ -16,6 +16,7 @@ class GlobalNotice(SoftDeleteModel):
         ("Teaching", "Teaching"),
         ("Non-Teaching", "Non-Teaching"),
         ("Resource Person", "Resource Person"),
+        ("Interview", "Interview"),
         ("Others", "Others"),
     ]
 
