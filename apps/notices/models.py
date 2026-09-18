@@ -12,6 +12,12 @@ class GlobalNotice(SoftDeleteModel):
         ("Appointment", "Appointment"),
         ("Tenders", "Tenders"),
     ]
+    Appointment_choice = [
+        ("Teaching", "Teaching"),
+        ("Non-Teaching", "Non-Teaching"),
+        ("Resourse Person", "Resourse Person"),
+        ("Others", "Others"),
+    ]
 
     title = models.CharField(max_length=500)
     categories = ArrayField(
@@ -19,6 +25,12 @@ class GlobalNotice(SoftDeleteModel):
         blank=True,
         default=list,
         help_text="Select one or more categories",
+    )
+    appointment_type = models.CharField(
+        max_length=50,
+        choices=Appointment_choice,
+        blank=True,
+        verbose_name="Appointment Choice",
     )
     link = models.URLField(
         blank=True, null=True, help_text="Optional external link or relative URL",verbose_name="External Link"
@@ -73,6 +85,10 @@ class GlobalNotice(SoftDeleteModel):
         if not self.link and not self.attachment and not self.internal_link:
             raise ValidationError(
                 "A notice must have either an external link or a file attachment or a website internal link."
+            )
+        if self.categories and "Appointment" in self.categories and not self.appointment_type:
+            raise ValidationError(
+                {"appointment_type": "Appointment type is required for appointment notices."}
             )
 
     def __str__(self):
