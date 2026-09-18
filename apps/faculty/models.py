@@ -100,8 +100,6 @@ class Faculty(SoftDeleteModel):
         help_text="Upload CV/Resume in PDF format",
     )
 
-    roles = models.JSONField(default=list, blank=True)
-
     insti_email = models.EmailField(null=True, blank=True)
     other_email = models.EmailField(null=True, blank=True)
     phone1 = models.CharField(max_length=10, null=True, blank=True)
@@ -126,6 +124,15 @@ class Faculty(SoftDeleteModel):
         from django.core.exceptions import ValidationError
         from django.apps import apps
 
+        if not self.is_active and not self.date_of_superannuation:
+            raise ValidationError(
+                {"is_active": "Faculty member cannot be inactive without date of superannuation."}
+            )
+            
+        if self.is_active and self.date_of_superannuation:
+            raise ValidationError(
+                {"is_active": "Faculty member cannot be active with date of superannuation."}
+            )
         if self.staff_no:
             try:
                 Staff = apps.get_model("staff", "Staff")
