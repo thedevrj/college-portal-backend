@@ -347,8 +347,8 @@ class FacultyResource(resources.ModelResource):
                         pass
 
         # 10. Default roles to empty list
-        if "roles" not in row:
-            row["roles"] = []
+        # if "roles" not in row:
+            # row["roles"] = []
 
 
 from simple_history.admin import SimpleHistoryAdmin
