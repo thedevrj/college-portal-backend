@@ -16,6 +16,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             )
         except Exception:
             token["force_password_change"] = False
+        try:
+            token["token_version"] = user.portal_profile.token_version
+        except Exception:
+            token["token_version"] = 0
         return token
 
     def validate(self, attrs):

@@ -14,6 +14,15 @@ class Faculty(SoftDeleteModel):
         ("BBAU", "BBAU"),
         ("Satellite Campus Amethi", "Satellite Campus Amethi"),
     ]
+    Designation_choices = [
+        ("Assistant Professor", "Assistant Professor"),
+        ("Associate Professor", "Associate Professor"),
+        ("Professor", "Professor"),
+        ("Senior Professor", "Senior Professor"),
+        ("Guest Faculty", "Guest Faculty"),
+        ("Others", "Others"),
+
+    ]
 
     user = models.OneToOneField(
         "auth.User",
@@ -33,7 +42,10 @@ class Faculty(SoftDeleteModel):
     )
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    designation = models.CharField(max_length=255)
+    designation = models.CharField(max_length=255, choices=Designation_choices)
+    others_designation = models.CharField(
+        max_length=255, blank=True, null=True, help_text="Enter your designation"
+    )
     dob = models.DateField(null=True, blank=True)
     campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES)
 
@@ -128,7 +140,10 @@ class Faculty(SoftDeleteModel):
             raise ValidationError(
                 {"is_active": "Faculty member cannot be inactive without date of superannuation."}
             )
-            
+        if self.designation == "Others" and not self.others_designation:
+            raise ValidationError(
+                {"others_designation": "This field is required."}
+            )
         if self.is_active and self.date_of_superannuation:
             raise ValidationError(
                 {"is_active": "Faculty member cannot be active with date of superannuation."}

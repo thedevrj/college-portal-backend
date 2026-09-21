@@ -21,7 +21,6 @@ class StaffResource(resources.ModelResource):
             "name",
             "designation",
             "department_section_cell",
-            "roles",
             "dob",
             "insti_email",
             "other_email",
@@ -51,8 +50,7 @@ class StaffResource(resources.ModelResource):
 
     def before_import(self, dataset, using_transactions, dry_run, **kwargs):
         """
-        Strip completely blank rows (ghost rows) from Excel files instantly, 
-        which otherwise cause infinite loading.
+        Remove completely blank rows from the dataset.
         """
         def is_row_empty(row):
             for cell in row:
@@ -166,7 +164,6 @@ class StaffAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
         "staff_no",
         "designation",
         "department_section_cell",
-        "roles",
     )
     prepopulated_fields = {"slug": ("name",)}
     formfield_overrides = {
