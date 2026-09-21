@@ -8,6 +8,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import AuthenticationFailed
+from django.conf import settings
+from django.middleware.csrf import get_token
+from .authentication import CookieJWTAuthentication
 from .serializers import CustomTokenObtainPairSerializer, ChangePasswordSerializer
 
 from .models import PortalRole
@@ -108,17 +112,28 @@ class PortalLogoutView(View):
     Logs the user out and redirects to the login page.
     """
 
-    def get(self, request):
+    def _logout(self, request):
+        try:
+            auth_result = CookieJWTAuthentication().authenticate(request)
+        except AuthenticationFailed:
+            # The token is already expired/revoked; still clear the browser cookie.
+            auth_result = None
+        if auth_result:
+            jwt_user, _ = auth_result
+            profile = getattr(jwt_user, "portal_profile", None)
+            if profile is not None:
+                profile.token_version += 1
+                profile.save(update_fields=["token_version"])
         logout(request)
         response = redirect("/portal/login/")
         response.delete_cookie("access_token", path="/")
         return response
 
+    def get(self, request):
+        return self._logout(request)
+
     def post(self, request):
-        logout(request)
-        response = redirect("/portal/login/")
-        response.delete_cookie("access_token", path="/")
-        return response
+        return self._logout(request)
 
 
 @login_required
@@ -171,13 +186,23 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         if response.status_code == status.HTTP_200_OK and "access" in response.data:
             access_token = response.data.pop("access")
             response.data.pop("refresh", None)
+            csrf_token = get_token(request)
             response.set_cookie(
                 "access_token",
                 access_token,
                 httponly=True,
-                secure=False,
+                secure=settings.AUTH_COOKIE_SECURE,
                 samesite="Lax",
                 max_age=600,
+                path="/",
+            )
+            response.set_cookie(
+                "csrftoken",
+                csrf_token,
+                secure=settings.CSRF_COOKIE_SECURE,
+                httponly=False,
+                samesite="Lax",
+                max_age=31449600,
                 path="/",
             )
         return response
@@ -197,12 +222,10 @@ class ChangePasswordView(APIView):
             user.save()
 
             # Clear the force change flag
-            try:
-                profile = user.portal_profile
-                profile.force_password_change = False
-                profile.save()
-            except Exception:
-                pass
+            profile = user.portal_profile
+            profile.force_password_change = False
+            profile.token_version += 1
+            profile.save(update_fields=["force_password_change", "token_version"])
 
             return Response(
                 {"message": "Password updated successfully"}, status=status.HTTP_200_OK

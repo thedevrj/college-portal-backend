@@ -419,7 +419,7 @@ class PortalSecurityMixin:
         if self._is_owner(request.user, obj):
             return True
 
-        # Deny delete permission for standard Staff users.
+        # Deny delete permission for Staff users.
         # Only HODs, Deans, and RD_Admins should be able to soft-delete other people's records.
         # Delete the code below to give delete permission to all users.
         try:

@@ -83,6 +83,10 @@ class UserProfile(models.Model):
         default=False,
         help_text="If True, the user will be forced to change their password on next login.",
     )
+    token_version = models.PositiveIntegerField(
+        default=0,
+        help_text="Increment to revoke all JWTs issued to this user.",
+    )
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
