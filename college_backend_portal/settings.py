@@ -177,6 +177,7 @@ PASSWORD_RESET_TIMEOUT = 600
 # when ssl is active radd not DEBUG
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
+AUTH_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", "True") == "False"
 
 
 # Prevent website loading inside the invisible third party iframe

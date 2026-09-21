@@ -23,9 +23,6 @@ from django.utils import timezone
 from django.db.models import Q
 
 
-# --- Robust Date Parser ---
-
-
 def clean_and_parse_date(val):
     if val is None:
         return None
