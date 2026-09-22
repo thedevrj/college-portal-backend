@@ -3,6 +3,8 @@ from django.contrib import admin
 from .models import PortalRole, EntityType
 from django.apps import apps
 from django.db import models
+from django.utils import timezone
+
 
 
 class PortalSecurityMixin:
@@ -453,8 +455,6 @@ class PortalSecurityMixin:
     def delete_queryset(self, request, queryset):
         """Default to bulk soft delete for everyone."""
         if hasattr(self.model, "soft_delete"):
-            from django.utils import timezone
-
             objs = list(queryset)
             queryset.update(is_deleted=True, deleted_at=timezone.now())
             self._log_soft_delete(request, objs)
@@ -464,13 +464,19 @@ class PortalSecurityMixin:
     @admin.action(description="Move selected to Trash")
     def move_to_trash(self, request, queryset):
         """Bulk soft delete."""
-        from django.utils import timezone
 
         objs = list(queryset)
         queryset.update(is_deleted=True, deleted_at=timezone.now())
         self._log_soft_delete(request, objs)
         self.message_user(request, "Selected items moved to Trash.")
 
+    @admin.action(description="Move selected items to Archive")
+    def move_to_archive(self, request, queryset):
+        """Bulk archive."""
+        objs = list(queryset)
+        queryset.update(is_archived=True, archive_date=timezone.now())
+        self.message_user(request, "Selected items moved to Archive.")
+        
     @admin.action(description="Permanently Delete selected")
     def permanently_delete_items(self, request, queryset):
         """Bulk permanent delete."""
@@ -541,6 +547,7 @@ class PortalSecurityMixin:
             actions["permanently_delete_items"] = self.get_action(
                 "permanently_delete_items"
             )
+            actions["move_to_archive"] = self.get_action("move_to_archive")
         return actions
 
     def get_exclude(self, request, obj=None):
@@ -573,6 +580,8 @@ class PortalSecurityMixin:
                     "user",
                     "is_active",
                     "department",
+                    "school",
+                    "campus",
                     "staff_no",
                     "designation",
                 ]:
