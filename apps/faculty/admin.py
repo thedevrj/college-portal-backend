@@ -361,11 +361,15 @@ class InvitedTalkInline(admin.TabularInline):
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+    exclude = ("is_deleted", "deleted_at")
+
 
 
 class CourseDesignInline(admin.StackedInline):
     model = CourseDesign
     extra = 1
+    exclude = ("is_deleted", "deleted_at")
+
 
 
 class MembershipInline(admin.TabularInline):
@@ -374,6 +378,7 @@ class MembershipInline(admin.TabularInline):
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+    exclude = ("is_deleted", "deleted_at")
 
 
 @admin.register(Faculty)
@@ -549,6 +554,7 @@ class InvitedTalkAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+    exclude = ("is_deleted", "deleted_at")
 
 
 @admin.register(CourseDesign)
@@ -557,6 +563,7 @@ class CourseDesignAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_filter = (SoftDeleteListFilter, "course_level")
     search_fields = ("course_name", "faculty__name")
     autocomplete_fields = ["faculty"]
+    exclude = ("is_deleted", "deleted_at")
 
 
 @admin.register(Membership)
@@ -568,3 +575,4 @@ class MembershipAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     formfield_overrides = {
         models.DateField: {"widget": forms.DateInput(attrs={"type": "date"})},
     }
+    exclude = ("is_deleted", "deleted_at")
