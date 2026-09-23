@@ -8,9 +8,6 @@ from django.utils import timezone
 
 
 class PortalSecurityMixin:
-    """
-    Advanced Mixin to enforce row-level security and UI automation.
-    """
 
     class Media:
         css = {"all": ("css/admin_tweaks.css",)}
@@ -139,6 +136,7 @@ class PortalSecurityMixin:
                 "ProctorialBoardMember",
                 "ProctorialBoardMinutes",
                 "ProctorialBoardNotice",
+                "Affidavit",
                 "AffidavitFAQ",
                 "SampleAffidavit",
                 "AffidavitGuidelines",
