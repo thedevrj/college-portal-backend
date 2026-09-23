@@ -37,11 +37,6 @@ class MOUViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ArchivedMOUViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows Archived MOUs to be viewed.
-    Only authenticated members (staff/faculty) can access this endpoint.
-    """
-
     serializer_class = MOUSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [
