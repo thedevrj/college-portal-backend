@@ -13,6 +13,8 @@ from .serializers import (
     MPHILVivaVoceDateSerializer,
     PHDVivaVoceDateSerializer,
 )
+from django.utils import timezone
+from django.db.models import Q
 
 
 class COENoticeViewSet(viewsets.ModelViewSet):
@@ -21,9 +23,7 @@ class COENoticeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return COENotice.objects.exclude(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -35,9 +35,7 @@ class ArchiveCOENoticeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return COENotice.objects.filter(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -49,9 +47,7 @@ class PHDVivaVoceDateViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return PHDVivaVoceDate.objects.exclude(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -63,9 +59,7 @@ class ArchivePHDVivaVoceDateViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return PHDVivaVoceDate.objects.filter(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -77,9 +71,7 @@ class MPHILVivaVoceDateViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return MPHILVivaVoceDate.objects.exclude(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -91,9 +83,7 @@ class ArchiveMPHILVivaVoceDateViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return MPHILVivaVoceDate.objects.filter(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -105,9 +95,7 @@ class PHDPreSubmissionSeminarViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return PHDPreSubmissionSeminar.objects.exclude(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -119,9 +107,7 @@ class ArchivePHDPreSubmissionSeminarViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return PHDPreSubmissionSeminar.objects.filter(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -133,9 +119,7 @@ class RDCUNoticeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return RDCUNotice.objects.exclude(
             Q(is_archived=True) | Q(archive_date__lt=today)
@@ -148,9 +132,7 @@ class ArchiveRDCUNoticeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
-        from django.utils import timezone
-        from django.db.models import Q
-
+        
         today = timezone.now().date()
         return RDCUNotice.objects.filter(
             Q(is_archived=True) | Q(archive_date__lt=today)
