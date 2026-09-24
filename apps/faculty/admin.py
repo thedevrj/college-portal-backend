@@ -471,7 +471,7 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
             user, user_created = User.objects.get_or_create(username=username)
             if user_created:
                 # Set default password
-                user.set_password("Bbau@2026")
+                user.set_password("Bbau@123")
                 if faculty.insti_email:
                     user.email = faculty.insti_email
                 user.save()

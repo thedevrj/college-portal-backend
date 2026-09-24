@@ -211,7 +211,7 @@ class Faculty(SoftDeleteModel):
             from django.contrib.auth.models import User
             from apps.accounts.models import UserProfile
 
-            username = f"faculty_{self.staff_no}"
+            username = f"fac_{self.staff_no}"
 
             is_new = self.pk is None
 
@@ -224,7 +224,7 @@ class Faculty(SoftDeleteModel):
                     user = User.objects.create_user(
                         username=username,
                         email=self.insti_email or "",
-                        password=User.objects.make_random_password(length=12),
+                        password=f"Bbau@123",  # Default password
                     )
                     self.user = user
 
