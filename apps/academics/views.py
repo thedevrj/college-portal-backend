@@ -118,12 +118,30 @@ class ProgramFilter(django_filters.FilterSet):
 
 
 class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Program.objects.select_related(
-        "department", "department__school", "centre"
-    ).prefetch_related("courses")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = ProgramFilter
     search_fields = ["name"]
+
+    def get_queryset(self):
+        from django.db.models import Case, When, Value, IntegerField
+
+        return (
+            Program.objects.select_related(
+                "department", "department__school", "centre"
+            )
+            .prefetch_related("courses")
+            .annotate(
+                level_order=Case(
+                    When(level="UG", then=Value(1)),
+                    When(level="PG", then=Value(2)),
+                    When(level="PHD", then=Value(3)),
+                    When(level="Others", then=Value(4)),
+                    default=Value(5),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("level_order", "id")
+        )
 
     def get_serializer_class(self):
         return ProgramDetailSerializer
