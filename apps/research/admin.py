@@ -5,6 +5,7 @@ from django.forms.models import BaseInlineFormSet
 from django.core.exceptions import ValidationError
 from simple_history.admin import SimpleHistoryAdmin
 from import_export import resources, fields
+from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from import_export.admin import ImportExportModelAdmin
 from datetime import datetime
@@ -29,9 +30,64 @@ from .models import (
 # Resources for Import/Export
 class FuzzyForeignKeyWidget(ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        if value:
-            value = str(value).strip()
-            return self.model.objects.filter(**{f"{self.field}__iexact": value})
+        if not value:
+            return self.model.objects.none()
+
+        val_str = str(value).strip()
+        if not val_str:
+            return self.model.objects.none()
+
+        # 1. Exact case-insensitive match on field
+        qs = self.model.objects.filter(**{f"{self.field}__iexact": val_str})
+        if qs.exists():
+            return qs
+
+        # 2. Try exact match on slug if present
+        if hasattr(self.model, "slug"):
+            from django.utils.text import slugify
+            clean_slug = slugify(val_str)
+            if clean_slug:
+                qs = self.model.objects.filter(slug__iexact=clean_slug)
+                if qs.exists():
+                    return qs
+
+        import re
+        try:
+            qs = self.model.objects.filter(**{f"{self.field}__iregex": r"\b" + re.escape(val_str) + r"\b"})
+            if qs.exists():
+                return qs
+        except Exception:
+            pass
+
+        # 4. Dept Acronym/Initials match 
+        val_upper = val_str.upper()
+        if len(val_upper) <= 6:
+            matching_pks = []
+            for obj in self.model.objects.all():
+                obj_name = str(getattr(obj, self.field, "") or "")
+                words = [
+                    w for w in re.split(r"[\s&,-]+", obj_name)
+                    if w and w.lower() not in ["of", "and", "the", "department", "cell", "section"]
+                ]
+                initials = "".join(w[0] for w in words).upper()
+                if initials == val_upper:
+                    matching_pks.append(obj.pk)
+            if matching_pks:
+                return self.model.objects.filter(pk__in=matching_pks)
+
+        # 5. Honorific title removal 
+        clean_name = re.sub(r"^(dr|prof|mr|mrs|ms|shri|smt)\.?\s+", "", val_str, flags=re.IGNORECASE).strip()
+        if clean_name and clean_name != val_str:
+            qs = self.model.objects.filter(**{f"{self.field}__iexact": clean_name})
+            if qs.exists():
+                return qs
+            try:
+                qs = self.model.objects.filter(**{f"{self.field}__iregex": r"\b" + re.escape(clean_name) + r"\b"})
+                if qs.exists():
+                    return qs
+            except Exception:
+                pass
+
         return self.model.objects.none()
 
     def clean(self, value, row=None, *args, **kwargs):
@@ -39,10 +95,6 @@ class FuzzyForeignKeyWidget(ForeignKeyWidget):
             qs = self.get_queryset(value, row, *args, **kwargs)
             if qs.exists():
                 return qs.first()
-            value = str(value).strip().lower()
-            for obj in self.model.objects.all():
-                if str(getattr(obj, self.field)).strip().lower() == value:
-                    return obj
         return None
 
 
@@ -54,28 +106,49 @@ class FuzzyManyToManyWidget(ManyToManyWidget):
         if isinstance(value, (float, int)):
             value = str(int(value))
 
-        ids = filter(None, [i.strip() for i in value.split(self.separator)])
-        objects = []
-        for id_val in ids:
-            qs = self.model.objects.filter(**{f"{self.field}__iexact": id_val})
-            if qs.exists():
-                objects.append(qs.first())
-                continue
+        ids = [i.strip() for i in str(value).split(self.separator) if i.strip()]
+        if not ids:
+            return self.model.objects.none()
 
-            id_val_lower = id_val.lower()
-            for obj in self.model.objects.all():
-                if str(getattr(obj, self.field)).strip().lower() == id_val_lower:
-                    objects.append(obj)
-                    break
-        return objects
+        pks = []
+        for id_val in ids:
+            # 1. Exact match
+            obj = self.model.objects.filter(**{f"{self.field}__iexact": id_val}).first()
+            if not obj and hasattr(self.model, "slug"):
+                from django.utils.text import slugify
+                clean_slug = slugify(id_val)
+                if clean_slug:
+                    obj = self.model.objects.filter(slug__iexact=clean_slug).first()
+            if not obj:
+                import re
+                try:
+                    obj = self.model.objects.filter(**{f"{self.field}__iregex": r"\b" + re.escape(id_val) + r"\b"}).first()
+                except Exception:
+                    pass
+            if obj:
+                pks.append(obj.pk)
+
+        if not pks:
+            return self.model.objects.none()
+
+        return self.model.objects.filter(pk__in=pks)
 
 
 class BaseResearchResource(resources.ModelResource):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
     def before_import_row(self, row, **kwargs):
         for key in list(row.keys()):
             val = row[key]
             if val is not None and str(val).lower().strip() == "none":
                 row[key] = None
+
+        if "contact_no" in row and row["contact_no"] is not None:
+            c = str(row["contact_no"]).strip()
+            if c.endswith(".0"):
+                c = c[:-2]
+            row["contact_no"] = c
 
         if "gender" in row and row["gender"]:
             g = str(row["gender"]).strip().lower()
@@ -85,6 +158,13 @@ class BaseResearchResource(resources.ModelResource):
                 row["gender"] = "Female"
             elif g == "other":
                 row["gender"] = "Other"
+        
+        if "campus" in row and row["campus"]:
+            c = str(row["campus"]).strip().upper()
+            if c == "BBAU":
+                row["campus"] = "BBAU"
+            elif c == "SATELLITE CAMPUS AMETHI" or c == "AMETHI":
+                row["campus"] = "Satellite Campus Amethi"
 
         if "category" in row and row["category"]:
             c = str(row["category"]).strip().upper()
@@ -105,9 +185,9 @@ class BaseResearchResource(resources.ModelResource):
             s = str(row["status"]).strip().lower()
             if s == "pursuing":
                 row["status"] = "Pursuing"
-            elif "thesis" in s:
+            elif s == "thesis submitted" or s == "thesis submit" or s == "thesis" :
                 row["status"] = "Thesis Submitted"
-            elif s == "awarded":
+            elif s == "awarded" or s == "award":
                 row["status"] = "Awarded"
             elif s == "ongoing":
                 row["status"] = "Ongoing"
@@ -158,6 +238,86 @@ class BaseResearchResource(resources.ModelResource):
                 val = row[field.column_name]
                 if val is not None and str(val).strip() != "":
                     self.import_field(field, obj, row, **kwargs)
+
+    def clean_instance(self, instance, original, row, **kwargs):
+        pass
+
+    def import_row(self, row, instance_loader, **kwargs):
+        row_result = super().import_row(row, instance_loader, **kwargs)
+
+        if row_result.import_type not in (RowResult.IMPORT_TYPE_SKIP, RowResult.IMPORT_TYPE_ERROR):
+            try:
+                instance, new = self.get_or_init_instance(instance_loader, row)
+                self.import_obj(instance, row, kwargs.get("dry_run", False))
+                instance.full_clean(exclude=getattr(self._meta, "exclude", None))
+            except ValidationError as e:
+                row_result.import_type = RowResult.IMPORT_TYPE_ERROR
+                row_result.validation_error = e
+            except Exception as e:
+                row_result.import_type = RowResult.IMPORT_TYPE_ERROR
+                row_result.errors.append(self.get_error_result_class()(e))
+
+        formatted = []
+        val_errs = []
+        if row_result.validation_error:
+            val_errs.append(row_result.validation_error)
+            if hasattr(row_result.validation_error, "__cause__") and row_result.validation_error.__cause__:
+                val_errs.append(row_result.validation_error.__cause__)
+
+        for val_err in val_errs:
+            if hasattr(val_err, "error_dict") and val_err.error_dict:
+                for f, err_list in val_err.error_dict.items():
+                    label = "General" if f == "__all__" else f.replace("_", " ").title()
+                    for err_item in (err_list if isinstance(err_list, (list, tuple)) else [err_list]):
+                        m = getattr(err_item, "message", str(err_item))
+                        if getattr(err_item, "params", None):
+                            try:
+                                m = m % err_item.params
+                            except Exception:
+                                pass
+                        text = f"{label}: {m}"
+                        if text not in formatted and str(m) != "Validation failed for this row.":
+                            formatted.append(text)
+
+            elif hasattr(val_err, "message_dict") and val_err.message_dict:
+                for f, msgs in val_err.message_dict.items():
+                    label = "General" if f == "__all__" else f.replace("_", " ").title()
+                    for m in (msgs if isinstance(msgs, (list, tuple)) else [msgs]):
+                        text = f"{label}: {m}"
+                        if text not in formatted and str(m) != "Validation failed for this row.":
+                            formatted.append(text)
+
+            elif hasattr(val_err, "messages") and val_err.messages:
+                for m in val_err.messages:
+                    m_str = str(m)
+                    if m_str != "Validation failed for this row." and m_str not in formatted:
+                        formatted.append(m_str)
+
+        if row_result.errors:
+            for err in row_result.errors:
+                err_text = str(getattr(err, "error", err))
+                if err_text not in formatted:
+                    formatted.append(f"Error: {err_text}")
+
+        if formatted:
+            row_result.formatted_errors = formatted
+
+        if not getattr(row_result, "diff", None):
+            diff_values = []
+            for field in self.get_export_fields():
+                val = row.get(field.column_name, "")
+                diff_values.append(str(val) if val is not None else "")
+            row_result.diff = diff_values
+
+        return row_result
+
+    def post_import_obj(self, instance, row, dry_run, **kwargs):
+        if not dry_run:
+            for field in self.get_import_fields():
+                if isinstance(field.widget, ManyToManyWidget) and field.column_name in row:
+                    val = row[field.column_name]
+                    if val is not None and str(val).strip() != "":
+                        field.save(instance, row, dry_run)
 
 
 class ResearchProjectResource(BaseResearchResource):
@@ -369,8 +529,7 @@ class ConsultancyResource(BaseResearchResource):
 
     def get_instance(self, instance_loader, row):
         """
-        Match on the composite unique key (faculty + nature_of_consultancy +
-        start_date + department) rather than the non-unique nature_of_consultancy alone.
+        Match on unique key (faculty + nature_of_consultancy + start_date + department)
         """
         nature = row.get("nature_of_consultancy", "")
         faculty_name = row.get("faculty", "")
@@ -419,7 +578,7 @@ class ResearchAreaAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmi
 
 @admin.register(Consultancy)
 class ConsultancyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
-    resource_class = ConsultancyResource
+    resource_classes = [ConsultancyResource]
     list_display = ("faculty", "nature_of_consultancy", "campus")
     list_display_links = ("faculty", "nature_of_consultancy")
     list_filter = (
@@ -457,7 +616,7 @@ class ResearchFacilityAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.Model
 class ResearchProjectAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    resource_class = ResearchProjectResource
+    resource_classes = [ResearchProjectResource]
     list_display = (
         "title",
         "principal_investigator",
@@ -484,7 +643,7 @@ class ResearchProjectAdmin(
 class ResearchScholarAdmin(
     PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin
 ):
-    resource_class = ResearchScholarResource
+    resource_classes = [ResearchScholarResource]
     list_display = (
         "scholar_name",
         "enrollment_no",
@@ -520,8 +679,7 @@ class RequiredInlineFormSet(BaseInlineFormSet):
         super().clean()
         if any(self.errors):
             return
-        # Note: If no inline rows are filled out by the user, save_related() in PublicationAdmin
-        # and PatentAdmin will automatically link the logged-in faculty member as the author.
+        # Note: If no author are filled by the author in PublicationAdmin and PatentAdmin then logged-in faculty member as the author.
 
 
 class PublicationAdminForm(forms.ModelForm):
@@ -529,7 +687,6 @@ class PublicationAdminForm(forms.ModelForm):
         required=False,
         label="Confirm Co-Authorship Claim",
         help_text="Check this box if you are a co-author of the existing publication with this title/DOI and wish to link yourself to it.",
-        # Hidden by default; revealed by JS only when a duplicate is detected.
         widget=forms.CheckboxInput(attrs={"class": "claim-confirm-checkbox"}),
     )
 
@@ -610,7 +767,7 @@ class PublicationAuthorInline(admin.TabularInline):
 @admin.register(Publication)
 class PublicationAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     form = PublicationAdminForm
-    resource_class = PublicationResource
+    resource_classes = [PublicationResource]
     list_display = ("title", "publication_date", "campus")
     list_display_links = ("title",)
     list_filter = (
@@ -805,7 +962,7 @@ class PatentAuthorInline(admin.TabularInline):
 @admin.register(Patent)
 class PatentAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdmin):
     form = PatentAdminForm
-    resource_class = PatentResource
+    resource_classes = [PatentResource]
     list_display = ("title", "date_of_filing", "status")
     list_display_links = ("title",)
     list_filter = (SoftDeleteListFilter, "status", "date_of_filing")

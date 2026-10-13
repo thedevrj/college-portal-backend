@@ -61,30 +61,30 @@ class FacultyResource(resources.ModelResource):
         fields = (
             "staff_no",
             "name",
-            "dob",
             "designation",
             "campus",
-            "qualification",
-            "teaching_exp",
-            "research_exp",
-            "google_scholar_url",
-            "scopus_url",
-            "research_gate_url",
-            "linkedin_url",
-            "website_url",
-            "orcid_id",
-            "date_of_joining",
-            "date_of_superannuation",
-            "is_active",
             "school",
             "department",
             "centre",
+            "dob",
+            "qualification",
+            "teaching_exp",
+            "research_exp",
+            "orcid_id",
             "insti_email",
             "other_email",
             "phone1",
             "phone2",
             "research_int",
             "bio",
+            "google_scholar_url",
+            "scopus_url",
+            "research_gate_url",
+            "linkedin_url",
+            "website_url",
+            "date_of_joining",
+            "date_of_superannuation",
+            "is_active",
         )
         export_order = fields
         skip_unchanged = True
@@ -92,7 +92,6 @@ class FacultyResource(resources.ModelResource):
 
     def get_instance(self, instance_loader, row):
         """
-        Prevent MultipleObjectsReturned when staff_no is None.
         If staff_no is missing, try to match by name or treat as a new object.
         """
         staff_no = row.get("staff_no")
