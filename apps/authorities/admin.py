@@ -81,7 +81,6 @@ class BoardOfManagementMemberResource(resources.ModelResource):
     class Meta:
         model = BoardOfManagementMember
         fields = (
-            "id",
             "provision",
             "name",
             "designation",
@@ -118,7 +117,6 @@ class AcademicCouncilMemberResource(resources.ModelResource):
     class Meta:
         model = AcademicCouncilMember
         fields = (
-            "id",
             "name",
             "designation",
             "institution",
@@ -150,7 +148,6 @@ class PlanningBoardMemberResource(resources.ModelResource):
     class Meta:
         model = PlanningBoardMember
         fields = (
-            "id",
             "provision",
             "name",
             "designation",
@@ -187,7 +184,6 @@ class FinanceCommitteeMemberResource(resources.ModelResource):
     class Meta:
         model = FinanceCommitteeMember
         fields = (
-            "id",
             "name",
             "designation",
             "institution",
@@ -233,7 +229,7 @@ class BoardOfManagementMemberAdmin(
 
 @admin.register(BoardOfManagementMinutes)
 class BoardOfManagementMinutesAdmin(
-    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+    PortalSecurityMixin, SimpleHistoryAdmin
 ):
     resource_class = BoardOfManagementMinutesResource
     list_display = (
@@ -276,7 +272,7 @@ class AcademicCouncilMemberAdmin(
 
 @admin.register(AcademicCouncilMinutes)
 class AcademicCouncilMinutesAdmin(
-    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+    PortalSecurityMixin, SimpleHistoryAdmin
 ):
     resource_class = AcademicCouncilMinutesResource
     list_display = (
@@ -325,7 +321,7 @@ class PlanningBoardMemberAdmin(
 
 @admin.register(PlanningBoardMinutes)
 class PlanningBoardMinutesAdmin(
-    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+    PortalSecurityMixin, SimpleHistoryAdmin
 ):
     resource_class = PlanningBoardMinutesResource
     list_display = (
@@ -368,7 +364,7 @@ class FinanceCommitteeMemberAdmin(
 
 @admin.register(FinanceCommitteeMinutes)
 class FinanceCommitteeMinutesAdmin(
-    PortalSecurityMixin, ImportExportModelAdmin, SimpleHistoryAdmin
+    PortalSecurityMixin, SimpleHistoryAdmin
 ):
     resource_class = FinanceCommitteeMinutesResource
     list_display = (

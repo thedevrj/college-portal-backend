@@ -1,0 +1,198 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static import_export_tags %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .import-error-box {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border: 1px solid #f5c6cb !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+    margin-top: 4px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    display: block !important;
+    text-align: left !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+  .import-error-badge {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+    padding: 3px 9px !important;
+    border-radius: 12px !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+  }
+  .validation-error-container {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+  }
+  .table-danger-custom {
+    background-color: #fce8e6 !important;
+  }
+  ins.diff, ins {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    text-decoration: none !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    font-weight: bold !important;
+    border: 1px solid #c3e6cb !important;
+    display: inline-block !important;
+  }
+  del.diff, del {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    text-decoration: line-through !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    margin-right: 4px !important;
+    display: inline-block !important;
+    opacity: 0.85 !important;
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; {% trans "Import" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+  {% if result %}
+    {% if result.has_errors or result.has_validation_errors or result.failed_dataset %}
+      <div class="alert alert-danger" style="background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h4 style="margin-top:0; font-weight: bold;"><i class="fas fa-exclamation-triangle"></i> {% trans "Some rows failed to validate" %}</h4>
+        <p style="margin-bottom:0;">{% trans "Please correct the errors indicated in red below in your spreadsheet, then reupload the updated file." %}</p>
+      </div>
+    {% endif %}
+
+    <h2>{% trans "Preview" %}</h2>
+    <form action="{% url opts|admin_urlname:'process_import' %}" method="post">
+      {% csrf_token %}
+      {% for field in confirm_form %}
+        {{ field }}
+      {% endfor %}
+      
+      <div class="table-responsive" style="margin-bottom: 20px; overflow-x: auto;">
+        <table class="table table-bordered table-striped import-preview" style="width: 100%; font-size: 13px;">
+          <thead>
+            <tr style="background-color: #f4f6f9;">
+              <th style="min-width: 80px; text-align: center;">{% trans "Status" %}</th>
+              <th style="min-width: 60px; text-align: center;">{% trans "Row" %}</th>
+              <th style="min-width: 280px;">{% trans "Validation Errors Details" %}</th>
+              {% for field in result.diff_headers %}
+                <th style="white-space: nowrap;">{{ field }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in result.rows %}
+              {% if row.import_type == 'error' or row.error_count or row.validation_error or row.errors or row.formatted_errors %}
+                <tr class="table-danger-custom" style="background-color: #fce8e6;">
+                  <td style="text-align: center; vertical-align: top; padding-top: 10px;">
+                    <span class="badge badge-danger" style="background-color: #dc3545; color: #fff; padding: 5px 10px; font-weight: bold; border-radius: 4px;">{% trans "Error" %}</span>
+                  </td>
+                  <td style="text-align: center; font-weight: bold; vertical-align: top; padding-top: 10px;">
+                    {% if row.number %}{{ row.number }}{% else %}{{ forloop.counter }}{% endif %}
+                  </td>
+                  <td style="vertical-align: top; padding: 8px;">
+                    <div class="validation-error-container">
+                      {% if row.formatted_errors %}
+                        {% for err in row.formatted_errors %}
+                          <div class="import-error-box">
+                            <i class="fas fa-times-circle" style="margin-right: 5px;"></i> {{ err }}
+                          </div>
+                        {% endfor %}
+                      {% elif row.validation_error %}
+                        <div class="import-error-box">
+                          <i class="fas fa-times-circle" style="margin-right: 5px;"></i> {{ row.validation_error }}
+                        </div>
+                      {% elif row.errors %}
+                        {% for error in row.errors %}
+                          <div class="import-error-box">
+                            <i class="fas fa-times-circle" style="margin-right: 5px;"></i> {{ error.error }}
+                          </div>
+                        {% endfor %}
+                      {% else %}
+                        <div class="import-error-box">
+                          Validation failed for this row.
+                        </div>
+                      {% endif %}
+                    </div>
+                  </td>
+                  {% for field in row.diff %}
+                    <td style="vertical-align: top; white-space: nowrap;">{{ field|safe }}</td>
+                  {% endfor %}
+                </tr>
+              {% else %}
+                <tr>
+                  <td style="text-align: center; vertical-align: top; padding-top: 10px;">
+                    {% if row.import_type == 'new' %}
+                      <span class="badge badge-success" style="background-color: #28a745; color: #fff; padding: 4px 8px;">{% trans "New" %}</span>
+                    {% elif row.import_type == 'skip' %}
+                      <span class="badge badge-secondary" style="background-color: #6c757d; color: #fff; padding: 4px 8px;">{% trans "Skipped" %}</span>
+                    {% elif row.import_type == 'delete' %}
+                      <span class="badge badge-danger" style="background-color: #dc3545; color: #fff; padding: 4px 8px;">{% trans "Delete" %}</span>
+                    {% elif row.import_type == 'update' %}
+                      <span class="badge badge-warning" style="background-color: #ffc107; color: #212529; padding: 4px 8px;">{% trans "Update" %}</span>
+                    {% else %}
+                      <span class="badge badge-info" style="background-color: #17a2b8; color: #fff; padding: 4px 8px;">{{ row.import_type|capfirst }}</span>
+                    {% endif %}
+                  </td>
+                  <td style="text-align: center; font-weight: bold; vertical-align: top; padding-top: 10px;">
+                    {% if row.number %}{{ row.number }}{% else %}{{ forloop.counter }}{% endif %}
+                  </td>
+                  <td style="vertical-align: top; color: #28a745; font-weight: 500; padding-top: 10px;"><i class="fas fa-check-circle"></i> Valid</td>
+                  {% for field in row.diff %}
+                    <td style="vertical-align: top; white-space: nowrap;">{{ field|safe }}</td>
+                  {% endfor %}
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if not result.has_errors and not result.has_validation_errors %}
+        <div class="submit-row" style="margin-top: 20px;">
+          <input type="submit" class="btn btn-primary btn-lg" value="{% trans "Confirm import" %}" />
+        </div>
+      {% else %}
+        <div class="alert alert-warning" style="margin-top: 15px; background-color: #fff3cd; color: #856404; border-color: #ffeeba; padding: 12px 15px; border-radius: 4px;">
+          <strong><i class="fas fa-exclamation-circle"></i> Note:</strong> You cannot submit this import until all validation errors listed above are corrected in your spreadsheet.
+        </div>
+      {% endif %}
+    </form>
+  {% else %}
+    <form action="" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <fieldset class="module aligned">
+        {% for field in form %}
+          <div class="form-row">
+            {{ field.errors }}
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+              <div class="help">{{ field.help_text|safe }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </fieldset>
+      <div class="submit-row">
+        <input type="submit" class="btn btn-primary" value="{% trans "Submit" %}" />
+      </div>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
