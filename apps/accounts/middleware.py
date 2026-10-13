@@ -50,8 +50,6 @@ from django.shortcuts import redirect
 
 class FileValidationMiddleware:
 
-    # Middleware to globally validate all file uploads and prevent malicious extensions.
-
     ALLOWED_EXTENSIONS = {
         ".jpg",
         ".jpeg",
@@ -62,7 +60,8 @@ class FileValidationMiddleware:
         ".docx",
         ".xls",
         ".xlsx",
-        ".csv",
+        ".ppt",
+        ".pptx",
         ".txt", 
     }
 
