@@ -342,9 +342,9 @@ class ResearchScholar(SoftDeleteModel):
                 {"thesis_submission_date": "Thesis submission date cannot be empty when status is 'Thesis Submitted'."}
             )
 
-        if( self.status == "Award" and not self.award_date):
+        if( self.status == "Awarded" and not self.award_date):
             raise ValidationError(
-                {"award_date": "Award date cannot be empty when status is 'Award'."}
+                {"award_date": "Award date cannot be empty when status is 'Awarded'."}
             )
 
         if self.contact_no:
@@ -762,12 +762,12 @@ class Patent(SoftDeleteModel):
         #     )
 
         # Filing date required when status is Published or Granted
-        if self.status in ("Published", "Granted") and not self.date_of_filing:
-            raise ValidationError(
-                {
-                    "date_of_filing": f"Date of filing is required when status is '{self.status}'."
-                }
-            )
+        # if self.status in ("Published", "Granted") and not self.date_of_filing:
+        #     raise ValidationError(
+        #         {
+        #             "date_of_filing": f"Date of filing is required when status is '{self.status}'."
+        #         }
+        #     )
 
         if self.patent_number:
             # Patent number is the strict identifier — enforced at DB level too.

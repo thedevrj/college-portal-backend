@@ -581,6 +581,7 @@ class PortalSecurityMixin:
                     "school",
                     "campus",
                     "staff_no",
+                    "centre",
                     "designation",
                 ]:
                     if field in form.base_fields:
