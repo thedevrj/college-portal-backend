@@ -6,7 +6,7 @@ from simple_history.models import HistoricalRecords
 class COENotice(SoftDeleteModel):
     title = models.CharField(max_length=255, verbose_name="Notice Title")
     date = models.DateField()
-    file = models.FileField(upload_to="coe/notices/")
+    file = models.FileField(upload_to="coe/notices/%Y/%m/")
 
     is_archived = models.BooleanField(
         default=False,
@@ -30,7 +30,7 @@ class COENotice(SoftDeleteModel):
 class PHDVivaVoceDate(SoftDeleteModel):
     title = models.CharField(max_length=255, verbose_name="Title")
     date = models.DateField()
-    file = models.FileField(upload_to="coe/phd_viva_voce_dates/")
+    file = models.FileField(upload_to="coe/phd_viva_voce_dates/%Y/%m/")
 
     is_archived = models.BooleanField(
         default=False,
@@ -54,7 +54,7 @@ class PHDVivaVoceDate(SoftDeleteModel):
 class MPHILVivaVoceDate(SoftDeleteModel):
     title = models.CharField(max_length=255, verbose_name="Title")
     date = models.DateField()
-    file = models.FileField(upload_to="coe/mphil_viva_voce_dates/")
+    file = models.FileField(upload_to="coe/mphil_viva_voce_dates/%Y/%m/")
 
     is_archived = models.BooleanField(
         default=False,
@@ -78,7 +78,7 @@ class MPHILVivaVoceDate(SoftDeleteModel):
 class PHDPreSubmissionSeminar(SoftDeleteModel):
     title = models.CharField(max_length=255, verbose_name="Title")
     date = models.DateField()
-    file = models.FileField(upload_to="coe/phd_pre_submission_seminars/")
+    file = models.FileField(upload_to="coe/phd_pre_submission_seminars/%Y/%m/")
 
     is_archived = models.BooleanField(
         default=False,
@@ -102,7 +102,7 @@ class PHDPreSubmissionSeminar(SoftDeleteModel):
 class RDCUNotice(SoftDeleteModel):
     title = models.CharField(max_length=255, verbose_name="Notice Title")
     date = models.DateField()
-    file = models.FileField(upload_to="coe/rdc_notices/")
+    file = models.FileField(upload_to="coe/rdc_notices/%Y/%m/")
 
     is_archived = models.BooleanField(
         default=False,

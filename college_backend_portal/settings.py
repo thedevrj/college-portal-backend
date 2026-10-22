@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.coe",
     "apps.mou",
     "apps.foundation_course",
+    "apps.placements",
     "apps.vigilance",
     "apps.portals",
     "apps.affidavits",
@@ -173,12 +174,12 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
 PASSWORD_RESET_TIMEOUT = 600
 
-# HTTPS Cookie Security
-# when ssl is active radd not DEBUG
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-AUTH_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", "True") == "False"
+# HTTPS Cookie & SSL Security
+ENABLE_SSL = os.getenv("ENABLE_SSL", "False").lower() in ("true", "1")
 
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", str(ENABLE_SSL)).lower() in ("true", "1")
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", str(ENABLE_SSL)).lower() in ("true", "1")
+AUTH_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", str(ENABLE_SSL)).lower() in ("true", "1")
 
 # Prevent website loading inside the invisible third party iframe
 X_FRAME_OPTIONS = "DENY"
@@ -186,13 +187,12 @@ X_FRAME_OPTIONS = "DENY"
 # Prevents the browser from guessing file types (MIME-sniffing protection)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# if not DEBUG:
-#     # Force HTTPS for 1 year
-#     SECURE_HSTS_SECONDS = 31536000
-#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-#     SECURE_HSTS_PRELOAD = True
-
-#     SECURE_SSL_REDIRECT = True
+if ENABLE_SSL:
+    # Force HTTPS for 1 year
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
 
 
 # Rate Limiting configuration
@@ -200,11 +200,12 @@ AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1
 AXES_ENABLE_ACCESS_FAILURE_LOG = True
 AXES_LOCKOUT_PARAMETERS = ["username"]
-AXES_META_PRECEDENCE_ORDER = [
+AXES_IPWARE_META_PRECEDENCE_ORDER = [
     "HTTP_X_FORWARDED_FOR",
     "HTTP_X_REAL_IP",
     "REMOTE_ADDR",
 ]
+
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
@@ -363,6 +364,7 @@ JAZZMIN_SETTINGS = {
         "authorities",
         "proctor",
         "coe",
+        "placements",
         "mou",
         "vigilance",
         "portals",
@@ -378,6 +380,7 @@ JAZZMIN_SETTINGS = {
         "archives.ArchivedPHDVivaVoceDate",
         "archives.ArchivedMPHILVivaVoceDate",
         "archives.ArchivedRDCUNotice",
+        "archives.ArchivedPlacementNotice",
         "archives.ArchivedBoardOfManagementMinutes",
         "archives.ArchivedAcademicCouncilMinutes",
         "archives.ArchivedPlanningBoardMinutes",
