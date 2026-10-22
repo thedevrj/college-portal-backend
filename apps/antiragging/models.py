@@ -18,7 +18,7 @@ class Resource(SoftDeleteModel):
     title = models.CharField(max_length=255)
     category = models.CharField(max_length=32, choices=ResourceCategory.choices)
     description = models.TextField(blank=True)
-    file = models.FileField(upload_to="antiragging/resources/")
+    file = models.FileField(upload_to="antiragging/resources/%Y/%m/")
     published_on = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()

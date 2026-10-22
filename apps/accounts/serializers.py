@@ -24,6 +24,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
+        if not self.user.is_superuser:
+            profile = getattr(self.user, "portal_profile", None)
+            if not profile or not profile.is_portal_user:
+                raise serializers.ValidationError(
+                    {"detail": "Your account does not have portal access. Contact University Computer Centre."}
+                )
         try:
             profile = getattr(self.user, "portal_profile", None)
             data["force_password_change"] = (

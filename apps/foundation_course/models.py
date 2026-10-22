@@ -93,7 +93,7 @@ class FoundationCourseMaterial(SoftDeleteModel):
         help_text="Please specify if material type is 'Others'.",
     )
     file = models.FileField(
-        upload_to="foundation_courses/materials/",
+        upload_to="foundation_courses/materials/%Y/%m/",
         blank=True,
         null=True,
         verbose_name="File Attachment",

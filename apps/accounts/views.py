@@ -3,7 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views import View
 from django.utils.decorators import method_decorator
-from rest_framework_simplejwt.views import TokenObtainPairView
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -65,12 +67,24 @@ class PortalLoginView(View):
                         "error": "Your account does not have portal access. Contact University Computer Centre."
                     },
                 )
+
+            # Check for an active access role BEFORE creating a session
+            has_active_role = user.access_entries.filter(is_active=True).exists()
+            if not has_active_role:
+                return render(
+                    request,
+                    self.template_name,
+                    {
+                        "error": "No active portal access role found for your account. Contact University Computer Centre."
+                    },
+                )
+
             login(request, user)
 
             # Force sync permissions on every login to avoid "stale" dashboards
             try:
                 user.portal_profile.sync_permissions()
-            except:
+            except Exception:
                 pass
 
             return self._redirect_by_role(request, user)
@@ -88,15 +102,7 @@ class PortalLoginView(View):
 
         access = user.access_entries.filter(is_active=True).first()
         if access is None:
-            if user.is_staff:
-                return redirect("/admin/")
-            return render(
-                request,
-                self.template_name,
-                {
-                    "error": "No portal access role found for your account. Contact IT Admin."
-                },
-            )
+            return redirect("/admin/")
 
         if access.role == PortalRole.RD_ADMIN:
             return redirect("/admin/research/")
@@ -107,9 +113,11 @@ class PortalLoginView(View):
         return redirect("/admin/")
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class PortalLogoutView(View):
     """
-    Logs the user out and redirects to the login page.
+    Logs the user out and redirects to the login page or returns JSON for AJAX/fetch.
+    Clears all auth cookies and revokes tokens.
     """
 
     def _logout(self, request):
@@ -124,9 +132,30 @@ class PortalLogoutView(View):
             if profile is not None:
                 profile.token_version += 1
                 profile.save(update_fields=["token_version"])
+        elif request.user and request.user.is_authenticated:
+            profile = getattr(request.user, "portal_profile", None)
+            if profile is not None:
+                profile.token_version += 1
+                profile.save(update_fields=["token_version"])
+
         logout(request)
-        response = redirect("/portal/login/")
+
+        # Support clean JSON response for AJAX/fetch requests from frontend
+        is_json_request = (
+            request.headers.get("x-requested-with") == "XMLHttpRequest"
+            or "application/json" in request.headers.get("accept", "")
+            or request.content_type == "application/json"
+            or request.method == "POST"
+        )
+        if is_json_request:
+            from django.http import JsonResponse
+            response = JsonResponse({"detail": "Successfully logged out."})
+        else:
+            response = redirect("/portal/login/")
+
         response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
+        response.delete_cookie("csrftoken", path="/")
         return response
 
     def get(self, request):
@@ -184,9 +213,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK and "access" in response.data:
-            access_token = response.data.pop("access")
-            response.data.pop("refresh", None)
+            access_token = response.data.get("access")
+            refresh_token = response.data.get("refresh")
             csrf_token = get_token(request)
+
             response.set_cookie(
                 "access_token",
                 access_token,
@@ -196,6 +226,16 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 max_age=600,
                 path="/",
             )
+            if refresh_token:
+                response.set_cookie(
+                    "refresh_token",
+                    refresh_token,
+                    httponly=True,
+                    secure=settings.AUTH_COOKIE_SECURE,
+                    samesite="Lax",
+                    max_age=86400,
+                    path="/",
+                )
             response.set_cookie(
                 "csrftoken",
                 csrf_token,
@@ -205,6 +245,54 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 max_age=31449600,
                 path="/",
             )
+        return response
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Refreshes JWT access token. Accepts refresh token from either:
+    1. Request JSON payload ({"refresh": "..."})
+    2. HttpOnly 'refresh_token' cookie
+    On success, updates 'access_token' and rotated 'refresh_token' cookies.
+    """
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        if "refresh" not in data and "refresh_token" in request.COOKIES:
+            data = data.copy() if hasattr(data, "copy") else dict(data)
+            data["refresh"] = request.COOKIES.get("refresh_token")
+            serializer = self.get_serializer(data=data)
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+            response = Response(serializer.validated_data, status=status.HTTP_200_OK)
+        else:
+            response = super().post(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_200_OK:
+            access_token = response.data.get("access")
+            if access_token:
+                response.set_cookie(
+                    "access_token",
+                    access_token,
+                    httponly=True,
+                    secure=settings.AUTH_COOKIE_SECURE,
+                    samesite="Lax",
+                    max_age=600,
+                    path="/",
+                )
+            new_refresh = response.data.get("refresh")
+            if new_refresh:
+                response.set_cookie(
+                    "refresh_token",
+                    new_refresh,
+                    httponly=True,
+                    secure=settings.AUTH_COOKIE_SECURE,
+                    samesite="Lax",
+                    max_age=86400,
+                    path="/",
+                )
         return response
 
 
@@ -221,15 +309,46 @@ class ChangePasswordView(APIView):
             user.set_password(serializer.validated_data["new_password"])
             user.save()
 
-            # Clear the force change flag
-            profile = user.portal_profile
-            profile.force_password_change = False
-            profile.token_version += 1
-            profile.save(update_fields=["force_password_change", "token_version"])
+            # Clear force password change and increment token_version (invalidating prior tokens)
+            profile = getattr(user, "portal_profile", None)
+            if profile:
+                profile.force_password_change = False
+                profile.token_version += 1
+                profile.save(update_fields=["force_password_change", "token_version"])
 
-            return Response(
-                {"message": "Password updated successfully"}, status=status.HTTP_200_OK
+            # Generate fresh tokens with the new token_version so the current session continues
+            token_serializer = CustomTokenObtainPairSerializer()
+            refresh = token_serializer.get_token(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            response = Response(
+                {
+                    "message": "Password updated successfully",
+                    "access": access_token,
+                    "refresh": refresh_token,
+                },
+                status=status.HTTP_200_OK,
             )
+            response.set_cookie(
+                "access_token",
+                access_token,
+                httponly=True,
+                secure=settings.AUTH_COOKIE_SECURE,
+                samesite="Lax",
+                max_age=600,
+                path="/",
+            )
+            response.set_cookie(
+                "refresh_token",
+                refresh_token,
+                httponly=True,
+                secure=settings.AUTH_COOKIE_SECURE,
+                samesite="Lax",
+                max_age=86400,
+                path="/",
+            )
+            return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

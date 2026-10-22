@@ -25,11 +25,11 @@ class SubmissionStatus(models.TextChoices):
 
 
 def student_affidavit_path(instance, filename):
-    return f"affidavits/student/{instance.tracking_id}_{instance.student_name}_{instance.department}_{instance.roll_number}.{filename.split('.')[-1]}"
+    return f"affidavits/student/%Y/{instance.tracking_id}_{instance.student_name}_{instance.department}_{instance.roll_number}.{filename.split('.')[-1]}"
 
 
 def parent_affidavit_path(instance, filename):
-    return f"affidavits/parent/{instance.tracking_id}_{instance.parent_name}_{instance.department}_{instance.roll_number}.{filename.split('.')[-1]}"
+    return f"affidavits/parent/%Y/{instance.tracking_id}_{instance.parent_name}_{instance.department}_{instance.roll_number}.{filename.split('.')[-1]}"
 
 
 class Affidavit(SoftDeleteModel):
@@ -99,7 +99,7 @@ class SampleAffidavit(SoftDeleteModel):
         ("PARENT", "Parent"),
     ]
     title = models.CharField(max_length=255)
-    file = models.FileField(upload_to="affidavits/sample/")
+    file = models.FileField(upload_to="affidavits/sample/%Y/")
     affidavit_category = models.CharField(max_length=20, choices=affidavit_type)
     history = HistoricalRecords()
     
