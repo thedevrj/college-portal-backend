@@ -76,7 +76,7 @@ class AdmissionProspectus(SoftDeleteModel):
     title = models.CharField(
         max_length=255, help_text="e.g., CUET PG Information Bulletin"
     )
-    file = models.FileField(upload_to="admission/prospectuses/")
+    file = models.FileField(upload_to="admission/prospectuses/%Y/")
     upload_date = models.DateField(auto_now_add=True)
     history = HistoricalRecords()
 
@@ -94,7 +94,7 @@ class AdmissionNotice(SoftDeleteModel):
     )
     category = models.CharField(max_length=50, choices=ADMISSION_CATEGORY_CHOICES)
     title = models.CharField(max_length=255)
-    file = models.FileField(upload_to="admission/notices/", blank=True, null=True)
+    file = models.FileField(upload_to="admission/notices/%Y/%m/", blank=True, null=True)
     date_posted = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_archived = models.BooleanField(
@@ -188,7 +188,7 @@ class MeritList(SoftDeleteModel):
         blank=True,
         null=True,
     )
-    pdf_file = models.FileField(upload_to="admission/merit_lists/")
+    pdf_file = models.FileField(upload_to="admission/merit_lists/%Y/%m/")
     upload_date = models.DateField(auto_now_add=True)
     history = HistoricalRecords()
 
@@ -232,7 +232,7 @@ class AdmissionCommitteeMember(SoftDeleteModel):
 class AdmissionCommitteeMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
-    file = models.FileField(upload_to="admission/committee_minutes/")
+    file = models.FileField(upload_to="admission/committee_minutes/%Y/%m/")
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to authenticated, authorized personnel.",

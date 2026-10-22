@@ -58,7 +58,7 @@ class ProctorialBoardMember(SoftDeleteModel):
 class ProctorialBoardMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
-    file = models.FileField(upload_to="proctorial_board/minutes/")
+    file = models.FileField(upload_to="proctorial_board/minutes/%Y/%m/")
 
     is_archived = models.BooleanField(
         default=False,
@@ -82,7 +82,7 @@ class ProctorialBoardMinutes(SoftDeleteModel):
 class ProctorialBoardNotice(SoftDeleteModel):
     title = models.CharField(max_length=255)
     date = models.DateField()
-    file = models.FileField(upload_to="proctorial_board/notices/")
+    file = models.FileField(upload_to="proctorial_board/notices/%Y/%m/")
 
     is_archived = models.BooleanField(
         default=False,

@@ -20,10 +20,9 @@ from django.urls import path, include
 from django.http import HttpResponse
 from django.views.generic import RedirectView
 from rest_framework_simplejwt.views import (
-    TokenRefreshView,
     TokenVerifyView,
 )
-from apps.accounts.views import CustomTokenObtainPairView
+from apps.accounts.views import CustomTokenObtainPairView, CustomTokenRefreshView
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -62,11 +61,12 @@ urlpatterns = [
     path("api/v1/affidavits/", include("apps.affidavits.urls")),
     path("api/v1/antiragging/", include("apps.antiragging.urls")),
     path("api/v1/admission/", include("apps.admission.urls")),
+    path("api/v1/placement/", include("apps.placements.urls")),
     # Authentication
     path(
         "api/v1/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"
     ),
-    path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/v1/token/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
     path("api/v1/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     # ERP Portal Login
     path("portal/", include("apps.accounts.urls")),

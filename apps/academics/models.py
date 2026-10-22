@@ -154,7 +154,7 @@ class SchoolBoardMOM(SoftDeleteModel):
         help_text="Date of the Meeting in yyyy-mm-dd format"
     )
     minutes = models.FileField(
-        upload_to="schools/school-board-mom/",
+        upload_to="schools/school-board-mom/%Y/%m/",
         help_text="Upload Minutes of the Meeting",
     )
     history = HistoricalRecords()
@@ -557,7 +557,7 @@ class Notice(SoftDeleteModel):
         max_length=100, blank=True, null=True, help_text="Specify if 'Others' selected"
     )
     content = RichTextField(blank=True, null=True)
-    attachment = models.FileField(upload_to="notices/", blank=True, null=True)
+    attachment = models.FileField(upload_to="notices/%Y/%m/", blank=True, null=True)
     date_posted = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
@@ -613,7 +613,7 @@ class Committee(SoftDeleteModel):
         max_length=255, blank=True, null=True, help_text="Specify if 'Others' selected"
     )
     notification_document = models.FileField(
-        upload_to="committees/notification/",
+        upload_to="committees/notification/%Y/%m/",
         blank=True,
         null=True,
         help_text="Notification or document related to the committee",
@@ -717,7 +717,7 @@ class MinutesOfTheMeeting(SoftDeleteModel):
         help_text="Enter date of meeting in YYYY-MM-DD format"
     )
     minutes_of_meeting = models.FileField(
-        upload_to="committees/minutes/",
+        upload_to="committees/minutes/%Y/%m/",
         help_text="Upload Minutes of the meeting",
     )
     history = HistoricalRecords()
@@ -761,7 +761,7 @@ class Timetable(SoftDeleteModel):
         blank=True,
     )
     title = models.CharField(max_length=255, help_text="e.g., B.Tech Sem 3 Timetable")
-    attachment = models.FileField(upload_to="timetables/")
+    attachment = models.FileField(upload_to="timetables/%Y/%m/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
@@ -805,7 +805,7 @@ class StudyMaterial(SoftDeleteModel):
     title = models.CharField(
         max_length=255, help_text="e.g., Data Structures Lecture Notes"
     )
-    attachment = models.FileField(upload_to="study_materials/")
+    attachment = models.FileField(upload_to="study_materials/%Y/%m/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 

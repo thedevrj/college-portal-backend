@@ -22,9 +22,9 @@ class AffidavitViewSet(
     permission_classes = [permissions.AllowAny]
 
     def get_permissions(self):
-        if self.action == "list":
-            return [permissions.IsAuthenticated()]
-        return [permissions.AllowAny()]
+        if self.action in ["create", "track"]:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
 
     @action(detail=False, methods=["get"], url_path="track/(?P<tracking_id>[^/.]+)")
     def track(self, request, tracking_id=None):
