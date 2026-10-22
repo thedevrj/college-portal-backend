@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.contenttypes.models import ContentType
@@ -330,14 +330,30 @@ class GlobalTrashItemAdmin(admin.ModelAdmin):
     manage_link.short_description = "Action"
     manage_link.allow_tags = True
 
+    def has_module_permission(self, request):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+
     def has_add_permission(self, request):
         return False
 
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
     @admin.action(description="Restore selected items")
     def restore_items(self, request, queryset):
+        if not request.user.is_superuser:
+            self.message_user(
+                request,
+                "Permission denied: Only superusers can restore items.",
+                level=messages.ERROR,
+            )
+            return
         restored = 0
         for trash_item in queryset:
             ModelClass = trash_item.content_type.model_class()
@@ -355,6 +371,13 @@ class GlobalTrashItemAdmin(admin.ModelAdmin):
 
     @admin.action(description="Permanently Delete selected")
     def permanently_delete_items(self, request, queryset):
+        if not request.user.is_superuser:
+            self.message_user(
+                request,
+                "Permission denied: Only superusers can permanently delete items.",
+                level=messages.ERROR,
+            )
+            return
         deleted = 0
         for trash_item in queryset:
             ModelClass = trash_item.content_type.model_class()
@@ -373,6 +396,8 @@ class GlobalTrashItemAdmin(admin.ModelAdmin):
     actions = ["restore_items", "permanently_delete_items"]
 
     def get_actions(self, request):
+        if not request.user.is_superuser:
+            return {}
         actions = super().get_actions(request)
         if "delete_selected" in actions:
             del actions["delete_selected"]

@@ -5,6 +5,7 @@ from .views import (
     portal_profile,
     get_entities_api,
     CustomTokenObtainPairView,
+    CustomTokenRefreshView,
     ChangePasswordView,
     SessionStatusView,
     AdminDashboardStatsView,
@@ -16,9 +17,8 @@ urlpatterns = [
     path("profile/", portal_profile, name="portal_profile"),
     path("api/get-entities/", get_entities_api, name="get_entities_api"),
     path("api/login/", CustomTokenObtainPairView.as_view(), name="api_login"),
-    path(
-        "api/change-password/", ChangePasswordView.as_view(), name="api_change_password"
-    ),
+    path("api/token/refresh/",CustomTokenRefreshView.as_view(),name="api_token_refresh",),
+    path("api/change-password/", ChangePasswordView.as_view(), name="api_change_password"),
     path("api/session/", SessionStatusView.as_view(), name="api_session"),
     path(
         "api/dashboard-stats/",

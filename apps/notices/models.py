@@ -37,7 +37,7 @@ class GlobalNotice(SoftDeleteModel):
         blank=True, null=True, help_text="Optional external link or relative URL",verbose_name="External Link"
     )
     internal_link = models.CharField(null=True,blank=True)
-    attachment = models.FileField(upload_to="global_notices/", blank=True, null=True)
+    attachment = models.FileField(upload_to="global_notices/%Y/%m/", blank=True, null=True)
     date_posted = models.DateField()
     show_in_marquee = models.BooleanField(
         default=False,

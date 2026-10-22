@@ -82,7 +82,7 @@ class BoardOfManagementMember(SoftDeleteModel):
 class BoardOfManagementMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
-    file = models.FileField(upload_to="board_of_management/minutes/")
+    file = models.FileField(upload_to="board_of_management/minutes/%Y/%m/")
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",
@@ -148,7 +148,7 @@ class AcademicCouncilMember(SoftDeleteModel):
 class AcademicCouncilMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
-    file = models.FileField(upload_to="academic_council/minutes/")
+    file = models.FileField(upload_to="academic_council/minutes/%Y/%m/")
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",
@@ -208,7 +208,7 @@ class PlanningBoardMember(SoftDeleteModel):
 class PlanningBoardMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
-    file = models.FileField(upload_to="planning_board/minutes/")
+    file = models.FileField(upload_to="planning_board/minutes/%Y/%m/")
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",
@@ -274,7 +274,7 @@ class FinanceCommitteeMember(SoftDeleteModel):
 class FinanceCommitteeMinutes(SoftDeleteModel):
     meeting_title = models.CharField(max_length=255)
     date_of_meeting = models.DateField()
-    file = models.FileField(upload_to="finance_committee/minutes/")
+    file = models.FileField(upload_to="finance_committee/minutes/%Y/%m/")
     is_private = models.BooleanField(
         default=False,
         help_text="If checked, these minutes will only be visible to specific users.",

@@ -1,5 +1,6 @@
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 class ForcePasswordChangeMiddleware:
@@ -23,6 +24,7 @@ class ForcePasswordChangeMiddleware:
                         reverse("admin:password_change_done"),
                         reverse("portal_logout"),
                         reverse("admin:logout"),
+                        reverse("api_change_password"),
                     ]
 
                     # If the current path is not allowed, redirect them
@@ -31,6 +33,15 @@ class ForcePasswordChangeMiddleware:
                         and not request.path.startswith("/static/")
                         and not request.path.startswith("/media/")
                     ):
+                        if request.path.startswith("/api/") or request.path.startswith("/portal/api/"):
+                            from django.http import JsonResponse
+                            return JsonResponse(
+                                {
+                                    "error": "Password change required before proceeding.",
+                                    "force_password_change": True,
+                                },
+                                status=403,
+                            )
                         return redirect("admin:password_change")
             except Exception:
                 pass
@@ -93,8 +104,19 @@ class FileValidationMiddleware:
 
                         # Otherwise, use Django messages for the admin/portal and redirect back
                         messages.error(request, error_msg)
-                        referer = request.META.get("HTTP_REFERER", "/admin/")
-                        return redirect(referer)
+                        referer = request.META.get("HTTP_REFERER")
+                        is_safe_redirect = False
+                        if referer:
+                            try:
+                                is_safe_redirect = url_has_allowed_host_and_scheme(
+                                    url=referer,
+                                    allowed_hosts={request.get_host()},
+                                    require_https=request.is_secure(),
+                                )
+                            except Exception:
+                                is_safe_redirect = False
+
+                        return redirect(referer if is_safe_redirect else "/admin/")
 
                     # rename the file if it had extra space or any emojis
                     import re

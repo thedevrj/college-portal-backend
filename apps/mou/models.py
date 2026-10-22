@@ -39,7 +39,7 @@ class MOU(SoftDeleteModel):
         help_text="Brief description (approx 200 words)", null=True, blank=True
     )
     document = models.FileField(
-        upload_to="mou_documents/", null=True, blank=True, verbose_name="MOU Document"
+        upload_to="mou_documents/%Y/%m/", null=True, blank=True, verbose_name="MOU Document"
     )
     is_archived = models.BooleanField(
         default=False,
