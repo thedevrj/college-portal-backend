@@ -250,9 +250,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class CustomTokenRefreshView(TokenRefreshView):
     """
-    Refreshes JWT access token. Accepts refresh token from either:
-    1. Request JSON payload ({"refresh": "..."})
-    2. HttpOnly 'refresh_token' cookie
+    Refreshes JWT access token. Accepts refresh token from HTTP cookie.
     On success, updates 'access_token' and rotated 'refresh_token' cookies.
     """
 
