@@ -19,9 +19,15 @@ class Faculty(SoftDeleteModel):
         ("Associate Professor", "Associate Professor"),
         ("Professor", "Professor"),
         ("Senior Professor", "Senior Professor"),
-        ("Guest Faculty", "Guest Faculty"),
         ("Others", "Others"),
 
+    ]
+    Faculty_choice = [
+        ("Permanent", "Permanent"),
+        ("Guest Faculty", "Guest Faculty"),
+        ("Contract Faculty","Contract Faculty"),
+        ("Retired Professor","Retired Professor"),
+        ("Others","Others"),
     ]
 
     user = models.OneToOneField(
@@ -40,6 +46,8 @@ class Faculty(SoftDeleteModel):
     photo_alt_text = models.CharField(
         max_length=255, blank=True, help_text="GIGW accessibility text for the image"
     )
+    faculty_type = models.CharField(max_length=255, choices=Faculty_choice, default="Permanent")
+    others_faculty_type = models.CharField(max_length=50,blank=True, null=True, help_text="Enter faculty type")
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     designation = models.CharField(max_length=255, choices=Designation_choices)
@@ -147,6 +155,10 @@ class Faculty(SoftDeleteModel):
         if self.is_active and self.date_of_superannuation:
             raise ValidationError(
                 {"is_active": "Faculty member cannot be active with date of superannuation."}
+            )
+        if self.faculty_type == "Others" and not self.others_faculty_type:
+            raise ValidationError(
+                {"others_faculty_type": "This field is required."}
             )
         if self.staff_no:
             try:

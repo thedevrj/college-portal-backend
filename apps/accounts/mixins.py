@@ -581,6 +581,7 @@ class PortalSecurityMixin:
                     "school",
                     "campus",
                     "staff_no",
+                    "faculty_type",
                     "centre",
                     "designation",
                 ]:

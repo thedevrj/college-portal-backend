@@ -22,6 +22,46 @@ from .models import (
     FeedbackSignature,
     FeedbackActionLog,
 )
+from college_backend_portal.email_service import send_status_update_email
+
+
+class PortalStatusNotificationFormMixin(forms.ModelForm):
+    notify_user = forms.BooleanField(
+        label="Send Email Notification",
+        required=False,
+        initial=True,
+        help_text="If checked and status is changed, an automated status update email will be sent to the applicant.",
+    )
+    officer_remarks = forms.CharField(
+        label="Officer Remarks / Email Note",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Optional remarks explaining the status change or next steps, included in the email notification.",
+    )
+
+
+class GrievanceAdminForm(PortalStatusNotificationFormMixin):
+    class Meta:
+        model = Grievance
+        fields = "__all__"
+
+
+class ICCComplaintAdminForm(PortalStatusNotificationFormMixin):
+    class Meta:
+        model = ICCComplaint
+        fields = "__all__"
+
+
+class DiscriminationComplaintAdminForm(PortalStatusNotificationFormMixin):
+    class Meta:
+        model = DiscriminationComplaint
+        fields = "__all__"
+
+
+class StudentFeedbackAdminForm(PortalStatusNotificationFormMixin):
+    class Meta:
+        model = StudentFeedback
+        fields = "__all__"
 
 
 class GrievanceAttachmentInline(admin.TabularInline):
@@ -69,6 +109,7 @@ class GrievanceActionLogInline(admin.TabularInline):
 
 @admin.register(Grievance)
 class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    form = GrievanceAdminForm
     list_display = (
         "tracking_id",
         "name_of_complainant",
@@ -104,9 +145,9 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
     fieldsets = (
         (
-            "Tracking",
+            "Status & Notification",
             {
-                "fields": ("tracking_id", "status"),
+                "fields": ("tracking_id", "status", "notify_user", "officer_remarks"),
             },
         ),
         (
@@ -195,15 +236,34 @@ class GrievanceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
             try:
                 old_obj = Grievance.objects.get(pk=obj.pk)
                 if old_obj.status != obj.status:
+                    notify_user = form.cleaned_data.get("notify_user", True)
+                    remarks = form.cleaned_data.get("officer_remarks", "").strip()
+                    if remarks:
+                        action_desc = f"Remarks: {remarks}"
+                    else:
+                        action_desc = (
+                            f"Status updated from '{old_obj.get_status_display()}' "
+                            f"to '{obj.get_status_display()}'"
+                        )
+
                     GrievanceActionLog.objects.create(
                         grievance=obj,
                         action_taken_by=request.user,
-                        action_description=(
-                            f"Status updated from '{old_obj.get_status_display()}' "
-                            f"to '{obj.get_status_display()}'"
-                        ),
+                        action_description=action_desc,
                         status_changed_to=obj.status,
                     )
+
+                    if notify_user and obj.email:
+                        send_status_update_email(
+                            to_email=obj.email,
+                            recipient_name=obj.name_of_complainant,
+                            tracking_id=obj.tracking_id,
+                            portal_name="Grievance Redressal Portal",
+                            portal_slug="grievance",
+                            old_status_display=old_obj.get_status_display(),
+                            new_status_display=obj.get_status_display(),
+                            remarks=remarks,
+                        )
             except Grievance.DoesNotExist:
                 pass
         super().save_model(request, obj, form, change)
@@ -259,6 +319,7 @@ class ICCActionLogInline(admin.TabularInline):
 
 @admin.register(ICCComplaint)
 class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    form = ICCComplaintAdminForm
     list_display = (
         "tracking_id",
         "name_of_complainant",
@@ -293,9 +354,9 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
     fieldsets = (
         (
-            "Tracking",
+            "Status & Notification",
             {
-                "fields": ("tracking_id", "status"),
+                "fields": ("tracking_id", "status", "notify_user", "officer_remarks"),
             },
         ),
         (
@@ -380,15 +441,35 @@ class ICCComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
             try:
                 old_obj = ICCComplaint.objects.get(pk=obj.pk)
                 if old_obj.status != obj.status:
+                    notify_user = form.cleaned_data.get("notify_user", True)
+                    remarks = form.cleaned_data.get("officer_remarks", "").strip()
+
+                    if remarks:
+                        action_desc = f"Remarks: {remarks}"
+                    else:
+                        action_desc = (
+                            f"Status updated from '{old_obj.get_status_display()}' "
+                            f"to '{obj.get_status_display()}'"
+                        )
+                    
                     ICCActionLog.objects.create(
                         complaint=obj,
                         action_taken_by=request.user,
-                        action_description=(
-                            f"Status updated from '{old_obj.get_status_display()}' "
-                            f"to '{obj.get_status_display()}'"
-                        ),
+                        action_description=action_desc,
                         status_changed_to=obj.status,
                     )
+
+                    if notify_user and obj.email:
+                        send_status_update_email(
+                            to_email=obj.email,
+                            recipient_name=obj.name_of_complainant,
+                            tracking_id=obj.tracking_id,
+                            portal_name="Internal Complaints Committee (ICC)",
+                            portal_slug="icc",
+                            old_status_display=old_obj.get_status_display(),
+                            new_status_display=obj.get_status_display(),
+                            remarks=remarks,
+                        )
             except ICCComplaint.DoesNotExist:
                 pass
         super().save_model(request, obj, form, change)
@@ -444,6 +525,7 @@ class DiscriminationActionLogInline(admin.TabularInline):
 
 @admin.register(DiscriminationComplaint)
 class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    form = DiscriminationComplaintAdminForm
     list_display = (
         "tracking_id",
         "full_name",
@@ -479,9 +561,9 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
     fieldsets = (
         (
-            "Tracking",
+            "Status & Notification",
             {
-                "fields": ("tracking_id", "status"),
+                "fields": ("tracking_id", "status", "notify_user", "officer_remarks"),
             },
         ),
         (
@@ -581,15 +663,34 @@ class DiscriminationComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
             try:
                 old_obj = DiscriminationComplaint.objects.get(pk=obj.pk)
                 if old_obj.status != obj.status:
+                    notify_user = form.cleaned_data.get("notify_user", True)
+                    remarks = form.cleaned_data.get("officer_remarks", "").strip()
+
+                    if remarks:
+                        action_desc = f"Remarks: {remarks}"
+                    else:
+                        action_desc = (
+                            f"Status updated from '{old_obj.get_status_display()}' "
+                            f"to '{obj.get_status_display()}'"
+                        )
                     DiscriminationActionLog.objects.create(
                         complaint=obj,
                         action_taken_by=request.user,
-                        action_description=(
-                            f"Status updated from '{old_obj.get_status_display()}' "
-                            f"to '{obj.get_status_display()}'"
-                        ),
+                        action_description=action_desc,
                         status_changed_to=obj.status,
                     )
+
+                    if notify_user and obj.email:
+                        send_status_update_email(
+                            to_email=obj.email,
+                            recipient_name=obj.full_name,
+                            tracking_id=obj.tracking_id,
+                            portal_name="Equal Opportunity / Discrimination Cell",
+                            portal_slug="discrimination",
+                            old_status_display=old_obj.get_status_display(),
+                            new_status_display=obj.get_status_display(),
+                            remarks=remarks,
+                        )
             except DiscriminationComplaint.DoesNotExist:
                 pass
         super().save_model(request, obj, form, change)
@@ -645,6 +746,7 @@ class FeedbackActionLogInline(admin.TabularInline):
 
 @admin.register(StudentFeedback)
 class StudentFeedbackAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    form = StudentFeedbackAdminForm
     list_display = (
         "tracking_id",
         "name_of_student",
@@ -680,9 +782,9 @@ class StudentFeedbackAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
     fieldsets = (
         (
-            "Tracking",
+            "Status & Notification",
             {
-                "fields": ("tracking_id", "status"),
+                "fields": ("tracking_id", "status", "notify_user", "officer_remarks"),
             },
         ),
         (
@@ -770,15 +872,34 @@ class StudentFeedbackAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
             try:
                 old_obj = StudentFeedback.objects.get(pk=obj.pk)
                 if old_obj.status != obj.status:
+                    notify_user = form.cleaned_data.get("notify_user", True)
+                    remarks = form.cleaned_data.get("officer_remarks", "").strip()
+
+                    if remarks:
+                        action_desc = f"Remarks: {remarks}"
+                    else:
+                        action_desc = (
+                            f"Status updated from '{old_obj.get_status_display()}' "
+                            f"to '{obj.get_status_display()}'"
+                        )
                     FeedbackActionLog.objects.create(
                         feedback=obj,
                         action_taken_by=request.user,
-                        action_description=(
-                            f"Status updated from '{old_obj.get_status_display()}' "
-                            f"to '{obj.get_status_display()}'"
-                        ),
+                        action_description=action_desc,
                         status_changed_to=obj.status,
                     )
+
+                    if notify_user and obj.email:
+                        send_status_update_email(
+                            to_email=obj.email,
+                            recipient_name=obj.name_of_student,
+                            tracking_id=obj.tracking_id,
+                            portal_name="Student Feedback Portal",
+                            portal_slug="feedback",
+                            old_status_display=old_obj.get_status_display(),
+                            new_status_display=obj.get_status_display(),
+                            remarks=remarks,
+                        )
             except StudentFeedback.DoesNotExist:
                 pass
         super().save_model(request, obj, form, change)
