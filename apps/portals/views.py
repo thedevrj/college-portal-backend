@@ -102,6 +102,7 @@ class GrievanceStatsView(APIView):
         )
         return Response(stats, status=status.HTTP_200_OK)
 
+from college_backend_portal.email_service import send_status_update_email
 
 class AdminGrievanceViewSet(
     mixins.ListModelMixin,
@@ -138,19 +139,40 @@ class AdminGrievanceViewSet(
         old_instance = self.get_object()
         old_status = old_instance.status
         old_status_display = old_instance.get_status_display()
+        notify_user = serializer.validated_data.pop("notify_user", True)
+        remarks = serializer.validated_data.pop("remarks", "").strip()
 
         new_instance = serializer.save()
 
         if old_status != new_instance.status:
+            if remarks:
+                action_desc = (
+                    f"Remarks: {remarks}"
+                )
+            else:
+                action_desc = (
+                    f"Status updated from '{old_status_display}' "
+                    f"to '{new_instance.get_status_display()}'"
+                )
+
             GrievanceActionLog.objects.create(
                 grievance=new_instance,
                 action_taken_by=self.request.user,
-                action_description=(
-                    f"Status updated from '{old_status_display}' "
-                    f"to '{new_instance.get_status_display()}'"
-                ),
+                action_description=action_desc,
                 status_changed_to=new_instance.status,
             )
+
+            if notify_user and new_instance.email:
+                send_status_update_email(
+                    to_email=new_instance.email,
+                    recipient_name=new_instance.name_of_complainant,
+                    tracking_id=new_instance.tracking_id,
+                    portal_name="Grievance Redressal Portal",
+                    portal_slug="grievance",
+                    old_status_display=old_status_display,
+                    new_status_display=new_instance.get_status_display(),
+                    remarks=remarks,
+                )
 
 
 # ─────────────────────────────────────────────────────────────────────────────

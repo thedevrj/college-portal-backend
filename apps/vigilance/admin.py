@@ -42,8 +42,32 @@ class ComplaintActionLogInline(admin.TabularInline):
         return False
 
 
+from django import forms
+from college_backend_portal.email_service import send_status_update_email
+
+
+class ComplaintAdminForm(forms.ModelForm):
+    notify_user = forms.BooleanField(
+        label="Send Email Notification",
+        required=False,
+        initial=True,
+        help_text="If checked and status is changed, an automated status update email will be sent to the complainant (if not anonymous).",
+    )
+    officer_remarks = forms.CharField(
+        label="Officer Remarks / Email Note",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Optional remarks explaining the status update, included in the email notification.",
+    )
+
+    class Meta:
+        model = Complaint
+        fields = "__all__"
+
+
 @admin.register(Complaint)
 class ComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
+    form = ComplaintAdminForm
     list_display = ("tracking_id", "category", "status", "submitted_at")
     list_filter = (
         SoftDeleteListFilter,
@@ -74,14 +98,37 @@ class ComplaintAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
 
     def save_model(self, request, obj, form, change):
         if change:
-            old_obj = Complaint.objects.get(pk=obj.pk)
-            if old_obj.status != obj.status:
-                ComplaintActionLog.objects.create(
-                    complaint=obj,
-                    action_taken_by=request.user,
-                    action_description=f"Status updated from {old_obj.get_status_display()} to {obj.get_status_display()}",
-                    status_changed_to=obj.status,
-                )
+            try:
+                old_obj = Complaint.objects.get(pk=obj.pk)
+                if old_obj.status != obj.status:
+                    notify_user = form.cleaned_data.get("notify_user", True)
+                    remarks = form.cleaned_data.get("officer_remarks", "").strip()
+                    if remarks:
+                        action_desc = f"Remarks: {remarks}"
+                    else:
+                        action_desc = f"Status updated from {old_obj.get_status_display()} to {obj.get_status_display()}"
+                    
+
+                    ComplaintActionLog.objects.create(
+                        complaint=obj,
+                        action_taken_by=request.user,
+                        action_description=action_desc,
+                        status_changed_to=obj.status,
+                    )
+
+                    if notify_user and not obj.is_anonymous and obj.email:
+                        send_status_update_email(
+                            to_email=obj.email,
+                            recipient_name=obj.name or "Complainant",
+                            tracking_id=obj.tracking_id,
+                            portal_name="Vigilance Cell",
+                            portal_slug="vigilance",
+                            old_status_display=old_obj.get_status_display(),
+                            new_status_display=obj.get_status_display(),
+                            remarks=remarks,
+                        )
+            except Complaint.DoesNotExist:
+                pass
         super().save_model(request, obj, form, change)
 
 

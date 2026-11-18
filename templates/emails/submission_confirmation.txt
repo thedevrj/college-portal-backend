@@ -1,0 +1,26 @@
+Babasaheb Bhimrao Ambedkar University (A Central University, Lucknow)
+{{ portal_name }}
+----------------------------------------------------------------------
+
+Dear {{ recipient_name|default:"Applicant" }},
+
+Thank you for reaching out to us. Your submission has been successfully registered in our system and forwarded to the concerned authorities.
+
+YOUR TRACKING ID: {{ tracking_id }}
+(Please save this Tracking ID for future reference and status tracking.)
+
+Submission Details:
+- Portal: {{ portal_name }}
+{% if category %}- Category / Subject: {{ category }}
+{% endif %}- Submitted On: {{ submitted_at }}
+- Initial Status: {{ initial_status|default:"Pending" }}
+
+{% if tracking_url %}
+Track Your Status Online:
+{{ tracking_url }}
+{% endif %}
+
+
+----------------------------------------------------------------------
+Babasaheb Bhimrao Ambedkar University, Vidya Vihar, Raebareli Road, Lucknow - 226025
+This is an automated notification email. Please do not reply to this email.

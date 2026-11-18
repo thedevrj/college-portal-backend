@@ -120,16 +120,37 @@ class AdminComplaintViewSet(
         return queryset
 
     def perform_update(self, serializer):
+        from college_backend_portal.email_service import send_status_update_email
+
         old_instance = self.get_object()
         old_status = old_instance.status
         old_status_display = old_instance.get_status_display()
+        notify_user = serializer.validated_data.pop("notify_user", True)
+        remarks = serializer.validated_data.pop("remarks", "").strip()
 
         new_instance = serializer.save()
 
         if old_status != new_instance.status:
+            if remarks:
+                action_desc = f"Remarks: {remarks}"
+            else:
+                action_desc = f"Status updated from {old_status_display} to {new_instance.get_status_display()}"
+            
             ComplaintActionLog.objects.create(
                 complaint=new_instance,
                 action_taken_by=self.request.user,
-                action_description=f"Status updated from {old_status_display} to {new_instance.get_status_display()}",
+                action_description=action_desc,
                 status_changed_to=new_instance.status,
             )
+
+            if notify_user and not new_instance.is_anonymous and new_instance.email:
+                send_status_update_email(
+                    to_email=new_instance.email,
+                    recipient_name=new_instance.name or "Complainant",
+                    tracking_id=new_instance.tracking_id,
+                    portal_name="Vigilance Cell",
+                    portal_slug="vigilance",
+                    old_status_display=old_status_display,
+                    new_status_display=new_instance.get_status_display(),
+                    remarks=remarks,
+                )
