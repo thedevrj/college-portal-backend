@@ -1,6 +1,7 @@
 import os
 from rest_framework import serializers
 from .models import Grievance, GrievanceAttachment, GrievanceSignature
+from college_backend_portal.email_service import send_tracking_id_email
 
 
 #  Allowed file types per form spec
@@ -163,6 +164,18 @@ class GrievanceSerializer(serializers.ModelSerializer):
                 grievance=grievance, image=signature_image
             )
 
+        if grievance.email and grievance.tracking_id:
+            send_tracking_id_email(
+                to_email=grievance.email,
+                recipient_name=grievance.name_of_complainant,
+                tracking_id=grievance.tracking_id,
+                portal_name="Grievance Redressal Portal",
+                portal_slug="grievance",
+                category=grievance.get_nature_of_grievance_display(),
+                initial_status=grievance.get_status_display(),
+                submitted_at=grievance.submitted_at,
+            )
+
         return grievance
 
 
@@ -187,13 +200,15 @@ class GrievanceStatusSerializer(serializers.ModelSerializer):
 
 
 class GrievanceStatusUpdateSerializer(serializers.ModelSerializer):
+    notify_user = serializers.BooleanField(default=True, required=False)
+    remarks = serializers.CharField(required=False, allow_blank=True, default="")
 
     class Meta:
         model = Grievance
-        fields = ["status"]
+        fields = ["status", "notify_user", "remarks"]
 
     def validate(self, attrs):
-        unexpected_fields = set(self.initial_data) - {"status"}
+        unexpected_fields = set(self.initial_data) - {"status", "notify_user", "remarks"}
         if unexpected_fields:
             raise serializers.ValidationError(
                 {
@@ -352,6 +367,18 @@ class ICCComplaintSerializer(serializers.ModelSerializer):
 
         if signature_image:
             ICCSignature.objects.create(complaint=complaint, image=signature_image)
+
+        if complaint.email and complaint.tracking_id:
+            send_tracking_id_email(
+                to_email=complaint.email,
+                recipient_name=complaint.name_of_complainant,
+                tracking_id=complaint.tracking_id,
+                portal_name="Internal Complaints Committee (ICC)",
+                portal_slug="icc",
+                category=complaint.get_nature_of_grievance_display(),
+                initial_status=complaint.get_status_display(),
+                submitted_at=complaint.submitted_at,
+            )
 
         return complaint
 
@@ -543,6 +570,17 @@ class DiscriminationComplaintSerializer(serializers.ModelSerializer):
                 complaint=complaint, image=signature_image
             )
 
+        if complaint.email and complaint.tracking_id:
+            send_tracking_id_email(
+                to_email=complaint.email,
+                recipient_name=complaint.full_name,
+                tracking_id=complaint.tracking_id,
+                portal_name="Equal Opportunity / Discrimination Cell",
+                portal_slug="discrimination",
+                category=complaint.get_complaint_discrimination_display(),
+                initial_status=complaint.get_status_display(),
+                submitted_at=complaint.submitted_at,
+            )
         return complaint
 
 
@@ -720,6 +758,18 @@ class StudentFeedbackSerializer(serializers.ModelSerializer):
 
         if signature_image:
             FeedbackSignature.objects.create(feedback=feedback, image=signature_image)
+
+        if feedback.email and feedback.tracking_id:
+            send_tracking_id_email(
+                to_email=feedback.email,
+                recipient_name=feedback.name_of_student,
+                tracking_id=feedback.tracking_id,
+                portal_name="Student Feedback Portal",
+                portal_slug="feedback",
+                category=feedback.get_subject_of_feedback_display(),
+                initial_status=feedback.get_status_display(),
+                submitted_at=feedback.submitted_at,
+            )
 
         return feedback
 

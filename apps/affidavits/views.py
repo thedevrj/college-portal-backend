@@ -19,7 +19,6 @@ class AffidavitViewSet(
 ):
     queryset = Affidavit.objects.all()
     serializer_class = AffidavitSerializer
-    permission_classes = [permissions.AllowAny]
 
     def get_permissions(self):
         if self.action in ["create", "track"]:

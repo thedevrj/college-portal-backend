@@ -3,12 +3,8 @@ from rest_framework.exceptions import AuthenticationFailed
 
 
 class CookieJWTAuthentication(JWTAuthentication):
-    """
-    Authenticate API requests using either:
-    1. Standard 'Authorization: Bearer <token>' header
-    2. HttpOnly 'access_token' cookie
-    Enforces token_version check to support instant token revocation on password change and logout.
-    """
+
+    # add token_version check to support instant token revocation on password change and logout.
 
     def authenticate(self, request):
         header = self.get_header(request)

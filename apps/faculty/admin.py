@@ -389,15 +389,18 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
         "designation",
         "department",
         "campus",
+        "faculty_type",
         "is_active",
     )
     list_filter = (
         SoftDeleteListFilter,
         "is_active",
-        "campus",
         "department",
         "school",
         "designation",
+        "faculty_type",
+        "campus",
+
     )
     search_fields = ("name", "staff_no", "insti_email", "orcid_id")
     prepopulated_fields = {"slug": ("name",)}

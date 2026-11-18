@@ -56,6 +56,24 @@ class AffidavitSerializer(serializers.ModelSerializer):
         value = value.strip().lower()
         return value
 
+    def create(self, validated_data):
+        from college_backend_portal.email_service import send_tracking_id_email
+
+        affidavit = super().create(validated_data)
+        if affidavit.student_email and affidavit.tracking_id:
+            dept_name = affidavit.department.name if affidavit.department else affidavit.program_name
+            send_tracking_id_email(
+                to_email=affidavit.student_email,
+                recipient_name=affidavit.student_name,
+                tracking_id=affidavit.tracking_id,
+                portal_name="Anti-Ragging Affidavit Portal",
+                portal_slug="affidavit",
+                category=f"Department: {dept_name}" if dept_name else "Affidavit Submission",
+                initial_status=affidavit.get_status_display(),
+                submitted_at=affidavit.submitted_on,
+            )
+        return affidavit
+
 
 class AffidavitFAQSerializer(serializers.ModelSerializer):
     class Meta:

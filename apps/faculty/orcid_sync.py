@@ -9,8 +9,7 @@ logger = logging.getLogger(__name__)
 
 def parse_orcid_date(date_dict, default_month="01", default_day="01"):
     """
-    Safely parses ORCID date dictionary and returns a python date object.
-    Defaults missing month/day if only the year is available.
+    Function safely extracts and converts an ORCID API date dictionary into standard Python datetime.date object.
     """
     if not date_dict:
         return None
