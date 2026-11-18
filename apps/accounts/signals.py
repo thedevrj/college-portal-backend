@@ -5,9 +5,6 @@ from django.dispatch import receiver
 
 @receiver(post_save, sender="academics.Department")
 def sync_hod_portal_access(sender, instance, created, **kwargs):
-    """
-    Portal access for HODs should now be managed manually in the Admin.
-    """
     pass
 
 

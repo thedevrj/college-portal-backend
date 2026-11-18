@@ -137,7 +137,7 @@ class PortalStatsService:
     @staticmethod
     def get_user_stats(user_profile):
         """
-        FRESH START: Returning simplified stats to verify connection.
+        Return the stats of the projects,publications,patents,consultancies, projects_ongoing, scholars, scholars_active
         """
         user = user_profile.user
         active_access_list = user.access_entries.filter(is_active=True)

@@ -1,0 +1,25 @@
+Babasaheb Bhimrao Ambedkar University (A Central University, Lucknow)
+{{ portal_name }}
+----------------------------------------------------------------------
+
+Dear {{ recipient_name|default:"Applicant" }},
+
+This is to inform you that there has been an official update regarding your case/application submitted to the {{ portal_name }}.
+
+TRACKING ID: {{ tracking_id }}
+STATUS UPDATE: {{ old_status_display }} ➔ {{ new_status_display }}
+UPDATED ON: {{ updated_at }}
+
+{% if remarks %}
+Remarks / Comments:
+{{ remarks }}
+{% endif %}
+
+{% if tracking_url %}
+Track Your Application:
+{{ tracking_url }}
+{% endif %}
+
+----------------------------------------------------------------------
+Babasaheb Bhimrao Ambedkar University, Vidya Vihar, Raebareli Road, Lucknow - 226025
+This is an automated notification. Please do not reply directly to this email.

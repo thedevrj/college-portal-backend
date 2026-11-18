@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Update - Tracking ID: {{ tracking_id }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #2d3748;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 620px;
+            margin: 30px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: #ffffff;
+            padding: 30px 28px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .badge-portal {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .content {
+            padding: 32px 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 12px;
+        }
+        .message {
+            font-size: 14px;
+            line-height: 1.65;
+            color: #4a5568;
+            margin-bottom: 22px;
+        }
+        .status-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .status-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 14px 0 8px 0;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .status-old {
+            background: #e2e8f0;
+            color: #4a5568;
+            text-decoration: line-through;
+        }
+        .status-arrow {
+            font-size: 18px;
+            color: #1e3a8a;
+            font-weight: bold;
+        }
+        .status-new {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        .status-new.resolved {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+        .status-new.rejected, .status-new.dismissed {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fca5a5;
+        }
+        .tracking-meta {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        .tracking-meta strong {
+            color: #1e3a8a;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .remarks-box {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
+            margin: 22px 0;
+        }
+        .remarks-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #92400e;
+            margin-bottom: 4px;
+        }
+        .remarks-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #78350f;
+            margin: 0;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 28px 0 16px 0;
+        }
+        .btn {
+            display: inline-block;
+            background: #1e3a8a;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
+        }
+        .footer {
+            background: #f8fafc;
+            padding: 24px 28px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            line-height: 1.6;
+        }
+        .footer p {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Babasaheb Bhimrao Ambedkar University</h1>
+            <p>A Central University • Lucknow</p>
+            <div class="badge-portal">{{ portal_name }}</div>
+        </div>
+
+        <div class="content">
+            <div class="greeting">Dear {{ recipient_name|default:"Applicant" }},</div>
+
+            <div class="message">
+                This is to inform you that there has been an official update regarding your case/application submitted to the <strong>{{ portal_name }}</strong>.
+            </div>
+
+            <div class="status-box">
+                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; font-weight: 600;">Status Update</div>
+                <div class="status-flow">
+                    <span class="status-badge status-old">{{ old_status_display }}</span>
+                    <span class="status-arrow">&rarr;</span>
+                    <span class="status-badge status-new {% if is_resolved %}resolved{% elif is_negative %}rejected{% endif %}">{{ new_status_display }}</span>
+                </div>
+                <div class="tracking-meta">
+                    Tracking ID: <strong>{{ tracking_id }}</strong> • Updated: {{ updated_at }}
+                </div>
+            </div>
+
+            {% if remarks %}
+            <div class="remarks-box">
+                <div class="remarks-title">Remarks / Comments</div>
+                <p class="remarks-text">{{ remarks }}</p>
+            </div>
+            {% endif %}
+
+            {% if tracking_url %}
+            <div class="btn-container">
+                <a href="{{ tracking_url }}" class="btn" target="_blank" rel="noopener">Track Your Application</a>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <div class="footer">
+            <p><strong>Babasaheb Bhimrao Ambedkar University</strong>, Vidya Vihar, Raebareli Road, Lucknow - 226025</p>
+            <p>This is an automated status notification. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

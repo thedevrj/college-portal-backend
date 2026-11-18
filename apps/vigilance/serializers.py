@@ -26,6 +26,9 @@ class ComplaintAttachmentSerializer(serializers.ModelSerializer):
         fields = ["id", "file", "uploaded_at"]
 
 
+from college_backend_portal.email_service import send_tracking_id_email
+
+
 class ComplaintSerializer(serializers.ModelSerializer):
     attachments = ComplaintAttachmentSerializer(many=True, read_only=True)
     # Using ListField to handle multiple file uploads in a single request
@@ -71,17 +74,31 @@ class ComplaintSerializer(serializers.ModelSerializer):
         for file in uploaded_files:
             ComplaintAttachment.objects.create(complaint=complaint, file=file)
 
+        if not complaint.is_anonymous and complaint.email and complaint.tracking_id:
+            send_tracking_id_email(
+                to_email=complaint.email,
+                recipient_name=complaint.name or "Complainant",
+                tracking_id=complaint.tracking_id,
+                portal_name="Vigilance Cell",
+                portal_slug="vigilance",
+                category=complaint.get_category_display(),
+                initial_status=complaint.get_status_display(),
+                submitted_at=complaint.submitted_at,
+            )
+
         return complaint
 
 
 class ComplaintStatusUpdateSerializer(serializers.ModelSerializer):
+    notify_user = serializers.BooleanField(default=True, required=False)
+    remarks = serializers.CharField(required=False, allow_blank=True, default="")
 
     class Meta:
         model = Complaint
-        fields = ["status"]
+        fields = ["status", "notify_user", "remarks"]
 
     def validate(self, attrs):
-        unexpected_fields = set(self.initial_data) - {"status"}
+        unexpected_fields = set(self.initial_data) - {"status", "notify_user", "remarks"}
         if unexpected_fields:
             raise serializers.ValidationError(
                 {
