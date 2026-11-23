@@ -3,7 +3,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from apps.accounts.filters import SoftDeleteListFilter
 from apps.accounts.mixins import PortalSecurityMixin
 
-from .models import CommitteeMember, EmergencyContact, FAQ, Resource
+from .models import AntiraggingCommitteeMember, EmergencyContact, FAQ, Resource
 
 
 @admin.register(Resource)
@@ -14,7 +14,7 @@ class ResourceAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     exclude = ("is_deleted", "deleted_at")
 
 
-@admin.register(CommitteeMember)
+@admin.register(AntiraggingCommitteeMember)
 class CommitteeMemberAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
     list_display = ("get_member_name", "affiliation", "designation", "committee_type", "display_order")
     list_filter = (SoftDeleteListFilter, "committee_type", "designation")

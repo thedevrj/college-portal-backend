@@ -8,7 +8,7 @@ from .models import Centre
 @admin.register(Centre)
 class CentreAdmin(PortalSecurityMixin, SimpleHistoryAdmin, admin.ModelAdmin):
 
-    list_display = ("name", "slug", "school", "head", "head_title")
+    list_display = ("name", "slug", "school","department", "head", "head_title")
     list_filter = (SoftDeleteListFilter, "school", "head_title")
     search_fields = ("name", "slug", "head__name")
     prepopulated_fields = {"slug": ("name",)}

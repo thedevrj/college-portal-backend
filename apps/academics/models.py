@@ -7,12 +7,9 @@ from apps.accounts.models import SoftDeleteModel
 
 
 class School(SoftDeleteModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, verbose_name= "Schools")
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     image = models.ImageField(upload_to="schools/", blank=True, null=True)
-    image_alt_text = models.CharField(
-        max_length=255, blank=True, help_text="GIGW accessibility text for the image"
-    )
 
     LEADERSHIP_TITLE_CHOICES = [
         ("Dean", "Dean"),
@@ -180,7 +177,7 @@ class Department(SoftDeleteModel):
         null=True,
         blank=True,
     )
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, verbose_name="Departments")
     slug = models.SlugField(unique=True, blank=True, null=True)
 
     LEADERSHIP_TITLE_CHOICES = [

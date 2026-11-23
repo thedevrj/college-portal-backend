@@ -35,7 +35,7 @@ class CommitteeType(models.TextChoices):
     ANTI_RAGGING_SQUAD = "squad", "Anti-Ragging Squad"
 
 
-class CommitteeMember(SoftDeleteModel):
+class AntiraggingCommitteeMember(SoftDeleteModel):
     designation_choices = [
         ("", "Select Designation"),
         ("CHAIRPERSON", "Chairperson"),
@@ -79,6 +79,8 @@ class CommitteeMember(SoftDeleteModel):
 
     class Meta:
         ordering = ["committee_type", "display_order"]
+        verbose_name_plural = "AntiRagging Committee Members"
+
 
     @property
     def member_name(self):
