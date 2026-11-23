@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
 
-from .models import Resource, CommitteeMember, FAQ, EmergencyContact
+from .models import Resource, AntiraggingCommitteeMember, FAQ, EmergencyContact
 from .serializers import (
     ResourceSerializer,
     CommitteeMemberSerializer,
@@ -23,7 +23,7 @@ class ResourceViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CommitteeMemberViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = CommitteeMember.objects.all()
+    queryset = AntiraggingCommitteeMember.objects.all()
     serializer_class = CommitteeMemberSerializer
     permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
 
