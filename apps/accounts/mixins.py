@@ -140,7 +140,7 @@ class PortalSecurityMixin:
                 "AffidavitFAQ",
                 "SampleAffidavit",
                 "AffidavitGuidelines",
-                "CommitteeMember",
+                "AntiraggingCommitteeMember",
                 "Resource",
                 "FAQ",
                 "EmergencyContact",
@@ -234,8 +234,10 @@ class PortalSecurityMixin:
                         "SchoolBoardMOM",
                     ]:
                         role_qs = role_qs.filter(school_id=access.object_id)
-                    elif hasattr(self.model, "department"):
-                        role_qs = role_qs.filter(department__school_id=access.object_id)
+                    elif self.model.__name__ == "SchoolBoardCommitteeMember":
+                        role_qs = role_qs.filter(
+                            committee__school_id=access.object_id
+                        )
                     elif hasattr(self.model, "school"):
                         role_qs = role_qs.filter(school_id=access.object_id)
                     elif hasattr(self.model, "internal_authors"):
@@ -309,66 +311,99 @@ class PortalSecurityMixin:
             return True
 
         # Check ALL active roles for permission (Multi-role support)
+        # High-level departmental management models (Programs, Notices, etc.)
+        management_models = [
+            "Program",
+            "Course",
+            "Notice",
+            "Timetable",
+            "StudyMaterial",
+            "CBCSCourse",
+            "Committee",
+            "CommitteeMember",
+            "MinutesOfTheMeeting",
+            "DepartmentGallery",
+            "DepartmentGalleryEvent",
+            "Department",
+        ]
+        school_models = [
+            "School",
+            "SchoolBoardCommittee",
+            "SchoolBoardMOM",
+            "SchoolBoardCommitteeMember",
+        ]
+
         active_access = request.user.access_entries.filter(is_active=True)
         for access in active_access:
-            # High-level management models (Programs, Notices, etc.)
-            management_models = [
-                "Program",
-                "Notice",
-                "Timetable",
-                "StudyMaterial",
-                "Cbcscourse",
-                "Committee",
-                "MinutesOfTheMeeting",
-                "DepartmentGallery",
-                "DepartmentGalleryEvent",
-                "Department",
-            ]
-
             if self.model.__name__ in management_models:
                 if access.entity_type == EntityType.DEPARTMENT:
+                    dept_id = access.object_id
                     dept_name = (
                         access.entity.name if hasattr(access.entity, "name") else None
                     )
                     if self.model.__name__ == "Department":
-                        if dept_name and obj.name == dept_name:
+                        if obj.pk == dept_id or (dept_name and obj.name == dept_name):
                             return True
                     elif (
                         self.model.__name__ == "Course"
                         and obj.program
-                        and obj.program.department
+                        and obj.program.department_id
                     ):
-                        # Edit permission check for HODs: Verify the course belongs to their department
-                        if dept_name and obj.program.department.name == dept_name:
+                        if obj.program.department_id == dept_id:
                             return True
                     elif (
                         self.model.__name__ == "MinutesOfTheMeeting"
                         and obj.committee
-                        and obj.committee.department
+                        and obj.committee.department_id
                     ):
-                        if dept_name and obj.committee.department.name == dept_name:
+                        if obj.committee.department_id == dept_id:
+                            return True
+                    elif hasattr(obj, "department_id") and obj.department_id:
+                        if obj.department_id == dept_id:
                             return True
                     elif hasattr(obj, "department") and obj.department:
-                        if dept_name and obj.department.name == dept_name:
-                            return True
-
-                elif access.entity_type == EntityType.SCHOOL:
-                    if self.model.__name__ == "Department":
                         if (
-                            hasattr(obj, "school_id")
-                            and obj.school_id == access.object_id
+                            obj.department.pk == dept_id
+                            or (dept_name and obj.department.name == dept_name)
                         ):
                             return True
+
+                elif access.entity_type == EntityType.CENTRE:
+                    centre_id = access.object_id
+                    if hasattr(obj, "centre_id") and obj.centre_id == centre_id:
+                        return True
                     elif (
-                        self.model.__name__ == "MinutesOfTheMeeting"
-                        and obj.committee
-                        and obj.committee.department
+                        hasattr(obj, "centre")
+                        and obj.centre
+                        and obj.centre.pk == centre_id
                     ):
-                        if obj.committee.department.school_id == access.object_id:
+                        return True
+
+            elif self.model.__name__ in school_models:
+                if access.entity_type == EntityType.SCHOOL:
+                    school_id = access.object_id
+                    if self.model.__name__ == "School":
+                        if obj.pk == school_id:
                             return True
-                    elif hasattr(obj, "department") and obj.department:
-                        if obj.department.school_id == access.object_id:
+                    elif hasattr(obj, "school_id") and obj.school_id == school_id:
+                        return True
+                    elif (
+                        hasattr(obj, "school")
+                        and obj.school
+                        and obj.school.pk == school_id
+                    ):
+                        return True
+                    elif self.model.__name__ == "SchoolBoardCommitteeMember":
+                        if obj.committee and obj.committee.school_id == school_id:
                             return True
+
+        # Deny change permission if object belongs to management or school models
+        # and current user does not have appropriate role for this object
+        if (
+            self.model.__name__ in management_models
+            or self.model.__name__ in school_models
+        ):
+            return False
 
         # 5. Fallback to standard Django permissions if no owner is set yet
         # (This handles old records or records being assigned)
@@ -407,7 +442,7 @@ class PortalSecurityMixin:
             "AffidavitFAQ",
             "SampleAffidavit",
             "AffidavitGuidelines",
-            "CommitteeMember",
+            "AntiraggingCommitteeMember",
             "Resource",
             "FAQ",
             "EmergencyContact",
@@ -435,8 +470,8 @@ class PortalSecurityMixin:
             pass
 
         # Follow the same ownership/admin logic as change permission for high-level roles
-        if obj and self.has_change_permission(request, obj):
-            return True
+        if obj:
+            return self.has_change_permission(request, obj)
 
         return super().has_delete_permission(request, obj)
 
@@ -568,9 +603,38 @@ class PortalSecurityMixin:
             return form
 
         try:
+            # Helper to cleanly disable a field and remove related add/change popups
+            def lock_field(field_name):
+                if field_name in form.base_fields:
+                    form.base_fields[field_name].disabled = True
+                    w = form.base_fields[field_name].widget
+                    if hasattr(w, "can_add_related"):
+                        w.can_add_related = False
+                    if hasattr(w, "can_change_related"):
+                        w.can_change_related = False
+                    if hasattr(w, "can_delete_related"):
+                        w.can_delete_related = False
+
             # --- GLOBAL: Lock 'slug' for ALL non-superusers across all models ---
             if "slug" in form.base_fields:
                 form.base_fields["slug"].disabled = True
+
+            # --- Lock leadership fields for non-superusers (visible but disabled) ---
+            if self.model.__name__ == "Department":
+                for field in ["hod", "leadership_title", "school"]:
+                    lock_field(field)
+            elif self.model.__name__ == "School":
+                for field in ["dean", "leadership_title"]:
+                    lock_field(field)
+            elif self.model.__name__ == "Centre":
+                for field in [
+                    "head",
+                    "head_title",
+                    "head_title_other",
+                    "school",
+                    "department",
+                ]:
+                    lock_field(field)
 
             # --- Lock sensitive fields on the Faculty model for ALL non-superusers ---
             if self.model.__name__ == "Faculty":
@@ -690,12 +754,14 @@ class PortalSecurityMixin:
                     "Department",
                 ]
                 if self.model.__name__ in management_models:
-                    active_access = active_access.filter(
+                    dept_management_access = active_access.filter(
                         role__in=[
                             PortalRole.HOD,
                             PortalRole.DEPT_STAFF,
                         ]
                     )
+                    if dept_management_access.exists():
+                        active_access = dept_management_access
 
                 # Combine filters for all roles using OR logic (Q objects)
                 combined_q = models.Q()
@@ -706,7 +772,17 @@ class PortalSecurityMixin:
                             if hasattr(access.entity, "name")
                             else None
                         )
-                        if db_field.name == "department":
+                        if db_field.name == "school":
+                            if (
+                                hasattr(access.entity, "school_id")
+                                and access.entity.school_id
+                            ):
+                                combined_q |= models.Q(pk=access.entity.school_id)
+                            else:
+                                combined_q |= models.Q(
+                                    departments__id=access.object_id
+                                )
+                        elif db_field.name == "department":
                             combined_q |= (
                                 models.Q(name=dept_name)
                                 if dept_name
@@ -717,6 +793,15 @@ class PortalSecurityMixin:
                                 models.Q(department__name=dept_name)
                                 if dept_name
                                 else models.Q(department=access.entity)
+                            )
+                        elif db_field.name == "centre":
+                            combined_q |= (
+                                models.Q(department_id=access.object_id)
+                                | (
+                                    models.Q(department__name=dept_name)
+                                    if dept_name
+                                    else models.Q()
+                                )
                             )
                         elif db_field.name in [
                             "faculty",
@@ -742,6 +827,13 @@ class PortalSecurityMixin:
                             combined_q |= models.Q(
                                 department__school_id=access.object_id
                             )
+                        elif db_field.name == "centre":
+                            combined_q |= (
+                                models.Q(school_id=access.object_id)
+                                | models.Q(
+                                    department__school_id=access.object_id
+                                )
+                            )
                         elif db_field.name in [
                             "faculty",
                             "principal_investigator",
@@ -754,11 +846,23 @@ class PortalSecurityMixin:
                                 department__school_id=access.object_id
                             )
 
+                    elif access.entity_type == EntityType.CENTRE:
+                        if db_field.name == "centre":
+                            combined_q |= models.Q(pk=access.object_id)
+
                 if combined_q.children:
                     current_qs = kwargs.get(
                         "queryset", db_field.remote_field.model.objects.all()
                     )
                     kwargs["queryset"] = current_qs.filter(combined_q).distinct()
+                elif (
+                    db_field.name in ["centre", "department", "program", "school"]
+                    and active_access.exists()
+                ):
+                    current_qs = kwargs.get(
+                        "queryset", db_field.remote_field.model.objects.all()
+                    )
+                    kwargs["queryset"] = current_qs.none()
 
             except Exception:
                 pass
@@ -767,9 +871,22 @@ class PortalSecurityMixin:
     def save_model(self, request, obj, form, change):
         if not request.user.is_superuser:
             try:
-                access = request.user.access_entries.filter(is_active=True).first()
-                if access:
-                    if access.role == PortalRole.FACULTY:
+                active_access = request.user.access_entries.filter(is_active=True)
+                dept_access = active_access.filter(
+                    entity_type=EntityType.DEPARTMENT
+                ).first()
+                if (
+                    dept_access
+                    and hasattr(obj, "department")
+                    and self.model.__name__ != "Department"
+                ):
+                    if not obj.department:
+                        obj.department = dept_access.entity
+                else:
+                    faculty_access = active_access.filter(
+                        role=PortalRole.FACULTY
+                    ).first()
+                    if faculty_access:
                         Faculty = apps.get_model("faculty", "Faculty")
                         faculty_profile = Faculty.objects.filter(
                             user=request.user
@@ -790,14 +907,6 @@ class PortalSecurityMixin:
                                 and not obj.faculty
                             ):
                                 obj.faculty = faculty_profile
-
-                    elif (
-                        access.entity_type == EntityType.DEPARTMENT
-                        and hasattr(obj, "department")
-                        and self.model.__name__ != "Department"
-                    ):
-                        if not obj.department:
-                            obj.department = access.entity
             except Exception:
                 pass
         super().save_model(request, obj, form, change)

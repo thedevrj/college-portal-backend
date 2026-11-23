@@ -6,7 +6,7 @@ from ckeditor.fields import RichTextField
 
 
 class Centre(SoftDeleteModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, verbose_name="Centre Name")
     slug = models.SlugField(unique=True)
 
     school = models.ForeignKey(
@@ -15,6 +15,12 @@ class Centre(SoftDeleteModel):
         null=True,
         blank=True,
         related_name="centres",
+    )
+    department = models.ForeignKey("academics.Department", 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name= "departments"
     )
 
     HEAD_TITLE_CHOICES = [

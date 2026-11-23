@@ -73,8 +73,9 @@ class SchoolAdmin(PortalSecurityMixin, SimpleHistoryAdmin):
         if request.user.is_superuser:
             return True
         try:
-            access = request.user.access_entries.filter(is_active=True).first()
-            if access and access.role == PortalRole.DEAN:
+            if request.user.access_entries.filter(
+                is_active=True, role=PortalRole.DEAN
+            ).exists():
                 return True
         except:
             pass

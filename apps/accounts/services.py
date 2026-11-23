@@ -137,66 +137,91 @@ class PortalStatsService:
     @staticmethod
     def get_user_stats(user_profile):
         """
-        Return the stats of the projects,publications,patents,consultancies, projects_ongoing, scholars, scholars_active
+        Return the stats of the projects, publications, scholars, etc.
         """
         user = user_profile.user
         active_access_list = user.access_entries.filter(is_active=True)
         if not active_access_list.exists():
             return {}
 
-        # Prioritize DEAN stats over HOD stats
-        access = (
-            active_access_list.filter(role=PortalRole.DEAN).first()
-            or active_access_list.first()
-        )
-
         try:
-            # We use the internal app names verified by diagnostic
             Project = apps.get_model("research", "ResearchProject")
             Scholar = apps.get_model("research", "ResearchScholar")
             Pub = apps.get_model("research", "Publication")
+            Faculty = apps.get_model("faculty", "Faculty")
 
-            if (
-                access.role == PortalRole.DEAN
-                or access.entity_type == EntityType.SCHOOL
-            ):
-                school = access.entity
-                return {
-                    "projects": Project.objects.filter(
-                        department__school=school
-                    ).count(),
-                    "projects_ongoing": Project.objects.filter(
-                        department__school=school, status="ONGOING"
-                    ).count(),
-                    "scholars": Scholar.objects.filter(
-                        department__school=school
-                    ).count(),
-                    "scholars_active": Scholar.objects.filter(
-                        department__school=school, status="PURSUING"
-                    ).count(),
-                    "publications": Pub.objects.filter(
-                        department__school=school
-                    ).count(),
-                }
-            elif (
-                access.role == PortalRole.HOD
-                or access.entity_type == EntityType.DEPARTMENT
-            ):
-                dept = access.entity
-                return {
-                    "projects": Project.objects.filter(department=dept).count(),
-                    "projects_ongoing": Project.objects.filter(
-                        department=dept, status="ONGOING"
-                    ).count(),
-                    "scholars": Scholar.objects.filter(department=dept).count(),
-                    "scholars_active": Scholar.objects.filter(
-                        department=dept, status="PURSUING"
-                    ).count(),
-                    "publications": Pub.objects.filter(department=dept).count(),
-                }
+            # Check if user has RD_ADMIN role -> global research stats
+            if any(access.role == PortalRole.RD_ADMIN for access in active_access_list):
+                projects_qs = Project.objects.filter(is_deleted=False)
+                scholars_qs = Scholar.objects.filter(is_deleted=False)
+                pubs_qs = Pub.objects.filter(is_deleted=False)
+            else:
+                projects_qs = Project.objects.none()
+                scholars_qs = Scholar.objects.none()
+                pubs_qs = Pub.objects.none()
+
+                faculty_obj = Faculty.objects.filter(user=user).first()
+
+                for access in active_access_list:
+                    # 1. FACULTY Role
+                    if access.role == PortalRole.FACULTY:
+                        if faculty_obj:
+                            scholars_qs |= Scholar.objects.filter(
+                                Q(supervisor=faculty_obj) | Q(co_supervisor=faculty_obj)
+                            )
+                            pubs_qs |= Pub.objects.filter(internal_authors=faculty_obj)
+                            projects_qs |= Project.objects.filter(
+                                Q(principal_investigator=faculty_obj)
+                                | Q(co_investigators=faculty_obj)
+                            )
+
+                    # 2. HOD or Department Role
+                    elif (
+                        access.role == PortalRole.HOD
+                        or access.entity_type == EntityType.DEPARTMENT
+                    ):
+                        dept = access.entity
+                        if dept:
+                            scholars_qs |= Scholar.objects.filter(department=dept)
+                            pubs_qs |= Pub.objects.filter(
+                                internal_authors__department=dept
+                            )
+                            projects_qs |= Project.objects.filter(department=dept)
+
+                    # 3. DEAN or School Role
+                    elif (
+                        access.role == PortalRole.DEAN
+                        or access.entity_type == EntityType.SCHOOL
+                    ):
+                        school = access.entity
+                        if school:
+                            scholars_qs |= Scholar.objects.filter(
+                                department__school=school
+                            )
+                            pubs_qs |= Pub.objects.filter(
+                                internal_authors__department__school=school
+                            )
+                            projects_qs |= Project.objects.filter(
+                                department__school=school
+                            )
+
+                projects_qs = projects_qs.filter(is_deleted=False).distinct()
+                scholars_qs = scholars_qs.filter(is_deleted=False).distinct()
+                pubs_qs = pubs_qs.filter(is_deleted=False).distinct()
+
+            return {
+                "projects": projects_qs.count(),
+                "projects_ongoing": projects_qs.filter(
+                    status__iexact="Ongoing"
+                ).count(),
+                "scholars": scholars_qs.count(),
+                "scholars_active": scholars_qs.filter(
+                    status__iexact="Pursuing"
+                ).count(),
+                "publications": pubs_qs.count(),
+            }
         except Exception as e:
             logger.error(f"Fresh Stats Error: {e}")
-            # Fallback to zeros so the boxes at least show up
             return {
                 "projects": 0,
                 "projects_ongoing": 0,
