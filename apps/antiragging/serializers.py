@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Resource, CommitteeMember, FAQ, EmergencyContact
+from .models import Resource, AntiraggingCommitteeMember, FAQ, EmergencyContact
 
 
 class ResourceSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class CommitteeMemberSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source="member_name", read_only=True)
 
     class Meta:
-        model = CommitteeMember
+        model = AntiraggingCommitteeMember
         fields = [
             "id",
             "faculty",
