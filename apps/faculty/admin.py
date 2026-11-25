@@ -523,21 +523,10 @@ class FacultyAdmin(PortalSecurityMixin, SimpleHistoryAdmin, ImportExportModelAdm
         return super().has_module_permission(request)
 
     def has_add_permission(self, request):
-        if request.user.is_superuser:
-            return True
-        try:
-            profile = request.user.portal_profile
-            active_roles = list(
-                request.user.access_entries.filter(is_active=True).values_list(
-                    "role", flat=True
-                )
-            )
-            # RD_ADMIN and COE should never be able to add a faculty profile
-            if any(r in ["RD_ADMIN", "COE"] for r in active_roles) and len(active_roles) == 1:
-                return False
-        except Exception:
-            pass
-        return super().has_add_permission(request)
+        return request.user.is_superuser
+
+    def has_import_permission(self, request):
+        return request.user.is_superuser
 
     def get_actions(self, request):
         actions = super().get_actions(request)
