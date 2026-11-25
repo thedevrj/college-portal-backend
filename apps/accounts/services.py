@@ -124,6 +124,7 @@ class PortalPermissionService:
                     | Q(codename__startswith="add_")
                     | Q(codename__startswith="change_")
                 )
+            permissions = permissions.exclude(codename="add_faculty")
             group, _ = Group.objects.get_or_create(
                 name=f"Portal_AutoGroup_{user.username}"
             )
