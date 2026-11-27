@@ -338,7 +338,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "BBAU ERP",
     "site_brand": "BBAU",
     "welcome_sign": "Welcome to the BBAU ERP Portal",
-    "copyright": "Babasaheb Bhimrao Ambedkar University",
+    "copyright": "Computer Centre, Babasaheb Bhimrao Ambedkar University",
     # Login page
     "site_logo": "img/bbau_logo.png",
     "login_logo": "img/bbau_logo.png",
