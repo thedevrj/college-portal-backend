@@ -97,6 +97,10 @@ class PortalAccessForm(forms.ModelForm):
                     app_label=app_label, model=model_name.lower()
                 )
                 instance.object_id = dynamic_entity_id
+        else:
+            instance.entity_type = entity_type or None
+            instance.content_type = None
+            instance.object_id = None
 
         if commit:
             instance.save()
