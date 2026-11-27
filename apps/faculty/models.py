@@ -412,7 +412,7 @@ class Membership(SoftDeleteModel):
     class Meta:
         ordering = ["name"]
         verbose_name = "Membership"
-        verbose_name_plural = "Member/Expert/Membership"
+        verbose_name_plural = "Expert/ Membership"
 
     def clean(self):
         super().clean()

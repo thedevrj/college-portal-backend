@@ -239,7 +239,7 @@ class FacultyResource(resources.ModelResource):
             if "SATELLITE" in val or "AMETHI" in val:
                 row["campus"] = "Satellite Campus Amethi"
             else:
-                row["campus"] = "BBAU Lucknow"
+                row["campus"] = "BBAU"
 
         qual_key = next(
             (
