@@ -429,7 +429,7 @@ class PublicationResource(BaseResearchResource):
 
     class Meta:
         model = Publication
-        exclude = ("id", "is_deleted", "deleted_at")
+        exclude = ("id", "is_deleted", "deleted_at", "title_fp")
         import_id_fields = ("doi_url",)
         export_order = (
             "title",
@@ -442,6 +442,7 @@ class PublicationResource(BaseResearchResource):
             "indexing",
             "others_indexing",
             "full_author_list",
+            "internal_authors",
         )
 
     def get_instance(self, instance_loader, row):
@@ -470,7 +471,7 @@ class PatentResource(BaseResearchResource):
 
     class Meta:
         model = Patent
-        exclude = ("id", "is_deleted", "deleted_at")
+        exclude = ("id", "is_deleted", "deleted_at", "title_fp")
         import_id_fields = ("patent_number",)
         export_order = (
             "title",
@@ -478,6 +479,7 @@ class PatentResource(BaseResearchResource):
             "status",
             "date_of_filing",
             "full_inventor_list",
+            "internal_inventors",
             "description",
         )
 
