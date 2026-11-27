@@ -113,7 +113,9 @@ class PortalAccess(models.Model):
         User, on_delete=models.CASCADE, related_name="access_entries"
     )
     role = models.CharField(max_length=50, choices=PortalRole.choices)
-    entity_type = models.CharField(max_length=50, choices=EntityType.choices)
+    entity_type = models.CharField(
+        max_length=50, choices=EntityType.choices, blank=True, null=True
+    )
 
     # Made Nullable to prevent migration errors with existing data
     content_type = models.ForeignKey(
@@ -138,7 +140,9 @@ class PortalAccess(models.Model):
         verbose_name_plural = "Portal Access Entries"
 
     def __str__(self):
-        return f"{self.user.username} - {self.get_role_display()} of {self.entity}"
+        if self.entity:
+            return f"{self.user.username} - {self.get_role_display()} of {self.entity}"
+        return f"{self.user.username} - {self.get_role_display()}"
 
 
 class UserActivityLog(models.Model):
