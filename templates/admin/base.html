@@ -78,3 +78,14 @@
 </script>
 {% endif %}
 {% endblock %}
+
+{% block footer %}
+    {% if not is_popup %}
+        <footer class="main-footer {{ jazzmin_ui.footer_classes }}">
+            <div class="d-none d-sm-inline">
+               <strong>Note: You are requested to ensure that all information added or updated by you is Accurate, Verified, and Authenticated. &nbsp; |&nbsp; </strong> 
+            </div>
+            <strong>&copy; {% now 'Y' %}{% if jazzmin_settings.copyright %} {{ jazzmin_settings.copyright }}{% else %} {{ jazzmin_settings.site_header }}{% endif %}.</strong> 
+        </footer>
+    {% endif %}
+{% endblock %}

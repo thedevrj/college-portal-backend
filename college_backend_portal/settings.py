@@ -29,7 +29,11 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
+]
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
@@ -79,22 +83,30 @@ LOGOUT_REDIRECT_URL = "/portal/login/"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
     "axes.middleware.AxesMiddleware",
     "apps.accounts.middleware.FileValidationMiddleware",
 ]
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
 
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
 
 ROOT_URLCONF = "college_backend_portal.urls"
 
@@ -326,7 +338,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "BBAU ERP",
     "site_brand": "BBAU",
     "welcome_sign": "Welcome to the BBAU ERP Portal",
-    "copyright": "Babasaheb Bhimrao Ambedkar University",
+    "copyright": "Computer Centre, Babasaheb Bhimrao Ambedkar University",
     # Login page
     "site_logo": "img/bbau_logo.png",
     "login_logo": "img/bbau_logo.png",
@@ -352,6 +364,20 @@ JAZZMIN_SETTINGS = {
     "order_with_respect_to": [
         "accounts",
         "academics",
+        "academics.School",
+        "academics.SchoolBoardCommittee",
+        "academics.SchoolBoardMOM",
+        "academics.Department",
+        "academics.Program",
+        "academics.Course",
+        "academics.CBCSCourse",
+        "academics.Notice",
+        "academics.Timetable",
+        "academics.StudyMaterial",
+        "academics.Committee",
+        "academics.MinutesOfTheMeeting",
+        "academics.DepartmentGalleryEvent",
+        "academics.DepartmentGallery",
         "foundation_course",
         "centres",
         "notices",
