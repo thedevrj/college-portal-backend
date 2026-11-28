@@ -76,11 +76,73 @@ class FileValidationMiddleware:
         ".txt", 
     }
 
+    MAGIC_SIGNATURES = {
+        ".pdf": [b"%PDF-"],
+        ".png": [b"\x89PNG\r\n\x1a\n"],
+        ".jpg": [b"\xff\xd8\xff"],
+        ".jpeg": [b"\xff\xd8\xff"],
+        ".webp": [b"RIFF"],
+        ".docx": [b"PK\x03\x04"],
+        ".xlsx": [b"PK\x03\x04"],
+        ".pptx": [b"PK\x03\x04"],
+        ".doc": [b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"],
+        ".xls": [b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"],
+        ".ppt": [b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"],
+    }
+
+    DANGEROUS_PAYLOADS = [
+        b"MZ",              # Windows PE executable
+        b"\x7fELF",         # Linux executable
+        b"#!/",             # Shell script
+        b"<?php",           # PHP script
+        b"<script",         # Injected JavaScript
+        b"<!doctype html",  # HTML document
+        b"<html",           # HTML root
+    ]
+
     # 20 MB limit
     MAX_UPLOAD_SIZE = 20 * 1024 * 1024
 
     def __init__(self, get_response):
         self.get_response = get_response
+
+    def _validate_content(self, uploaded_file, ext):
+        try:
+            pos = uploaded_file.tell()
+        except Exception:
+            pos = 0
+
+        header = uploaded_file.read(512)
+        uploaded_file.seek(pos)
+
+        header_lower = header.lower()
+        for dangerous in self.DANGEROUS_PAYLOADS:
+            if header_lower.startswith(dangerous.lower()):
+                return f"Upload Failed: File '{uploaded_file.name}' contains disallowed script/executable content."
+
+        # Check expected magic bytes
+        signatures = self.MAGIC_SIGNATURES.get(ext)
+        if signatures:
+            if not any(header.startswith(sig) for sig in signatures):
+                return f"Upload Failed: File content for '{uploaded_file.name}' does not match the file extension '{ext}'."
+
+        # Text files cannot contain binary null bytes
+        if ext == ".txt":
+            if b"\x00" in header:
+                return f"Upload Failed: Text file '{uploaded_file.name}' contains binary data."
+
+        # Image deep verification via Pillow
+        if ext in {".jpg", ".jpeg", ".png", ".webp"}:
+            try:
+                from PIL import Image
+                img = Image.open(uploaded_file)
+                img.verify()
+                uploaded_file.seek(pos)
+            except Exception:
+                uploaded_file.seek(pos)
+                return f"Upload Failed: Image file '{uploaded_file.name}' is corrupted or invalid."
+
+        return None
 
     def __call__(self, request):
         if request.FILES:
@@ -96,6 +158,10 @@ class FileValidationMiddleware:
                     ext = os.path.splitext(uploaded_file.name)[1].lower()
                     if not error_msg and ext not in self.ALLOWED_EXTENSIONS:
                         error_msg = f"Upload Failed: File extension '{ext}' is not allowed for security reasons."
+
+                    # 3. Check Binary Magic Bytes & Content
+                    if not error_msg:
+                        error_msg = self._validate_content(uploaded_file, ext)
 
                     if error_msg:
                         # If this is an API request, return a JSON error

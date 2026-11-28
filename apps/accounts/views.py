@@ -32,7 +32,7 @@ class PortalLoginView(View):
         password = request.POST.get("password", "").strip()
 
         # Strict validation on username to prevent injection attempts or overly long inputs
-        if not all(char.isalnum() or char in "_@" for char in username):
+        if not all(char.isalnum() or char in "_@.-" for char in username):
             return render(
                 request,
                 self.template_name,
@@ -49,43 +49,60 @@ class PortalLoginView(View):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            if not user.is_active:
+                return render(
+                    request,
+                    self.template_name,
+                    {"error": "This account is inactive. Please contact administrator."},
+                )
+
+            # 1. Superusers always have full access
             if user.is_superuser:
                 login(request, user)
                 return self._redirect_by_role(request, user)
 
-            # For portal users, check the UserProfile flag
+            # 2. Check for active RBAC Portal Access role (Faculty, HOD, Dean, COE, etc.)
+            has_active_role = user.access_entries.filter(is_active=True).exists()
+
+            # 3. Check for standard Django staff with groups or permissions (e.g. academic_council)
+            has_group_or_perm = user.is_staff and (
+                user.groups.exists() or user.user_permissions.exists()
+            )
+
+            # 4. Check for portal profile flag
             try:
                 is_portal = user.portal_profile.is_portal_user
             except Exception:
                 is_portal = False
 
-            if not is_portal:
-                return render(
-                    request,
-                    self.template_name,
-                    {
-                        "error": "Your account does not have portal access. Contact University Computer Centre."
-                    },
-                )
+            # Allow login if user has a portal role OR standard staff permissions/groups
+            is_allowed = has_active_role or has_group_or_perm or (is_portal and user.is_staff)
 
-            # Check for an active access role BEFORE creating a session
-            has_active_role = user.access_entries.filter(is_active=True).exists()
-            if not has_active_role:
+            if not is_allowed:
+                if not is_portal and not user.is_staff:
+                    return render(
+                        request,
+                        self.template_name,
+                        {
+                            "error": "Your account does not have portal access. Contact University Computer Centre."
+                        },
+                    )
                 return render(
                     request,
                     self.template_name,
                     {
-                        "error": "No active portal access role found for your account. Contact University Computer Centre."
+                        "error": "No active portal access role or permissions found for your account. Contact University Computer Centre."
                     },
                 )
 
             login(request, user)
 
-            # Force sync permissions on every login to avoid "stale" dashboards
-            try:
-                user.portal_profile.sync_permissions()
-            except Exception:
-                pass
+            # Only sync RBAC permissions if the user has configured PortalAccess roles
+            if has_active_role:
+                try:
+                    user.portal_profile.sync_permissions()
+                except Exception:
+                    pass
 
             return self._redirect_by_role(request, user)
         else:
