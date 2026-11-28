@@ -10,7 +10,8 @@
             'COE',
             'REGISTRAR',
             'FINANCE_SECTION',
-            'ACADEMIC_SECTION'
+            'ACADEMIC_SECTION',
+            "VC_SECRETARIAT"
         ];
 
         // Function to handle entity type change
