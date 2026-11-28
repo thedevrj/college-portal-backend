@@ -6,7 +6,7 @@ __pycache__/
 .Python
 venv/
 env/
-faculty_credentials_audit.csv
+*.csv
 # Django
 *.log
 db.sqlite3
