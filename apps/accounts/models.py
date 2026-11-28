@@ -46,6 +46,7 @@ class PortalRole(models.TextChoices):
     REGISTRAR = "REGISTRAR", "Registrar Office"
     FINANCE_SECTION = "FINANCE_SECTION", "Finance Section"
     ACADEMIC_SECTION = "ACADEMIC_SECTION", "Academic Section"
+    VC_SECRETARIAT = "VC_SECRETARIAT" ,"Vc Secretariat"
 
 
 class EntityType(models.TextChoices):
