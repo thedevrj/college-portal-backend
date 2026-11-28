@@ -58,6 +58,10 @@ class ResearchArea(SoftDeleteModel):
     campus = models.CharField(max_length=50, choices=CAMPUS_CHOICES)
     history = HistoricalRecords()
 
+    class Meta:
+        ordering = ["id"]
+        verbose_name_plural = "Research Areas"
+
     def __str__(self):
         return f"{self.available_research_areas_or_Specialization} ({self.department.name})"
 
