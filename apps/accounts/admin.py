@@ -68,6 +68,7 @@ class PortalAccessForm(forms.ModelForm):
             "REGISTRAR",
             "FINANCE_SECTION",
             "ACADEMIC_SECTION",
+            "VC_SECRETARIAT",
         ]:
             return cleaned_data
 
