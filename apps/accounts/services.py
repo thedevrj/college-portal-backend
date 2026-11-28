@@ -89,6 +89,20 @@ class PortalConfig:
             "rdcunotice",
             "faculty",
         ],
+        PortalRole.REGISTRAR: [
+            "boardofmanagementmember",
+            "boardofmanagementminutes",
+            "planningboardmember",
+            "planningboardminutes",
+        ],
+        PortalRole.ACADEMIC_SECTION: [
+            "academiccouncilmember",
+            "academiccouncilminutes",
+        ],
+        PortalRole.FINANCE_SECTION: [
+            "financecommitteemember",
+            "financecommitteeminutes",
+        ],
     }
 
 
@@ -110,11 +124,31 @@ class PortalPermissionService:
                 role_models = PortalConfig.ROLE_MODELS.get(access.role, [])
                 models_to_grant.update(role_models)
 
-            if any(access.role == PortalRole.RD_ADMIN for access in active_access_list):
+            if any(access.role == PortalRole.REGISTRAR for access in active_access_list):
+                permissions = Permission.objects.filter(
+                    content_type__model__in=list(models_to_grant)
+                ).filter(
+                    Q(codename__startswith="view_") | Q(codename__startswith="add_")| Q(codename__startswith="change_") | Q(codename__startswith="delete_")
+                )
+            elif any(access.role == PortalRole.RD_ADMIN for access in active_access_list):
                 permissions = Permission.objects.filter(
                     content_type__model__in=list(models_to_grant)
                 ).filter(
                     Q(codename__startswith="view_") | Q(codename__startswith="add_")
+                )
+
+            elif any(access.role == PortalRole.ACADEMIC_SECTION for access in active_access_list):
+                permissions = Permission.objects.filter(
+                    content_type__model__in=list(models_to_grant)
+                ).filter(
+                    Q(codename__startswith="view_") | Q(codename__startswith="add_")| Q(codename__startswith="change_") | Q(codename__startswith="delete_")
+                )
+
+            elif any(access.role == PortalRole.FINANCE_SECTION for access in active_access_list):
+                permissions = Permission.objects.filter(
+                    content_type__model__in=list(models_to_grant)
+                ).filter(
+                    Q(codename__startswith="view_") | Q(codename__startswith="add_")| Q(codename__startswith="change_") | Q(codename__startswith="delete_")
                 )
             else:
                 permissions = Permission.objects.filter(
